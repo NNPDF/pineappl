@@ -968,6 +968,7 @@ dependencies = [
  "pineappl 0.8.3",
  "rand",
  "rand_pcg",
+ "rayon",
  "rustc-hash 1.1.0",
  "serde",
  "serde_yaml",

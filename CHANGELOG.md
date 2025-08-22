@@ -27,6 +27,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   types of convolution functions, so we simply convert the grid to use only
   proton PDFs
 
+### Changed
+
+- the function `Grid::evolve` now makes use of parallelization to take advantage
+  of the number of CPU cores available using the Rayon crate; the number of CPU
+  cores to be used can be controlled via the `RAYON_NUM_THREADS` environment
+  variable
+
 ## [1.1.0] - 08/07/2025
 
 ### Added

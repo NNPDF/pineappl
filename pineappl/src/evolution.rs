@@ -15,6 +15,7 @@ use ndarray::{
     s, Array1, Array2, Array3, ArrayD, ArrayView1, ArrayView4, ArrayViewD, ArrayViewMutD, Axis,
     Ix1, Ix2,
 };
+use rayon::iter::{IndexedParallelIterator, IntoParallelRefMutIterator, ParallelIterator};
 use std::iter;
 
 /// This structure captures the information needed to create an evolution kernel operator (EKO) for
@@ -400,8 +401,6 @@ pub(crate) fn evolve_slice(
     let channels0 = channels0;
 
     let mut sub_fk_tables = Vec::with_capacity(grid.bwfl().len() * channels0.len());
-
-    // TODO: generalize to `n`
     let mut last_x1 = vec![Vec::new(); infos.len()];
     let mut eko_slices = vec![Vec::new(); infos.len()];
     let dim: Vec<_> = infos.iter().map(|info| info.x0.len()).collect();
@@ -445,34 +444,35 @@ pub(crate) fn evolve_slice(
                 }
             }
 
-            for (pids1, factor) in channel1.entry() {
-                // find the tuple of EKOs that evolve the current channel entry of the grid into
-                // every channel of the FK-table
-                let tmp = channels0.iter().map(|pids0| {
-                    izip!(pids0, pids1, &pids01, &eko_slices)
-                        .map(|(&pid0, &pid1, pids, slices)| {
-                            // for each convolution ...
-                            pids.iter().zip(slices).find_map(|(&(p0, p1), op)| {
-                                // find the EKO that matches both the FK-table and the grid PID
-                                ((p0 == pid0) && (p1 == pid1)).then_some(op)
+            // for each channel in the FK-table ...
+            tables
+                .par_iter_mut()
+                .zip(&channels0)
+                .for_each(|(fk_table, pids0)| {
+                    // and each sub-channel in the grid ...
+                    for (pids1, factor) in channel1.entry() {
+                        // find the tuple of EKOs that evolve this combination
+                        let ops: Option<Box<[_]>> = izip!(pids0, pids1, &pids01, &eko_slices)
+                            .map(|(&pid0, &pid1, pids, slices)| {
+                                // for each convolution ...
+                                pids.iter().zip(slices).find_map(|(pid01, op)| {
+                                    // find the EKO that matches both the FK-table and the grid PID
+                                    (pid01 == &(pid0, pid1)).then_some(op)
+                                })
                             })
-                        })
-                        // if an EKO isn't found, it's zero and therefore the whole FK-table
-                        // channel contribution will be zero
-                        .collect::<Option<Box<[_]>>>()
-                });
+                            // if an EKO isn't found, it's zero and therefore the whole FK-table
+                            // channel contribution will be zero
+                            .collect();
 
-                for (fk_table, ops) in tables.iter_mut().zip(tmp) {
-                    // if there's one zero EKO, the entire tuple is `None`
-                    if let Some(ops) = ops {
-                        general_tensor_mul(*factor, array.view(), &ops, fk_table.view_mut());
+                        // if there's one zero EKO, the entire tuple is `None`
+                        if let Some(ops) = ops {
+                            general_tensor_mul(*factor, array.view(), &ops, fk_table.view_mut());
+                        }
                     }
-                }
-            }
+                });
         }
 
         let mut node_values = vec![scale_values.to_vec()];
-
         for info in infos {
             node_values.push(info.x0.clone());
         }
