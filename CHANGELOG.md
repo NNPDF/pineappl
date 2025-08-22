@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] - 22/08/2025
+
 ### Added
 
 - added `Grid::repair` to repair bugs that survived by writing bugged grids to
@@ -809,7 +811,8 @@ the old file format can still be read with this new version.
 
 - first release
 
-[Unreleased]: https://github.com/NNPDF/pineappl/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/NNPDF/pineappl/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/NNPDF/pineappl/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/NNPDF/pineappl/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/NNPDF/pineappl/compare/v0.8.2...v1.0.0
 [0.8.7]: https://github.com/NNPDF/pineappl/compare/v0.8.6...v0.8.7
