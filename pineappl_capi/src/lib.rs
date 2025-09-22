@@ -1514,7 +1514,7 @@ pub extern "C" fn pineappl_channels_new(convolutions: usize) -> Box<Channels> {
 /// # Safety
 ///
 /// The parameter `channels` must point to a valid `Channels` object created by `pineappl_channels_new`.
-/// `pdg_id_combinations` must be an array with length `nb_combinations * combinations`, and
+/// `pdg_id_combinations` must be an array with length `nb_convolutions * combinations`, and
 /// `factors` with length of `combinations`. The `nb_convolutions` describe the number of
 /// parton distributions involved, while `combinations` represent the number of different
 /// channel combinations.
