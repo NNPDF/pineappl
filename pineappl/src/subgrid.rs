@@ -52,7 +52,7 @@ impl Subgrid for EmptySubgridV1 {
 
     fn symmetrize(&mut self, _: usize, _: usize) {}
 
-    fn indexed_iter(&self) -> SubgridIndexedIter {
+    fn indexed_iter(&self) -> SubgridIndexedIter<'_> {
         Box::new(iter::empty())
     }
 
@@ -162,7 +162,7 @@ impl Subgrid for ImportSubgridV1 {
         self.array = new_array;
     }
 
-    fn indexed_iter(&self) -> SubgridIndexedIter {
+    fn indexed_iter(&self) -> SubgridIndexedIter<'_> {
         Box::new(self.array.indexed_iter())
     }
 
@@ -313,7 +313,7 @@ impl Subgrid for InterpSubgridV1 {
         self.array = new_array;
     }
 
-    fn indexed_iter(&self) -> SubgridIndexedIter {
+    fn indexed_iter(&self) -> SubgridIndexedIter<'_> {
         let nodes: Vec<_> = self.interps.iter().map(Interp::node_values).collect();
 
         Box::new(self.array.indexed_iter().map(move |(indices, weight)| {
@@ -484,7 +484,7 @@ pub trait Subgrid {
     fn symmetrize(&mut self, a: usize, b: usize);
 
     /// Return an iterator over all non-zero elements of the subgrid.
-    fn indexed_iter(&self) -> SubgridIndexedIter;
+    fn indexed_iter(&self) -> SubgridIndexedIter<'_>;
 
     /// Return statistics for this subgrid.
     fn stats(&self) -> Stats;

@@ -707,13 +707,13 @@ impl Grid {
 
     /// Return all subgrids as an `ArrayView3`.
     #[must_use]
-    pub fn subgrids(&self) -> ArrayView3<SubgridEnum> {
+    pub fn subgrids(&self) -> ArrayView3<'_, SubgridEnum> {
         self.subgrids.view()
     }
 
     /// Return all subgrids as an `ArrayViewMut3`.
     #[must_use]
-    pub fn subgrids_mut(&mut self) -> ArrayViewMut3<SubgridEnum> {
+    pub fn subgrids_mut(&mut self) -> ArrayViewMut3<'_, SubgridEnum> {
         self.subgrids.view_mut()
     }
 

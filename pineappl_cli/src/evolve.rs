@@ -383,7 +383,7 @@ mod eko {
             })
         }
 
-        pub fn iter_mut(&mut self) -> EkoSlicesIter {
+        pub fn iter_mut(&mut self) -> EkoSlicesIter<'_> {
             match self {
                 Self::V0 {
                     fac1,
