@@ -1637,8 +1637,7 @@ mod tests {
         ];
         let mut ar = PackedArray::new(vec![1, 10, 10]);
         ar[[0, 0, 0]] = 0.;
-        let sg: SubgridEnum =
-            ImportSubgridV1::new(ar, vec![vec![0.0], x.clone(), x.clone()]).into();
+        let sg: SubgridEnum = ImportSubgridV1::new(ar, vec![vec![0.0], x.clone(), x]).into();
         grid.subgrids_mut()[[0, 0, 0]] = sg;
         let was_repaired = grid.repair();
         assert!(was_repaired);
