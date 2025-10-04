@@ -392,8 +392,8 @@ impl PyGrid {
     pub fn convolve<'py>(
         &self,
         pdg_convs: Vec<PyRef<PyConv>>,
-        xfxs: Vec<PyObject>,
-        alphas: PyObject,
+        xfxs: Vec<Py<PyAny>>,
+        alphas: Py<PyAny>,
         order_mask: Option<Vec<bool>>,
         bin_indices: Option<Vec<usize>>,
         channel_mask: Option<Vec<bool>>,
