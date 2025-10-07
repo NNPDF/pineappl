@@ -376,7 +376,7 @@ class TestGrid:
                 xfxs=[pdf.polarized_pdf],  # Requires ONE single PDF
                 alphas=pdf.alphasQ,
             )
-        assert "called `Option::unwrap()` on a `None` value" == str(err_func.value)
+        assert "couldn't match Conv { conv_type: UnpolPDF, pid: 2212 } with a convolution function from cache [Conv { conv_type: PolPDF, pid: 2212 }]" == str(err_func.value)
 
     @pytest.mark.parametrize("params,expected", TESTING_SPECS)
     def test_toy_convolution(self, fake_grids, params, expected):
