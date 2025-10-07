@@ -41,6 +41,7 @@ enum OpsArg {
     MulBinNorm(f64),
     Optimize(bool),
     OptimizeFkTable(FkAssumptions),
+    ReintNodeOpt(bool),
     Repair(bool),
     RewriteChannel((usize, Channel)),
     RewriteOrder((usize, Order)),
@@ -86,7 +87,12 @@ impl FromArgMatches for MoreArgs {
                         });
                     }
                 }
-                "merge_channel_factors" | "optimize" | "repair" | "split_channels" | "upgrade" => {
+                "merge_channel_factors"
+                | "optimize"
+                | "reint_node_opt"
+                | "repair"
+                | "split_channels"
+                | "upgrade" => {
                     let arguments: Vec<Vec<_>> = matches
                         .remove_occurrences(&id)
                         .unwrap()
@@ -99,6 +105,7 @@ impl FromArgMatches for MoreArgs {
                         args[index] = Some(match id.as_str() {
                             "merge_channel_factors" => OpsArg::MergeChannelFactors(arg[0]),
                             "optimize" => OpsArg::Optimize(arg[0]),
+                            "reint_node_opt" => OpsArg::ReintNodeOpt(arg[0]),
                             "repair" => OpsArg::Repair(arg[0]),
                             "split_channels" => OpsArg::SplitChannels(arg[0]),
                             "upgrade" => OpsArg::Upgrade(arg[0]),
@@ -397,6 +404,17 @@ impl Args for MoreArgs {
                 ),
         )
         .arg(
+            Arg::new("reint_node_opt")
+                .action(ArgAction::Append)
+                .default_missing_value("true")
+                .help("TODO")
+                .long("reint-node-opt")
+                .num_args(0..=1)
+                .require_equals(true)
+                .value_name("ENABLE")
+                .value_parser(clap::value_parser!(bool)),
+        )
+        .arg(
             Arg::new("repair")
                 .action(ArgAction::Append)
                 .default_missing_value("true")
@@ -596,6 +614,9 @@ impl Subcommand for Opts {
                     // UNWRAP: this cannot fail because we only modify the normalizations
                     .unwrap();
                 }
+                OpsArg::ReintNodeOpt(true) => {
+                    grid.reint_node_opt()?;
+                }
                 OpsArg::Repair(true) => {
                     grid.repair();
                 }
@@ -635,6 +656,7 @@ impl Subcommand for Opts {
                 OpsArg::Upgrade(true) => grid.upgrade(),
                 OpsArg::MergeChannelFactors(false)
                 | OpsArg::Repair(false)
+                | OpsArg::ReintNodeOpt(false)
                 | OpsArg::Optimize(false)
                 | OpsArg::SplitChannels(false)
                 | OpsArg::Upgrade(false) => {}

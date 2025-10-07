@@ -628,6 +628,128 @@ impl Grid {
             .for_each(|subgrid| subgrid.scale(factor));
     }
 
+    /// TODO
+    ///
+    /// # Errors
+    ///
+    /// TODO
+    pub fn reint_node_opt(&mut self) -> Result<bool> {
+        let mut modified = false;
+
+        let self_interpolations = self.interpolations().to_vec();
+        let grid_node_values: Vec<_> = self_interpolations
+            .iter()
+            .map(|interps| interps.node_values())
+            .collect();
+
+        for subgrid in &mut self.subgrids {
+            if let SubgridEnum::ImportSubgridV1(subgrid) = subgrid {
+                let node_values = subgrid.node_values();
+                let mut affected_indices = vec![None; node_values.len()];
+
+                for ((values, grid_values), affected) in node_values
+                    .iter()
+                    .zip(&grid_node_values)
+                    .zip(&mut affected_indices)
+                {
+                    if let Some(index) = values.iter().copied().position(|value| {
+                        !grid_values
+                            .iter()
+                            .find(|&&grid_value| subgrid::node_value_eq(value, grid_value))
+                            .is_some()
+                    }) {
+                        if affected.is_some() {
+                            // TODO: return an error
+                            todo!();
+                        } else {
+                            *affected = Some(index);
+                        }
+                    }
+                }
+
+                if affected_indices.iter().any(Option::is_some) {
+                    // filter out affected node values
+                    let new_node_values: Vec<_> = affected_indices
+                        .iter()
+                        .zip(&node_values)
+                        .map(|(affected, values)| {
+                            if let &Some(index) = affected {
+                                values[..index]
+                                    .iter()
+                                    .copied()
+                                    .chain(values[index + 1..].iter().copied())
+                                    .collect()
+                            } else {
+                                values.to_vec()
+                            }
+                        })
+                        .collect();
+                    let mut array = super::packed_array::PackedArray::new(
+                        new_node_values.iter().map(|values| values.len()).collect(),
+                    );
+
+                    let mut filtered = Vec::new();
+
+                    for (index, value) in subgrid.indexed_iter() {
+                        let Some(new_index): Option<Vec<_>> = index
+                            .iter()
+                            .copied()
+                            .zip(affected_indices.iter().copied())
+                            .map(|(idx, affected)| {
+                                if let Some(filter) = affected {
+                                    if idx < filter {
+                                        Some(idx)
+                                    } else if idx > filter {
+                                        Some(idx - 1)
+                                    } else {
+                                        None
+                                    }
+                                } else {
+                                    Some(idx)
+                                }
+                            })
+                            .collect()
+                        else {
+                            filtered.push(index);
+                            continue;
+                        };
+
+                        array[new_index.as_slice()] = value;
+                    }
+
+                    let mut subg = InterpSubgridV1::new(&self_interpolations);
+                    let weight = subgrid
+                        .indexed_iter()
+                        .filter_map(|(index, value)| {
+                            filtered
+                                .iter()
+                                .find(|&filter| *filter == index)
+                                .map(|_| value)
+                        })
+                        .sum();
+                    dbg!(weight);
+                    let ntuple: Vec<_> = affected_indices
+                        .iter()
+                        .zip(&node_values)
+                        .map(|(affected, node_value)| affected.map(|index| node_value[index]))
+                        .collect::<Option<_>>()
+                        // TODO: generalize this to include interpolated dimensions
+                        .unwrap();
+                    dbg!(&ntuple);
+                    subg.fill(&self_interpolations, &ntuple, weight);
+
+                    let mut new_subgrid = ImportSubgridV1::new(array, new_node_values);
+                    new_subgrid.merge_impl(&subg.into(), None);
+
+                    *subgrid = new_subgrid;
+                    modified = true;
+                }
+            }
+        }
+
+        Ok(modified)
+    }
+
     /// Repair the grid if it was written by bugged versions to disk.
     ///
     /// Returns `true` if this operations did anything. Currently, this scans for these problems:
