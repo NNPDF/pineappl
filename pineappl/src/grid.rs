@@ -717,7 +717,13 @@ impl Grid {
                         array[new_index.as_slice()] = value;
                     }
 
-                    let mut subg = InterpSubgridV1::new(&self_interpolations);
+                    let ntuple: Vec<_> = affected_indices
+                        .iter()
+                        .zip(&node_values)
+                        .map(|(affected, node_value)| affected.map(|index| node_value[index]))
+                        .collect::<Option<_>>()
+                        // TODO: generalize this to include interpolated dimensions
+                        .unwrap();
                     let weight = subgrid
                         .indexed_iter()
                         .filter_map(|(index, value)| {
@@ -727,15 +733,8 @@ impl Grid {
                                 .map(|_| value)
                         })
                         .sum();
-                    dbg!(weight);
-                    let ntuple: Vec<_> = affected_indices
-                        .iter()
-                        .zip(&node_values)
-                        .map(|(affected, node_value)| affected.map(|index| node_value[index]))
-                        .collect::<Option<_>>()
-                        // TODO: generalize this to include interpolated dimensions
-                        .unwrap();
-                    dbg!(&ntuple);
+
+                    let mut subg = InterpSubgridV1::new(&self_interpolations);
                     subg.fill(&self_interpolations, &ntuple, weight);
 
                     let mut new_subgrid = ImportSubgridV1::new(array, new_node_values);
