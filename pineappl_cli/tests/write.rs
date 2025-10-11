@@ -24,6 +24,7 @@ Options:
       --mul-bin-norm <NORM>             Multiply all bin normalizations with the given factor
       --optimize[=<ENABLE>]             Optimize internal data structure to minimize memory and disk usage [possible values: true, false]
       --optimize-fk-table <OPTIMI>      Optimize internal data structure of an FkTable to minimize memory and disk usage [possible values: Nf6Ind, Nf6Sym, Nf5Ind, Nf5Sym, Nf4Ind, Nf4Sym, Nf3Ind, Nf3Sym]
+      --reint-node-opt[=<ENABLE>]       TODO [possible values: true, false]
       --repair[=<ENABLE>]               Repair bugs saved in the grid [possible values: true, false]
       --rewrite-channel <IDX> <CHAN>    Rewrite the definition of the channel with index IDX
       --rewrite-order <IDX> <ORDER>     Rewrite the definition of the order with index IDX
