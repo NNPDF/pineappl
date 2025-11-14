@@ -18,16 +18,7 @@ jobs:
           df -h
           # 100 largest packages, in ascending order
           dpkg-query -Wf '${Installed-Size}\t${Package}\n' | sort -n | tail -n 100
-          sudo apt-get remove -y google-cloud-cli
-          sudo apt-get remove -y azure-cli
-          sudo apt-get remove -y microsoft-edge-stable
-          sudo apt-get remove -y '^dotnet-.*'
-          sudo apt-get remove -y '^temurin-.*-jdk'
-          sudo apt-get remove -y google-chrome-stable
-          sudo apt-get remove -y '^llvm-.*-dev'
-          sudo apt-get remove -y firefox
-          sudo apt-get remove -y powershell
-          sudo apt-get remove -y mono-devel
+          sudo apt-get remove -y microsoft-edge-stable azure-cli google-cloud-cli google-chrome-stable '^temurin-.*-jdk' '^llvm-.*-dev' firefox powershell
           sudo apt-get autoremove -y
           sudo apt-get clean
           # disk space after removing packages
