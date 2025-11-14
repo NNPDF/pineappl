@@ -27,7 +27,7 @@ jobs:
         uses: redhat-actions/buildah-build@v2
         with:
           image: pineappl-ci
-          tags: fastnlo-3067
+          tags: fastnlo-69d87cf4
           containerfiles: maintainer/pineappl-ci/Containerfile
           context: maintainer/pineappl-ci/
           oci: true
