@@ -16,10 +16,13 @@ pdf_sets=(
     ABMP16als118_5_nnlo
     CT18NNLO
     MSHT20nnlo_as118
+    MSHT20qed_nnlo
     NNPDF31_nlo_as_0118_luxqed
     NNPDF40_nlo_as_01180
     NNPDF40_nlo_pch_as_01180
     NNPDF40_nnlo_as_01180
+    NNPDFpol11_100
+    MAPFF10NLOPIsum
 )
 
 apt update

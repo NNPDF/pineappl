@@ -49,7 +49,7 @@ pub struct Opts {
         value_delimiter = ',',
         value_parser = helpers::parse_order
     )]
-    orders: Vec<(u32, u32)>,
+    orders: Vec<(u8, u8)>,
     /// Do not sort the channels according to their size.
     #[arg(long)]
     dont_sort: bool,
@@ -93,6 +93,7 @@ impl Subcommand for Opts {
                 helpers::convolve(
                     &grid,
                     &mut conv_funs,
+                    &self.conv_funs.conv_types,
                     &self.orders,
                     &[],
                     &channel_mask,

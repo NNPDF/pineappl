@@ -18,7 +18,7 @@ mod fastnlo;
 #[cfg(feature = "applgrid")]
 fn convert_into_applgrid(
     output: &Path,
-    grid: &Grid,
+    grid: &mut Grid,
     conv_funs: &mut [Pdf],
     _: usize,
     discard_non_matching_scales: bool,
@@ -35,7 +35,7 @@ fn convert_into_applgrid(
 #[cfg(not(feature = "applgrid"))]
 fn convert_into_applgrid(
     _: &Path,
-    _: &Grid,
+    _: &mut Grid,
     _: &mut [Pdf],
     _: usize,
     _: bool,
@@ -77,7 +77,7 @@ fn convert_into_fastnlo(
 
 fn convert_into_grid(
     output: &Path,
-    grid: &Grid,
+    grid: &mut Grid,
     conv_funs: &mut [Pdf],
     scales: usize,
     discard_non_matching_scales: bool,
@@ -148,13 +148,13 @@ impl Subcommand for Opts {
     fn run(&self, cfg: &GlobalConfiguration) -> Result<ExitCode> {
         use prettytable::{cell, row};
 
-        let grid = helpers::read_grid(&self.input)?;
+        let mut grid = helpers::read_grid(&self.input)?;
         let mut conv_funs = helpers::create_conv_funs(&self.conv_funs)?;
 
         // TODO: figure out `member` from `self.pdfset`
         let (grid_type, results, scale_variations, order_mask) = convert_into_grid(
             &self.output,
-            &grid,
+            &mut grid,
             &mut conv_funs,
             self.scales,
             self.discard_non_matching_scales,
@@ -165,13 +165,14 @@ impl Subcommand for Opts {
             alpha,
             logxir,
             logxif,
+            logxia,
         } in grid
             .orders()
             .iter()
             .zip(order_mask.iter())
             .filter_map(|(order, keep)| (!keep).then_some(order.clone()))
         {
-            println!("WARNING: the order O(as^{alphas} a^{alpha} lr^{logxir} lf^{logxif}) isn't supported by {grid_type} and will be skipped.");
+            println!("WARNING: the order O(as^{alphas} a^{alpha} lr^{logxir} lf^{logxif} la^{logxia}) isn't supported by {grid_type} and will be skipped.");
         }
 
         let orders: Vec<_> = grid
@@ -185,10 +186,12 @@ impl Subcommand for Opts {
                         alpha,
                         logxir,
                         logxif,
+                        logxia,
                     },
                     keep,
                 )| {
-                    (keep && (logxir == 0) && (logxif == 0)).then_some((alphas, alpha))
+                    (keep && (logxir == 0) && (logxif == 0) && (logxia == 0))
+                        .then_some((alphas, alpha))
                 },
             )
             .collect();
@@ -201,6 +204,7 @@ impl Subcommand for Opts {
             let reference_results = helpers::convolve(
                 &grid,
                 &mut conv_funs,
+                &self.conv_funs.conv_types,
                 &orders,
                 &[],
                 &[],
@@ -229,19 +233,18 @@ impl Subcommand for Opts {
                 // catches the case where both results are zero
                 let rel_diffs: Vec<_> = one
                     .iter()
-                    .zip(two.iter())
-                    .map(|(a, b)| if a == b { 0.0 } else { b / a - 1.0 })
+                    .zip(two)
+                    .map(|(&a, &b)| {
+                        // ALLOW: here we really need an exact comparison
+                        // TODO: change allow to `expect` if MSRV >= 1.81.0
+                        #[allow(clippy::float_cmp)]
+                        if a == b {
+                            0.0
+                        } else {
+                            b / a - 1.0
+                        }
+                    })
                     .collect();
-
-                let max_rel_diff = rel_diffs
-                    .iter()
-                    .max_by(|a, b| a.abs().partial_cmp(&b.abs()).unwrap())
-                    .unwrap()
-                    .abs();
-
-                if max_rel_diff > self.accuracy {
-                    different = true;
-                }
 
                 let mut row = row![
                     bin.to_string(),
@@ -250,7 +253,22 @@ impl Subcommand for Opts {
                     r->format!("{:.*e}", self.digits_rel, rel_diffs[0])
                 ];
 
+                if rel_diffs[0].abs() > self.accuracy {
+                    different = true;
+                }
+
                 if scale_variations > 1 {
+                    // skip central scale choice
+                    let &max_rel_diff = rel_diffs[1..]
+                        .iter()
+                        .max_by(|a, b| a.abs().total_cmp(&b.abs()))
+                        // UNWRAP: in this branch we know there are scale variations
+                        .unwrap();
+
+                    if max_rel_diff.abs() > self.accuracy {
+                        different = true;
+                    }
+
                     row.add_cell(cell!(r->format!("{:.*e}", self.digits_rel, max_rel_diff)));
                 }
 

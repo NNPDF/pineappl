@@ -24,8 +24,10 @@ fn main() {
     )
     .unwrap();
 
+    // 1.6.{39,40} weren't released
     let tested_versions = [
-        "1.6.27", "1.6.28", "1.6.29", "1.6.30", "1.6.31", "1.6.32", "1.6.35", "1.6.36",
+        "1.6.27", "1.6.28", "1.6.29", "1.6.30", "1.6.31", "1.6.32", "1.6.35", "1.6.36", "1.6.37",
+        "1.6.38", "1.6.41", "1.6.42", "1.6.43", "1.6.44",
     ];
 
     if !tested_versions
@@ -86,7 +88,7 @@ fn main() {
     let std = cxx_flags
         .iter()
         .filter_map(|token| token.strip_prefix("-std="))
-        .last();
+        .next_back();
 
     let libs = String::from_utf8(
         Command::new("applgrid-config")
@@ -114,6 +116,14 @@ fn main() {
     } else {
         ""
     };
+
+    // `--ldflags` contains linker paths not contained in `--libdir`
+    for lib_path in libs
+        .split_whitespace()
+        .filter_map(|token| token.strip_prefix("-L"))
+    {
+        println!("cargo:rustc-link-search={lib_path}");
+    }
 
     for lib in libs
         .split_whitespace()

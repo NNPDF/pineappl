@@ -1,15 +1,17 @@
 use anyhow::Result;
+use float_cmp::assert_approx_eq;
 use lhapdf::Pdf;
-use pineappl::boc::{Channel, Order};
-use pineappl::convolutions::Convolution;
+use pineappl::boc::{BinsWithFillLimits, Channel, Kinematics, Order, ScaleFuncForm, Scales};
+use pineappl::convolutions::{Conv, ConvType};
 use pineappl::grid::Grid;
-use pineappl::import_only_subgrid::ImportOnlySubgridV2;
-use pineappl::sparse_array3::SparseArray3;
-use pineappl::subgrid::{Mu2, SubgridParams};
+use pineappl::interpolation::{Interp, InterpMeth, Map, ReweightMeth};
+use pineappl::packed_array::PackedArray;
+use pineappl::pids::PidBasis;
+use pineappl::subgrid::ImportSubgridV1;
 use pineappl_applgrid::ffi::{self, grid};
 use std::f64::consts::TAU;
 use std::pin::Pin;
-use std::ptr;
+use std::{iter, ptr};
 
 fn convert_to_pdg_id(pid: usize) -> i32 {
     let pid = i32::try_from(pid).unwrap() - 6;
@@ -22,11 +24,11 @@ fn convert_to_pdg_id(pid: usize) -> i32 {
     }
 }
 
-fn reconstruct_luminosity_function(grid: &grid, order: i32, dis_pid: i32) -> Vec<Channel> {
+fn reconstruct_channels(grid: &grid, order: i32) -> Vec<Channel> {
     let pdf = unsafe { &*grid.genpdf(order, false) };
     let nproc: usize = pdf.Nproc().try_into().unwrap();
 
-    let mut lumis = vec![Vec::new(); nproc];
+    let mut channels = vec![Vec::new(); nproc];
     let mut xfx1 = [0.0; 14];
     let mut xfx2 = [0.0; 14];
     let mut results = vec![0.0; nproc];
@@ -41,7 +43,7 @@ fn reconstruct_luminosity_function(grid: &grid, order: i32, dis_pid: i32) -> Vec
 
             for i in 0..nproc {
                 if results[i] != 0.0 {
-                    lumis[i].push((convert_to_pdg_id(a), dis_pid, results[i]));
+                    channels[i].push((vec![convert_to_pdg_id(a)], results[i]));
                 }
             }
         } else {
@@ -54,7 +56,8 @@ fn reconstruct_luminosity_function(grid: &grid, order: i32, dis_pid: i32) -> Vec
 
                 for i in 0..nproc {
                     if results[i] != 0.0 {
-                        lumis[i].push((convert_to_pdg_id(a), convert_to_pdg_id(b), results[i]));
+                        channels[i]
+                            .push((vec![convert_to_pdg_id(a), convert_to_pdg_id(b)], results[i]));
                     }
                 }
 
@@ -65,28 +68,32 @@ fn reconstruct_luminosity_function(grid: &grid, order: i32, dis_pid: i32) -> Vec
         xfx1[a] = 0.0;
     }
 
-    lumis.into_iter().map(Channel::new).collect()
+    channels.into_iter().map(Channel::new).collect()
 }
 
-pub fn convert_applgrid(grid: Pin<&mut grid>, alpha: u32, dis_pid: i32) -> Result<Grid> {
+pub fn convert_applgrid(grid: Pin<&mut grid>, alpha: u8) -> Result<Grid> {
     let bin_limits: Vec<_> = (0..=grid.Nobs_internal())
         .map(|i| grid.obslow_internal(i))
         .collect();
 
-    let leading_order: u32 = grid.leadingOrder().try_into().unwrap();
+    let leading_order: u8 = grid
+        .leadingOrder()
+        .try_into()
+        // UNWRAP: exponents of orders shouldn't be larger than 255
+        .unwrap();
     let orders;
     let alphas_factor;
 
     if grid.calculation() == ffi::grid_CALCULATION::AMCATNLO {
         alphas_factor = 2.0 * TAU;
         orders = if grid.nloops() == 0 {
-            vec![Order::new(leading_order, alpha, 0, 0)]
+            vec![Order::new(leading_order, alpha, 0, 0, 0)]
         } else if grid.nloops() == 1 {
             vec![
-                Order::new(leading_order + 1, alpha, 0, 0), // NLO
-                Order::new(leading_order + 1, alpha, 1, 0), // NLO mur
-                Order::new(leading_order + 1, alpha, 0, 1), // NLO muf
-                Order::new(leading_order, alpha, 0, 0),     // LO
+                Order::new(leading_order + 1, alpha, 0, 0, 0), // NLO
+                Order::new(leading_order + 1, alpha, 1, 0, 0), // NLO mur
+                Order::new(leading_order + 1, alpha, 0, 1, 0), // NLO muf
+                Order::new(leading_order, alpha, 0, 0, 0),     // LO
             ]
         } else {
             unimplemented!("nloops = {} is not supported", grid.nloops());
@@ -94,7 +101,18 @@ pub fn convert_applgrid(grid: Pin<&mut grid>, alpha: u32, dis_pid: i32) -> Resul
     } else if grid.calculation() == ffi::grid_CALCULATION::STANDARD {
         alphas_factor = 1.0 / TAU;
         orders = (0..=grid.nloops())
-            .map(|power| Order::new(leading_order + u32::try_from(power).unwrap(), alpha, 0, 0))
+            .map(|power| {
+                Order::new(
+                    leading_order
+                        + u8::try_from(power)
+                            // UNWRAP: exponents of orders shouldn't be larger than 255
+                            .unwrap(),
+                    alpha,
+                    0,
+                    0,
+                    0,
+                )
+            })
             .collect();
     } else {
         unimplemented!("calculation is not supported");
@@ -109,38 +127,64 @@ pub fn convert_applgrid(grid: Pin<&mut grid>, alpha: u32, dis_pid: i32) -> Resul
     }
 
     // this setting isn't supported
-    assert_eq!(grid.getDynamicScale(), 0.0);
+    assert_approx_eq!(f64, grid.getDynamicScale(), 0.0, ulps = 4);
 
     let mut grids = Vec::with_capacity(orders.len());
+    let dis = grid.isDIS();
+
+    // from APPLgrid alone we don't know what type of convolution we have
+    let convolutions = vec![Conv::new(ConvType::UnpolPDF, 2212); if dis { 1 } else { 2 }];
+    // TODO: read out interpolation parameters from APPLgrid
+    let mut interps = vec![Interp::new(
+        1e2,
+        1e8,
+        40,
+        3,
+        ReweightMeth::NoReweight,
+        Map::ApplGridH0,
+        InterpMeth::Lagrange,
+    )];
+    for _ in 0..convolutions.len() {
+        interps.push(Interp::new(
+            2e-7,
+            1.0,
+            50,
+            3,
+            ReweightMeth::ApplGridX,
+            Map::ApplGridF2,
+            InterpMeth::Lagrange,
+        ));
+    }
 
     for (i, order) in orders.into_iter().enumerate() {
-        let lumis = reconstruct_luminosity_function(&grid, i.try_into().unwrap(), dis_pid);
-        let lumis_len = lumis.len();
+        let channels = reconstruct_channels(&grid, i.try_into().unwrap());
+        let lumis_len = channels.len();
         let mut pgrid = Grid::new(
-            lumis,
+            BinsWithFillLimits::from_fill_limits(bin_limits.clone())
+                // UNWRAP: panic here denotes a possible incompatibility between APPLgrid and
+                // PineAPPL
+                .unwrap(),
             vec![order],
-            bin_limits.clone(),
-            SubgridParams::default(),
+            channels,
+            PidBasis::Pdg,
+            convolutions.clone(),
+            interps.clone(),
+            iter::once(Kinematics::Scale(0))
+                .chain((0..convolutions.len()).map(Kinematics::X))
+                .collect(),
+            Scales {
+                ren: ScaleFuncForm::Scale(0),
+                fac: ScaleFuncForm::Scale(0),
+                frg: ScaleFuncForm::NoScale,
+            },
         );
-
-        // from APPLgrid alone we don't know what type of convolution we have
-        pgrid.set_convolution(0, Convolution::UnpolPDF(2212));
-
-        if grid.isDIS() {
-            pgrid.set_convolution(1, Convolution::None);
-        }
 
         for bin in 0..grid.Nobs_internal() {
             let igrid = grid.weightgrid(i.try_into().unwrap(), bin);
             let igrid = unsafe { &*igrid };
             let reweight = ffi::igrid_m_reweight(igrid);
 
-            let mu2_values: Vec<_> = (0..igrid.Ntau())
-                .map(|i| {
-                    let q2 = igrid.getQ2(i);
-                    Mu2 { ren: q2, fac: q2 }
-                })
-                .collect();
+            let scale_values: Vec<_> = (0..igrid.Ntau()).map(|i| igrid.getQ2(i)).collect();
             let x1_values: Vec<_> = (0..igrid.Ny1())
                 .map(|i| igrid.getx1(i).clamp(0.0, 1.0))
                 .collect();
@@ -171,10 +215,13 @@ pub fn convert_applgrid(grid: Pin<&mut grid>, alpha: u32, dis_pid: i32) -> Resul
 
                 let matrix = unsafe { &*matrix };
 
-                let mut array =
-                    SparseArray3::new(mu2_values.len(), x1_values.len(), x2_values.len());
+                let mut array = PackedArray::new(if dis {
+                    vec![scale_values.len(), x1_values.len()]
+                } else {
+                    vec![scale_values.len(), x1_values.len(), x2_values.len()]
+                });
 
-                for itau in 0..mu2_values.len() {
+                for itau in 0..scale_values.len() {
                     for ix1 in 0..x1_values.len() {
                         for ix2 in 0..x2_values.len() {
                             let value = ffi::sparse_matrix_get(
@@ -185,7 +232,12 @@ pub fn convert_applgrid(grid: Pin<&mut grid>, alpha: u32, dis_pid: i32) -> Resul
                             );
 
                             if value != 0.0 {
-                                array[[itau, ix1, ix2]] = value * x1_weights[ix1] * x2_weights[ix2];
+                                if dis {
+                                    array[[itau, ix1]] = value * x1_weights[ix1];
+                                } else {
+                                    array[[itau, ix1, ix2]] =
+                                        value * x1_weights[ix1] * x2_weights[ix2];
+                                }
                             }
                         }
                     }
@@ -193,11 +245,13 @@ pub fn convert_applgrid(grid: Pin<&mut grid>, alpha: u32, dis_pid: i32) -> Resul
 
                 if !array.is_empty() {
                     pgrid.subgrids_mut()[[0, bin.try_into().unwrap(), lumi]] =
-                        ImportOnlySubgridV2::new(
+                        ImportSubgridV1::new(
                             array,
-                            mu2_values.clone(),
-                            x1_values.clone(),
-                            x2_values.clone(),
+                            if dis {
+                                vec![scale_values.clone(), x1_values.clone()]
+                            } else {
+                                vec![scale_values.clone(), x1_values.clone(), x2_values.clone()]
+                            },
                         )
                         .into();
                 }
@@ -241,7 +295,7 @@ pub fn convert_applgrid(grid: Pin<&mut grid>, alpha: u32, dis_pid: i32) -> Resul
         }
     }
 
-    grid0.scale_by_order(alphas_factor, 1.0, 1.0, 1.0, global);
+    grid0.scale_by_order(alphas_factor, 1.0, 1.0, 1.0, 1.0, global);
 
     Ok(grid0)
 }

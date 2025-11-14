@@ -1,3 +1,4 @@
+#![allow(missing_docs)]
 #![cfg(feature = "evolve")]
 
 use assert_cmd::Command;
@@ -5,22 +6,22 @@ use assert_fs::NamedTempFile;
 
 const HELP_STR: &str = "Evolve a grid with an evolution kernel operator to an FK table
 
-Usage: pineappl evolve [OPTIONS] <INPUT> <EKO> <OUTPUT> <CONV_FUNS>
+Usage: pineappl evolve [OPTIONS] <INPUT> <EKO1,...> <OUTPUT> <CONV_FUNS>
 
 Arguments:
   <INPUT>      Path to the input grid
-  <EKO>        Path to the evolution kernel operator
+  <EKO1,...>   Path to the evolution kernel operator(s)
   <OUTPUT>     Path to the converted grid
   <CONV_FUNS>  LHAPDF ID(s) or name of the PDF(s)/FF(s)
 
 Options:
-      --ekob <EKOB>          Additional path to the 2nd evolution kernel operator
       --accuracy <ACCURACY>  Relative threshold between the table and the converted grid when comparison fails [default: 1e-3]
       --digits-abs <ABS>     Set the number of fractional digits shown for absolute numbers [default: 7]
       --digits-rel <REL>     Set the number of fractional digits shown for relative numbers [default: 7]
   -o, --orders <ORDERS>      Select which orders to evolve
       --xir <XIR>            Rescale the renormalization scale with this factor [default: 1]
       --xif <XIF>            Rescale the factorization scale with this factor [default: 1]
+      --xia <XIA>            Rescale the fragmentation scale with this factor [default: 1]
   -h, --help                 Print help
 ";
 
@@ -65,44 +66,44 @@ const LHCB_WP_7TEV_STR: &str = "b    Grid       FkTable     rel. diff
 7 2.9272102e1 2.9268451e1 -1.2474967e-4
 ";
 
-const LHCB_WP_7TEV_V2_STR: &str = "b         Grid               FkTable              rel. diff
--+--------------------+--------------------+----------------------
-0 7.8752126798068639e2 7.8731064380928558e2 -2.6745204220435248e-4
-1 7.1872113080347663e2 7.1853123147848032e2 -2.6421836906898033e-4
-2 6.2322357391848550e2 6.2306009928459093e2 -2.6230495882362259e-4
-3 5.0216762988872915e2 5.0203737363369049e2 -2.5938799573266280e-4
-4 3.7314505699003126e2 3.7305089832847733e2 -2.5233795755852384e-4
-5 2.5302044227292129e2 2.5295968261889854e2 -2.4013733229188983e-4
-6 1.1971045984774410e2 1.1968525412249538e2 -2.1055574659711862e-4
-7 2.9272102213930090e1 2.9268443366651141e1 -1.2499434622803562e-4
+const LHCB_WP_7TEV_V2_STR: &str = "b        Grid             FkTable         rel. diff
+-+------------------+------------------+-------------
+0 7.87521267980686e2 7.87310643809286e2 -2.6745204e-4
+1 7.18721130803477e2 7.18531231478480e2 -2.6421837e-4
+2 6.23223573918485e2 6.23060099284591e2 -2.6230496e-4
+3 5.02167629888729e2 5.02037373633690e2 -2.5938800e-4
+4 3.73145056990031e2 3.73050898328477e2 -2.5233796e-4
+5 2.53020442272921e2 2.52959682618899e2 -2.4013733e-4
+6 1.19710459847744e2 1.19685254122495e2 -2.1055575e-4
+7 2.92721022139301e1 2.92684433666511e1 -1.2499435e-4
 ";
 
-const LHCB_WP_7TEV_V2_XIR2_STR: &str = "b         Grid               FkTable              rel. diff
--+--------------------+--------------------+----------------------
-0 7.7634833292737017e2 7.7614037816519419e2 -2.6786270203205120e-4
-1 7.0866199875124983e2 7.0847444839781781e2 -2.6465417048249229e-4
-2 6.1427556024981789e2 6.1411417374531106e2 -2.6272655946324441e-4
-3 4.9482819982783724e2 4.9469964081143053e2 -2.5980535557890150e-4
-4 3.6756257449354945e2 3.6746967569489709e2 -2.5274281196974169e-4
-5 2.4912642701834142e2 2.4906651029915440e2 -2.4050727939273209e-4
-6 1.1776254040032327e2 1.1773772039493417e2 -2.1076316207790935e-4
-7 2.8749891297668260e1 2.8746299479656258e1 -1.2493327278395583e-4
+const LHCB_WP_7TEV_V2_XIR2_STR: &str = "b        Grid             FkTable         rel. diff
+-+------------------+------------------+-------------
+0 7.76348332927370e2 7.76140378165194e2 -2.6786270e-4
+1 7.08661998751250e2 7.08474448397818e2 -2.6465417e-4
+2 6.14275560249818e2 6.14114173745311e2 -2.6272656e-4
+3 4.94828199827837e2 4.94699640811431e2 -2.5980536e-4
+4 3.67562574493549e2 3.67469675694897e2 -2.5274281e-4
+5 2.49126427018341e2 2.49066510299154e2 -2.4050728e-4
+6 1.17762540400323e2 1.17737720394934e2 -2.1076316e-4
+7 2.87498912976683e1 2.87462994796563e1 -1.2493327e-4
 ";
 
-const LHCB_WP_7TEV_V2_XIF_2_STR: &str =
-    "b         Grid               FkTable              rel. diff
--+--------------------+--------------------+----------------------
-0 8.0902449713533758e2 8.0880109089579207e2 -2.7614273774967391e-4
-1 7.3869242569893402e2 7.3849113100483919e2 -2.7250136469769703e-4
-2 6.4102495904778243e2 6.4085178025871448e2 -2.7015919836448354e-4
-3 5.1668563837653949e2 5.1654786167667771e2 -2.6665478896348294e-4
-4 3.8405066991124284e2 3.8395127677619655e2 -2.5880213949180941e-4
-5 2.6047697125229388e2 2.6041295913273854e2 -2.4574963094659008e-4
-6 1.2324364745022301e2 1.2321715784184289e2 -2.1493690691698486e-4
-7 3.0134629982656573e1 3.0130872371345841e1 -1.2469412476256991e-4
+const LHCB_WP_7TEV_V2_XIF_2_STR: &str = "b        Grid             FkTable         rel. diff
+-+------------------+------------------+-------------
+0 8.09024497135338e2 8.08801090895792e2 -2.7614274e-4
+1 7.38692425698934e2 7.38491131004839e2 -2.7250136e-4
+2 6.41024959047782e2 6.40851780258714e2 -2.7015920e-4
+3 5.16685638376539e2 5.16547861676678e2 -2.6665479e-4
+4 3.84050669911243e2 3.83951276776197e2 -2.5880214e-4
+5 2.60476971252294e2 2.60412959132739e2 -2.4574963e-4
+6 1.23243647450223e2 1.23217157841843e2 -2.1493691e-4
+7 3.01346299826566e1 3.01308723713458e1 -1.2469412e-4
 ";
 
-const LHCB_WP_7TEV_V2_XIF_2_ERROR_STR: &str = "Error: failed to evolve grid: no operator for muf2 = 25825.775616000003 found in [6456.443904000001]
+const LHCB_WP_7TEV_V2_XIF_2_ERROR_STR: &str =
+    "Error: no operator for fac1 = '25825.775616000003' found
 ";
 
 const LHCB_WP_7TEV_OPTIMIZED_STR: &str = "b   etal    dsig/detal 
@@ -169,7 +170,7 @@ const NUTEV_CC_NU_FE_SIGMARED_STR: &str = "b     Grid       FkTable     rel. dif
 
 const CMS_TTB_8TEV_2D_TTM_TRAP_TOT_STR: &str = "b    Grid       FkTable     rel. diff
 -+-----------+-----------+-------------
-0 2.1596192e2 2.1590144e2 -2.8005486e-4
+0 2.0680644e2 2.0666857e2 -6.6663644e-4
 ";
 
 const STAR_WMWP_510GEV_WM_AL_POL: &str = "b    Grid       FkTable     rel. diff
@@ -180,6 +181,25 @@ const STAR_WMWP_510GEV_WM_AL_POL: &str = "b    Grid       FkTable     rel. diff
 3 4.3157563e3 4.3154783e3 -6.4409623e-5
 4 3.6443947e3 3.6443481e3 -1.2807044e-5
 5 5.8386697e2 5.8336795e2 -8.5468266e-4
+";
+
+const ZEUS_2JET_STR: &str = "b     Grid       FkTable      rel. diff
+-+------------+------------+-------------
+0 8.8139165e-2 8.8034383e-2 -1.1888247e-3
+1 3.3383261e-2 3.3326664e-2 -1.6953697e-3
+2 3.6247796e-3 3.6162230e-3 -2.3605729e-3
+";
+
+const LHCB_WP_8TEV_STR: &str = "b    Grid       FkTable     rel. diff
+-+-----------+-----------+-------------
+0 8.8660824e2 8.8745467e2  9.5468156e-4
+1 8.3324869e2 8.3388816e2  7.6744152e-4
+2 7.4379285e2 7.4420759e2  5.5761143e-4
+3 6.2114832e2 6.2135970e2  3.4030039e-4
+4 4.8212545e2 4.8218796e2  1.2966015e-4
+5 3.4357834e2 3.4355392e2 -7.1080989e-5
+6 1.7271792e2 1.7266488e2 -3.0707061e-4
+7 4.6738298e1 4.6715819e1 -4.8096830e-4
 ";
 
 #[test]
@@ -238,26 +258,6 @@ fn lhcb_wp_7tev() {
 }
 
 #[test]
-fn lhcb_wp_7tev_use_old_evolve() {
-    let output = NamedTempFile::new("fktable1c.lz4").unwrap();
-
-    Command::cargo_bin("pineappl")
-        .unwrap()
-        .args([
-            "evolve",
-            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
-            "../test-data/LHCB_WP_7TEV.tar",
-            output.path().to_str().unwrap(),
-            "NNPDF40_nlo_as_01180",
-            "--orders=a2,as1a2",
-            "--use-old-evolve",
-        ])
-        .assert()
-        .success()
-        .stdout(LHCB_WP_7TEV_STR);
-}
-
-#[test]
 fn lhcb_wp_7tev_v2() {
     let output = NamedTempFile::new("fktable2a.lz4").unwrap();
 
@@ -265,8 +265,8 @@ fn lhcb_wp_7tev_v2() {
         .unwrap()
         .args([
             "evolve",
-            "--digits-abs=16",
-            "--digits-rel=16",
+            "--digits-abs=14",
+            "--digits-rel=7",
             "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             "../test-data/LHCB_WP_7TEV_v2.tar",
             output.path().to_str().unwrap(),
@@ -286,8 +286,8 @@ fn lhcb_wp_7tev_v2_xir_2() {
         .unwrap()
         .args([
             "evolve",
-            "--digits-abs=16",
-            "--digits-rel=16",
+            "--digits-abs=14",
+            "--digits-rel=7",
             "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             "../test-data/LHCB_WP_7TEV_v2.tar",
             output.path().to_str().unwrap(),
@@ -308,8 +308,8 @@ fn lhcb_wp_7tev_v2_xif_2() {
         .unwrap()
         .args([
             "evolve",
-            "--digits-abs=16",
-            "--digits-rel=16",
+            "--digits-abs=14",
+            "--digits-rel=7",
             "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             "../test-data/LHCB_WP_7TEV_v2_xif_2.tar",
             output.path().to_str().unwrap(),
@@ -424,6 +424,7 @@ fn cms_ttb_8tev_2d_ttm_trap_tot() {
         .args([
             "evolve",
             "--orders=as2,as3,as4",
+            "--xir=2",
             "../test-data/CMS_TTB_8TEV_2D_TTM_TRAP_TOT-opt.pineappl.lz4",
             "../test-data/CMS_TTB_8TEV_2D_TTM_TRAP_TOT.tar",
             output.path().to_str().unwrap(),
@@ -438,17 +439,55 @@ fn cms_ttb_8tev_2d_ttm_trap_tot() {
 fn star_wmwp_510gev_wm_al_pol() {
     let output = NamedTempFile::new("fktable6.lz4").unwrap();
 
+    // Grid is (PolPDF, UnpolPDF) but EKOs are ordered as {UnpolEko, PolEko} to
+    // check that order doesn't matter.
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
             "evolve",
             "../test-data/STAR_WMWP_510GEV_WM-AL-POL.pineappl.lz4",
-            "../test-data/STAR_WMWP_510GEV_WM-AL-POL_PolPDF.tar",
+            "../test-data/STAR_WMWP_510GEV_WM-AL-POL_UnpolPDF.tar,../test-data/STAR_WMWP_510GEV_WM-AL-POL_PolPDF.tar",
             output.path().to_str().unwrap(),
-            "240608-tr-pol-nlo-100,NNPDF40_nlo_pch_as_01180",
-            "--ekob=../test-data/STAR_WMWP_510GEV_WM-AL-POL_UnpolPDF.tar",
+            "240608-tr-pol-nlo-100+p,NNPDF40_nlo_pch_as_01180",
         ])
         .assert()
         .success()
         .stdout(STAR_WMWP_510GEV_WM_AL_POL);
+}
+
+#[test]
+fn zeus_2jet() {
+    let output = NamedTempFile::new("fktable7.lz4").unwrap();
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "evolve",
+            "--accuracy=3e-3",
+            "../test-data/ZEUS_2JET_319GEV_374PB-1_DIF_ETQ2_BIN6.pineappl.lz4",
+            "../test-data/ZEUS_2JET_319GEV_374PB-1_DIF_ETQ2_BIN6.tar",
+            output.path().to_str().unwrap(),
+            "NNPDF40_nnlo_as_01180",
+        ])
+        .assert()
+        .success()
+        .stdout(ZEUS_2JET_STR);
+}
+
+#[test]
+fn lhcb_wp_8tev() {
+    let output = NamedTempFile::new("fktable8.lz4").unwrap();
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "evolve",
+            "../test-data/LHCB_WP_8TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_8TEV.tar",
+            output.path().to_str().unwrap(),
+            "NNPDF40_nnlo_as_01180",
+        ])
+        .assert()
+        .success()
+        .stdout(LHCB_WP_8TEV_STR);
 }

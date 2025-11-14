@@ -4,7 +4,8 @@ language = "C"
 
 header = """/*
  * PineAPPL - PDF-independent binning of phase space weights
- * Copyright (C) 2020-2024  Christopher Schwan
+ * Copyright (C) 2020-2025  Christopher Schwan
+ * Copyright (C) 2024-2025  Tanjona R. Rabemananjara
 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -29,12 +30,29 @@ style = "type"
 
 ############################## Codegen Options ##################################
 
+[enum]
+prefix_with_name = true
+rename_variants = "ScreamingSnakeCase"
+
 [export.rename]
+"Channels" = "pineappl_channels"
+"Conv" = "pineappl_conv"
+"ConvType" = "pineappl_conv_type"
+"FkAssumptions" = "pineappl_fk_assumptions"
 "Grid" = "pineappl_grid"
-"Lumi" = "pineappl_lumi"
-"KeyVal" = "pineappl_keyval"
-"SubGrid" = "pineappl_subgrid"
 "GridOptFlags" = "pineappl_gof"
+"Interp" = "pineappl_interp"
+"InterpMeth" = "pineappl_interp_meth"
+"KeyVal" = "pineappl_keyval"
+"Kinematics" = "pineappl_kinematics"
+"Lumi" = "pineappl_lumi"
+"Map" = "pineappl_map"
+"OperatorCallback" = "pineappl_operator_callback"
+"OperatorInfo" = "pineappl_operator_info"
+"PidBasis" = "pineappl_pid_basis"
+"ReweightMeth" = "pineappl_reweight_meth"
+"ScaleFuncForm" = "pineappl_scale_func_form"
+"SubGrid" = "pineappl_subgrid"
 
 ############## Options for How Your Rust library Should Be Parsed ##############
 

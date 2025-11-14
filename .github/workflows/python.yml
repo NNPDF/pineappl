@@ -7,11 +7,12 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    # `ubuntu-24.04` doesn't support Python 3.7 anymore
+    runs-on: ubuntu-22.04
 
     strategy:
       matrix:
-        python-version: ["3.7", "3.8", "3.9", "3.10", "3.11", "3.12"]
+        python-version: ["3.7", "3.8", "3.9", "3.10", "3.11", "3.12", "3.13"]
 
     steps:
       - uses: actions/checkout@v4
@@ -22,6 +23,8 @@ jobs:
       - name: Set up Rust
         run: |
           rustup component add llvm-tools
+      - name: Get test data
+        uses: ./.github/actions/cache-test-data
       - name: Test
         env:
           # `-C link-dead-code` is needed to prevent 'warning: XX functions have mismatched data' warnings

@@ -30,7 +30,7 @@ struct Group {
         long,
         require_equals = true,
         value_name = "SCALES",
-        value_parser = PossibleValuesParser::new(["3", "7", "9"]).try_map(|s| s.parse::<u16>())
+        value_parser = PossibleValuesParser::new(["3", "7", "9", "17", "27"]).try_map(|s| s.parse::<u16>())
     )]
     scale_abs: Option<u16>,
     /// Calculate scale uncertainties using the covariance method.
@@ -40,17 +40,17 @@ struct Group {
         long,
         require_equals = true,
         value_name = "SCALES",
-        value_parser = PossibleValuesParser::new(["3", "7", "9"]).try_map(|s| s.parse::<u16>())
+        value_parser = PossibleValuesParser::new(["3", "7", "9", "17", "27"]).try_map(|s| s.parse::<u16>())
     )]
     scale_cov: Option<u16>,
-    /// Calculate the envelope of results where renormalization and factorization scales varied.
+    /// Calculate the envelope of results where renormalization, factorization and fragmentation scales are varied.
     #[arg(
         default_missing_value = "7",
         num_args = 0..=1,
         long,
         require_equals = true,
         value_name = "SCALES",
-        value_parser = PossibleValuesParser::new(["3", "7", "9"]).try_map(|s| s.parse::<u16>())
+        value_parser = PossibleValuesParser::new(["3", "7", "9", "17", "27"]).try_map(|s| s.parse::<u16>())
     )]
     scale_env: Option<u16>,
 }
@@ -79,7 +79,7 @@ pub struct Opts {
         value_delimiter = ',',
         value_parser = helpers::parse_order
     )]
-    orders: Vec<(u32, u32)>,
+    orders: Vec<(u8, u8)>,
     /// Number of threads to utilize.
     #[arg(default_value_t = thread::available_parallelism().map_or(1, NonZeroUsize::get), long)]
     threads: usize,
@@ -123,6 +123,7 @@ impl Subcommand for Opts {
                         Ok::<_, Error>(helpers::convolve(
                             &grid,
                             &mut funs,
+                            &self.conv_funs.conv_types,
                             &self.orders,
                             &[],
                             &[],
@@ -157,13 +158,15 @@ impl Subcommand for Opts {
             .map(|&x| usize::from(x))
             .max()
             .unwrap_or(1);
-        let scale_results = helpers::convolve(
+        let scale_tuples = helpers::scales_vector(&grid, scales_max);
+        let scale_results = helpers::convolve_scales(
             &grid,
             &mut conv_funs,
+            &self.conv_funs.conv_types,
             &self.orders,
             &[],
             &[],
-            scales_max,
+            scale_tuples,
             if self.integrated {
                 ConvoluteMode::Integrated
             } else {
@@ -191,8 +194,8 @@ impl Subcommand for Opts {
         }
 
         if let Some(scales) = self.group.scale_abs {
-            for scale in &helpers::SCALES_VECTOR[0..scales.into()] {
-                title.add_cell(cell!(c->format!("(r={},f={})\n[{}]", scale.0, scale.1, y_unit)));
+            for (xir, xif, xia) in &scale_tuples[0..scales.into()] {
+                title.add_cell(cell!(c->format!("{xir},{xif},{xia}\n(r,f,a)\n[{y_unit}]")));
             }
         }
 

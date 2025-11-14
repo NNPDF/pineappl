@@ -38,45 +38,17 @@ if [[ $(echo ${version} | grep -oP '^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:
     exit 1
 fi
 
+if [[ $(git tag -l v${version}) ]]; then
+    echo "Version already exists."
+    exit 1
+fi
+
 # in branches that are not master we only allow prereleases
 if [[ ${this_branch} != ${main} ]] && [[ ${prerelease} == "" ]]; then
     echo "Ordinary releases are only allowed in the '${main}' branch."
     echo "If you really want to make a release from '${this_branch}', consider making a prerelease."
     exit 1
 fi
-
-for crate in ${crates[@]}; do
-    if [[ -n $(git status ${crate} --porcelain) ]]; then
-        echo "This repository isn't clean. Make sure to add or delete the corresponding files."
-        exit 1
-    fi
-done
-
-if ! cargo msrv --help >/dev/null; then
-    echo "Didn't find \`msrv\` applet of \`cargo\`. Run \`cargo install msrv\` to install it."
-    exit 1
-fi
-
-if ! cargo msrv --min 1.70.0 --max 1.70.0 >/dev/null; then
-    echo "Minimum supported Rust version doesn't match avertised one."
-    exit 1
-fi
-
-echo ">>> Testing release configuration with default features ..."
-
-cargo test --release
-
-for feature in ${features[@]}; do
-    echo ">>> Testing release configuration with \`${feature}\` feature ..."
-
-    cargo test --release --features=${feature}
-done
-
-echo ">>> Testing if 'pineappl' can be published ..."
-
-cd pineappl
-cargo publish --dry-run
-cd ..
 
 echo ">>> Updating version strings ..."
 
@@ -104,7 +76,12 @@ done
 
 echo ">>> Updating Cargo.lock ..."
 
-echo ${crates[@]} | xargs printf ' -p %s' | xargs cargo update
+for crate in "${crates[@]}"; do
+    # convert packages in the lockfile that correspond to files in this
+    # repository to PKGIDs - important because we may depend on crate with
+    # different version multiple times
+    cargo pkgid path+file://$(cd "${crate}" && pwd)
+done | xargs printf " -p %s" | xargs cargo update
 git add Cargo.lock
 
 echo ">>> Commiting and pushing changes ..."

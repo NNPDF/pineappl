@@ -1,14 +1,14 @@
 use anyhow::{anyhow, Context, Result};
 use flate2::read::GzDecoder;
 use ndarray::s;
-use pineappl::boc::Order;
+use pineappl::boc::{BinsWithFillLimits, Kinematics, Order, ScaleFuncForm, Scales};
 use pineappl::channel;
-use pineappl::convolutions::Convolution;
+use pineappl::convolutions::{Conv, ConvType};
 use pineappl::grid::Grid;
-use pineappl::import_only_subgrid::ImportOnlySubgridV1;
+use pineappl::interpolation::{Interp, InterpMeth, Map, ReweightMeth};
+use pineappl::packed_array::PackedArray;
 use pineappl::pids::PidBasis;
-use pineappl::sparse_array3::SparseArray3;
-use pineappl::subgrid::SubgridParams;
+use pineappl::subgrid::ImportSubgridV1;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::iter;
@@ -27,7 +27,7 @@ enum FkTableSection {
     FastKernel,
 }
 
-fn read_fktable(reader: impl BufRead, dis_pid: i32) -> Result<Grid> {
+fn read_fktable(reader: impl BufRead) -> Result<Grid> {
     let mut section = FkTableSection::Sof;
     let mut flavor_mask = Vec::<bool>::new();
     let mut x_grid = Vec::new();
@@ -77,7 +77,7 @@ fn read_fktable(reader: impl BufRead, dis_pid: i32) -> Result<Grid> {
 
                 nx2 = if hadronic { nx1 } else { 1 };
 
-                // FK tables are always in the flavor basis
+                // TODO: are FK tables always in the evolution basis?
                 let basis = [
                     22, 100, 21, 200, 203, 208, 215, 224, 235, 103, 108, 115, 124, 135,
                 ];
@@ -86,47 +86,109 @@ fn read_fktable(reader: impl BufRead, dis_pid: i32) -> Result<Grid> {
                         .iter()
                         .enumerate()
                         .filter(|&(_, &value)| value)
-                        .map(|(index, _)| channel![basis[index / 14], basis[index % 14], 1.0])
+                        .map(|(index, _)| channel![1.0 * (basis[index / 14], basis[index % 14])])
                         .collect()
                 } else {
                     flavor_mask
                         .iter()
                         .enumerate()
                         .filter(|&(_, &value)| value)
-                        .map(|(index, _)| channel![basis[index], dis_pid, 1.0])
+                        .map(|(index, _)| channel![1.0 * (basis[index])])
                         .collect()
                 };
 
-                // construct `Grid`
-                let mut fktable = Grid::new(
-                    lumis,
-                    vec![Order {
-                        alphas: 0,
-                        alpha: 0,
-                        logxir: 0,
-                        logxif: 0,
-                    }],
-                    (0..=ndata).map(Into::into).collect(),
-                    SubgridParams::default(),
-                );
-
-                // explicitly set the evolution basis
-                fktable.set_pid_basis(PidBasis::Evol);
-
-                // legacy FK-tables only support unpolarized proton PDFs
-                fktable.set_convolution(0, Convolution::UnpolPDF(2212));
-
-                if hadronic {
-                    fktable.set_convolution(1, Convolution::UnpolPDF(2212));
+                let convolutions = if hadronic {
+                    vec![Conv::new(ConvType::UnpolPDF, 2212); 2]
                 } else {
-                    fktable.set_convolution(1, Convolution::None);
-                }
+                    vec![Conv::new(ConvType::UnpolPDF, 2212)]
+                };
+
+                // construct `Grid`
+                let fktable = Grid::new(
+                    BinsWithFillLimits::from_fill_limits((0..=ndata).map(Into::into).collect())
+                        // UNWRAP: panic indicates an incompatibility between legacy FK-tables and
+                        // PineAPPL
+                        .unwrap(),
+                    vec![Order::new(0, 0, 0, 0, 0)],
+                    lumis,
+                    PidBasis::Evol,
+                    // legacy FK-tables only support unpolarized proton PDFs
+                    convolutions.clone(),
+                    // TODO: what are sensible parameters for FK-tables?
+                    if hadronic {
+                        vec![
+                            Interp::new(
+                                1e2,
+                                1e8,
+                                40,
+                                3,
+                                ReweightMeth::NoReweight,
+                                Map::ApplGridH0,
+                                InterpMeth::Lagrange,
+                            ),
+                            Interp::new(
+                                2e-7,
+                                1.0,
+                                50,
+                                3,
+                                ReweightMeth::ApplGridX,
+                                Map::ApplGridF2,
+                                InterpMeth::Lagrange,
+                            ),
+                            Interp::new(
+                                2e-7,
+                                1.0,
+                                50,
+                                3,
+                                ReweightMeth::ApplGridX,
+                                Map::ApplGridF2,
+                                InterpMeth::Lagrange,
+                            ),
+                        ]
+                    } else {
+                        vec![
+                            Interp::new(
+                                1e2,
+                                1e8,
+                                40,
+                                3,
+                                ReweightMeth::NoReweight,
+                                Map::ApplGridH0,
+                                InterpMeth::Lagrange,
+                            ),
+                            Interp::new(
+                                2e-7,
+                                1.0,
+                                50,
+                                3,
+                                ReweightMeth::ApplGridX,
+                                Map::ApplGridF2,
+                                InterpMeth::Lagrange,
+                            ),
+                        ]
+                    },
+                    if hadronic {
+                        vec![Kinematics::Scale(0), Kinematics::X(0), Kinematics::X(1)]
+                    } else {
+                        vec![Kinematics::Scale(0), Kinematics::X(0)]
+                    },
+                    // TODO: is this correct?
+                    Scales {
+                        ren: ScaleFuncForm::NoScale,
+                        fac: ScaleFuncForm::Scale(0),
+                        frg: ScaleFuncForm::NoScale,
+                    },
+                );
 
                 grid = Some(fktable);
 
-                arrays = iter::repeat(SparseArray3::new(1, nx1, nx2))
-                    .take(flavor_mask.iter().filter(|&&value| value).count())
-                    .collect();
+                arrays = iter::repeat(PackedArray::new(if hadronic {
+                    vec![1, nx1, nx2]
+                } else {
+                    vec![1, nx1]
+                }))
+                .take(flavor_mask.iter().filter(|&&value| value).count())
+                .collect();
             }
             _ => match section {
                 FkTableSection::GridInfo => {
@@ -136,9 +198,7 @@ fn read_fktable(reader: impl BufRead, dis_pid: i32) -> Result<Grid> {
                                 hadronic = match value {
                                     "0" => false,
                                     "1" => true,
-                                    _ => {
-                                        unimplemented!("hadronic value: '{value}' is not supported")
-                                    }
+                                    _ => unreachable!(),
                                 }
                             }
                             "*NDATA:" => ndata = value.parse()?,
@@ -186,18 +246,24 @@ fn read_fktable(reader: impl BufRead, dis_pid: i32) -> Result<Grid> {
                             .iter_mut()
                             .zip(arrays.into_iter())
                         {
-                            *subgrid = ImportOnlySubgridV1::new(
+                            *subgrid = ImportSubgridV1::new(
                                 array,
-                                vec![q0 * q0],
-                                x_grid.clone(),
-                                if hadronic { x_grid.clone() } else { vec![1.0] },
+                                if hadronic {
+                                    vec![vec![q0 * q0], x_grid.clone(), x_grid.clone()]
+                                } else {
+                                    vec![vec![q0 * q0], x_grid.clone()]
+                                },
                             )
                             .into();
                         }
 
-                        arrays = iter::repeat(SparseArray3::new(1, nx1, nx2))
-                            .take(flavor_mask.iter().filter(|&&value| value).count())
-                            .collect();
+                        arrays = iter::repeat(PackedArray::new(if hadronic {
+                            vec![1, nx1, nx2]
+                        } else {
+                            vec![1, nx1]
+                        }))
+                        .take(flavor_mask.iter().filter(|&&value| value).count())
+                        .collect();
                         last_bin = bin;
                     }
 
@@ -223,8 +289,11 @@ fn read_fktable(reader: impl BufRead, dis_pid: i32) -> Result<Grid> {
                         .zip(grid_values.iter())
                         .filter(|(_, value)| **value != 0.0)
                     {
-                        array[[0, x1, x2]] =
-                            x_grid[x1] * if hadronic { x_grid[x2] } else { 1.0 } * value;
+                        if hadronic {
+                            array[[0, x1, x2]] = x_grid[x1] * x_grid[x2] * value;
+                        } else {
+                            array[[0, x1]] = x_grid[x1] * value;
+                        }
                     }
                 }
                 _ => {}
@@ -242,11 +311,13 @@ fn read_fktable(reader: impl BufRead, dis_pid: i32) -> Result<Grid> {
         .iter_mut()
         .zip(arrays.into_iter())
     {
-        *subgrid = ImportOnlySubgridV1::new(
+        *subgrid = ImportSubgridV1::new(
             array,
-            vec![q0 * q0],
-            x_grid.clone(),
-            if hadronic { x_grid.clone() } else { vec![1.0] },
+            if hadronic {
+                vec![vec![q0 * q0], x_grid.clone(), x_grid.clone()]
+            } else {
+                vec![vec![q0 * q0], x_grid.clone()]
+            },
         )
         .into();
     }
@@ -254,7 +325,7 @@ fn read_fktable(reader: impl BufRead, dis_pid: i32) -> Result<Grid> {
     Ok(grid)
 }
 
-pub fn convert_fktable(input: &Path, dis_pid: i32) -> Result<Grid> {
+pub fn convert_fktable(input: &Path) -> Result<Grid> {
     let reader = GzDecoder::new(File::open(input)?);
 
     let mut archive = Archive::new(reader);
@@ -265,7 +336,7 @@ pub fn convert_fktable(input: &Path, dis_pid: i32) -> Result<Grid> {
 
         if let Some(extension) = path.extension() {
             if extension == "dat" {
-                return read_fktable(BufReader::new(file), dis_pid);
+                return read_fktable(BufReader::new(file));
             }
         }
     }

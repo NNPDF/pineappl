@@ -34,7 +34,7 @@ pub struct Opts {
         value_delimiter = ',',
         value_parser = helpers::parse_order
     )]
-    orders1: Vec<(u32, u32)>,
+    orders1: Vec<(u8, u8)>,
     /// Select orders of the second grid.
     #[arg(
         long,
@@ -42,7 +42,7 @@ pub struct Opts {
         value_delimiter = ',',
         value_parser = helpers::parse_order
     )]
-    orders2: Vec<(u32, u32)>,
+    orders2: Vec<(u8, u8)>,
     /// Scale all results of the first grid.
     #[arg(long, default_value = "1.0")]
     scale1: f64,
@@ -69,10 +69,7 @@ impl Subcommand for Opts {
                 (order.logxir == 0)
                     && (order.logxif == 0)
                     && (self.orders1.is_empty()
-                        || self
-                            .orders1
-                            .iter()
-                            .any(|&o| (order.alphas, order.alpha) == o))
+                        || self.orders1.contains(&(order.alphas, order.alpha)))
             })
             .collect();
         let orders2: HashSet<_> = grid2
@@ -82,10 +79,7 @@ impl Subcommand for Opts {
                 (order.logxir == 0)
                     && (order.logxif == 0)
                     && (self.orders2.is_empty()
-                        || self
-                            .orders2
-                            .iter()
-                            .any(|&o| (order.alphas, order.alpha) == o))
+                        || self.orders2.contains(&(order.alphas, order.alpha)))
             })
             .collect();
 
@@ -113,12 +107,12 @@ impl Subcommand for Opts {
             bail!("selected orders differ");
         }
 
-        if !self.ignore_bin_limits && (grid1.bin_info() != grid2.bin_info()) {
-            bail!("bins limits differ");
+        if self.ignore_bin_limits && (grid1.bwfl().len() != grid2.bwfl().len()) {
+            bail!("number of bins differ");
         }
 
-        if self.ignore_bin_limits && (grid1.bin_info().bins() != grid2.bin_info().bins()) {
-            bail!("number of bins differ");
+        if !self.ignore_bin_limits && !grid1.bwfl().bins_partial_eq_with_ulps(grid2.bwfl(), 8) {
+            bail!("bins limits differ");
         }
 
         // TODO: use approximate comparison
@@ -131,7 +125,7 @@ impl Subcommand for Opts {
         let mut table = helpers::create_table();
         let mut title = Row::empty();
         title.add_cell(cell!(c->"b"));
-        for i in 0..grid1.bin_info().dimensions() {
+        for i in 0..grid1.bwfl().dimensions() {
             let mut cell = cell!(c->format!("x{}", i + 1));
             cell.set_hspan(2);
             title.add_cell(cell);
@@ -149,6 +143,7 @@ impl Subcommand for Opts {
             let results1 = helpers::convolve(
                 &grid1,
                 &mut conv_funs,
+                &self.conv_funs.conv_types,
                 &orders1,
                 &[],
                 &[],
@@ -159,6 +154,7 @@ impl Subcommand for Opts {
             let results2 = helpers::convolve(
                 &grid2,
                 &mut conv_funs,
+                &self.conv_funs.conv_types,
                 &orders2,
                 &[],
                 &[],
@@ -183,10 +179,18 @@ impl Subcommand for Opts {
                 let result1 = result1 * self.scale1;
                 let result2 = result2 * self.scale2;
 
+                // ALLOW: here we really need an exact comparison
+                // TODO: change allow to `expect` if MSRV >= 1.81.0
+                #[allow(clippy::float_cmp)]
+                let diff = if result1 == result2 {
+                    0.0
+                } else {
+                    result2 / result1 - 1.0
+                };
+
                 row.add_cell(cell!(r->format!("{:.*e}", self.digits_abs, result1)));
                 row.add_cell(cell!(r->format!("{:.*e}", self.digits_abs, result2)));
-                row.add_cell(cell!(r->format!("{:.*e}", self.digits_rel,
-                if result1 == result2 { 0.0 } else { result2 / result1 - 1.0 })));
+                row.add_cell(cell!(r->format!("{:.*e}", self.digits_rel, diff)));
             }
         } else {
             let orders = orders1;
@@ -205,6 +209,7 @@ impl Subcommand for Opts {
                     helpers::convolve(
                         &grid1,
                         &mut conv_funs,
+                        &self.conv_funs.conv_types,
                         &[order],
                         &[],
                         &[],
@@ -220,6 +225,7 @@ impl Subcommand for Opts {
                     helpers::convolve(
                         &grid2,
                         &mut conv_funs,
+                        &self.conv_funs.conv_types,
                         &[order],
                         &[],
                         &[],
@@ -242,10 +248,19 @@ impl Subcommand for Opts {
                 for (result1, result2) in order_results1.iter().zip(order_results2.iter()) {
                     let result1 = result1[bin] * self.scale1;
                     let result2 = result2[bin] * self.scale2;
+
+                    // ALLOW: here we really need an exact comparison
+                    // TODO: change allow to `expect` if MSRV >= 1.81.0
+                    #[allow(clippy::float_cmp)]
+                    let diff = if result1 == result2 {
+                        0.0
+                    } else {
+                        result2 / result1 - 1.0
+                    };
+
                     row.add_cell(cell!(r->format!("{:.*e}", self.digits_abs, result1)));
                     row.add_cell(cell!(r->format!("{:.*e}", self.digits_abs, result2)));
-                    row.add_cell(cell!(r->format!("{:.*e}", self.digits_rel,
-                    if result1 == result2 { 0.0 } else { result2 / result1 - 1.0 })));
+                    row.add_cell(cell!(r->format!("{:.*e}", self.digits_rel, diff)));
                 }
             }
         }

@@ -7,13 +7,99 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] - 22/08/2025
+
+### Added
+
+- added `Grid::repair` to repair bugs that survived by writing bugged grids to
+  disk, for example <https://github.com/NNPDF/pineappl/issues/338>. The CLI
+  offers this functionality via `pineappl write --repair` and it can also be
+  accessed via Python
+
+### Fixed
+
+- added a missing implementation for a branch in `Grid::merge` that was
+  triggered when exporting some PineAPPL grids generated from the 'pinejet'
+  group
+- fixed wrong coupling orders when exporting to APPLgrid. This happened when
+  the PineAPPL grid had orders that had any other ordering than 'LO', 'NLO',
+  'NNLO'
+- fixed a bug that caused exported grids to compare unsuccessfully when the
+  convolution functions were proton-anti-proton; APPLgrid doesn't store the
+  types of convolution functions, so we simply convert the grid to use only
+  proton PDFs
+
+### Changed
+
+- the function `Grid::evolve` now makes use of parallelization to take advantage
+  of the number of CPU cores available using the Rayon crate; the number of CPU
+  cores to be used can be controlled via the `RAYON_NUM_THREADS` environment
+  variable
+
+## [1.1.0] - 08/07/2025
+
+### Added
+
+- added a new `V3` metadata reader to the `pineappl evolve` CLI for EKOs
+  generated with `v0.15.0` or higher
+- C API: added new functions `pineappl_grid_evolve_info_shape`,
+  `pineappl_grid_evolve_info`, and `pineappl_grid_evolve` to evolve grids
+- C API: added `pineappl_fktable_optimize` to optimize FK Table-like objects
+  given an optimization assumption
+- added methods `Grid::merge_channel_factors` and `Channel::factor`
+
+### Fixed
+
+- fixed a bug that caused `pineappl export` to fail when called with grid
+  having non-trivial factors in their channel definitions
+
+## [1.0.0] - 10/06/2025
+
+PineAPPL 1.0 is a major rewrite from the previous version, allowing grids to
+have an arbitrary number of convolutions in the initial (PDFs with a
+factorization scale) and in the final (FFs with a fragmentation scale) state.
+This required a change in the file format that is used to write out grids, but
+the old file format can still be read with this new version.
+
 ### Added
 
 - added new method `Grid::delete_orders` and the corresponding switch
   `--delete-orders` in the subcommand `write` of the CLI
+- added the switches `--xir` and `--xif`, which allow varying the
+  renormalization and factorization scales with a custom factor in the
+  subcommand `convolve`
+- the CLI now allows the user to mark convolution functions as polarized
+  by adding `+p` to its LHAPDF name, as a fragmentation function by adding
+  `+f` and both by adding `+pf` or `+fp`
+- added switches `--fk-table-fac0` and `--fk-table-frg0` to `pineappl read` to
+  read out the squared factorization and fragmentation scales of FK-tables
+- C API: added new functions `pineappl_channels_new` and `pineappl_channels_delete`
+  to create and delete an instance of `Channels` object
+- C API: added `pineappl_grid_channels` and `pineappl_channels_count` to get
+  the channel objects for a given grid and their numbers
+- C API: added a function `pineappl_channels_combinations` to retrieve the
+  number of combinations of channels for a specified entry, and
+  `pineappl_channels_entry` to retrieve the channel combination for a given
+  entry
+- C API: added a new function `pineappl_grid_new2` to create a grid with the
+  new features introduced in `v1.0.0`; this includes the support for an
+  arbitrary number of initial and final state hadrons
+- C API: added new functions to fill grids with an arbitrary number of
+  initial and final state hadrons; these include `pineappl_grid_fill2`,
+  `pineappl_grid_fill_all2`, and `pineappl_grid_fill_array2`
+- C API: added new functions to extract the various properties of a given
+  grid; these include `pineappl_grid_conv_types`, `pineappl_grid_convolutions_len`,
+  and `pineappl_grid_kinematics_len`
+- C API: added a new function `pineappl_grid_convolve` to convolve grids
+  with an arbitrary combination of initial and final state hadrons
+- C API: added various functions to extract the subgrids of a given grid;
+  these include `pineappl_grid_subgrid_shape`, `pineappl_grid_subgrid_node_values`,
+  and `pineappl_grid_subgrid_array`
 
 ### Changed
 
+- the macro `channel!` now accepts a channel specification that is of the
+  format `factor * (pid, ..) + ...`
 - Python API: dropped top-level Python interface layer
 - Python API: renamed `lumi` to `channel` in PyO3 Python interface. This
   concerns 1) the argument names of `convolute_with_one` and similar functions;
@@ -30,12 +116,53 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - by default `pineappl plot` no longer shows a channel breakdown in the panel
   with absolute PDF predictions. However, this feature can be enabled with via
   a new array added at the start of the script
+- raised MSRV to 1.80.1
+- changed the order of elements in `Grid::fill` of the parameter `ntuple` to
+  reflect the ordering of `kinematics` given to `Grid::new`
+- renamed the following switches of `pineappl write`: `--remap` to
+  `--set-bins`, `--remap-norm-ignore` to `--div-bin-norm-dims` and
+  `--remap-norm` to `--mul-bin-norm`. These names should reflect the
+  corresponding operations
+- renamed the switch `--fktable` to `--fk-table` of `pineappl read`
 
 ### Removed
 
 - Python API: removed `pineappl.grid.Grid.create()` and
   `pineappl.fk_table.FkTable.from_grid()` methods; use the constructors
   of the respective class instead
+- removed the constructor `Grid::with_subgrid_type`
+- removed `Grid::convolve_subgrid` and `--subgrid-pull` from `pineappl plot`
+  that was using the method. The CLI subgrid-pull plotting routine only ever
+  worked for grids with two convolutions
+
+## [0.8.7] - 22/01/2025
+
+### Added
+
+- added support for Python 3.13 to the Python interface
+
+## [0.8.6] - 18/10/2024
+
+### Fixed
+
+- fixed [Issue #318](https://github.com/NNPDF/pineappl/issues/318) that caused
+  fastNLO tables with `NPDFDim = 2` to be incorrectly imported
+
+## [0.8.5] - 07/10/2024
+
+### Fixed
+
+- fixed a bug in `pineappl_applgrid` that lead to linking problems with ROOT
+  and `gfortran`
+
+## [0.8.4] - 04/10/2024
+
+### Fixed
+
+- fixed a bug that lead to inconsistent convolution metadata
+  (https://github.com/NNPDF/pineappl/issues/316)
+
+## [0.8.3] - 30/08/2024
 
 ### Fixed
 
@@ -80,8 +207,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - added `PidBasis::charge_conjugate` and `PidBasis::guess`
 - added `Grid::set_pid_basis` method
 - added `Grid::subgrids` and `Grid::subgrids_mut` methods
-- added new switch `conv_fun_uncert_from` to subcommand `plot` to allow
-  choosing with convolution function uncertainty should be plotted
+- added new switch `--conv-fun-uncert-from` to subcommand `plot` to allow
+  choosing which convolution function uncertainty should be plotted
 
 ### Changed
 
@@ -684,10 +811,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - first release
 
-[Unreleased]: https://github.com/NNPDF/pineappl/compare/v0.8.2...HEAD
+[Unreleased]: https://github.com/NNPDF/pineappl/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/NNPDF/pineappl/compare/v1.1.0...v1.2.0
+[1.1.0]: https://github.com/NNPDF/pineappl/compare/v1.0.0...v1.1.0
+[1.0.0]: https://github.com/NNPDF/pineappl/compare/v0.8.2...v1.0.0
+[0.8.7]: https://github.com/NNPDF/pineappl/compare/v0.8.6...v0.8.7
+[0.8.6]: https://github.com/NNPDF/pineappl/compare/v0.8.5...v0.8.6
+[0.8.5]: https://github.com/NNPDF/pineappl/compare/v0.8.4...v0.8.5
+[0.8.4]: https://github.com/NNPDF/pineappl/compare/v0.8.3...v0.8.4
+[0.8.3]: https://github.com/NNPDF/pineappl/compare/v0.8.2...v0.8.3
 [0.8.2]: https://github.com/NNPDF/pineappl/compare/v0.8.1...v0.8.2
 [0.8.1]: https://github.com/NNPDF/pineappl/compare/v0.8.0...v0.8.1
 [0.8.0]: https://github.com/NNPDF/pineappl/compare/v0.7.4...v0.8.0
+[0.7.5]: https://github.com/NNPDF/pineappl/compare/v0.7.4...v0.7.5
 [0.7.4]: https://github.com/NNPDF/pineappl/compare/v0.7.3...v0.7.4
 [0.7.3]: https://github.com/NNPDF/pineappl/compare/v0.7.2...v0.7.3
 [0.7.2]: https://github.com/NNPDF/pineappl/compare/v0.7.1...v0.7.2

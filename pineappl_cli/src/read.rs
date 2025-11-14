@@ -12,34 +12,39 @@ use std::process::ExitCode;
 #[derive(Args)]
 #[group(multiple = false, required = true)]
 struct Group {
-    /// Show the orders of a grid, stripping zero powers.
-    #[arg(long, short)]
-    orders: bool,
-    /// Show the orders of a grid, replacing zero powers with spaces.
-    #[arg(long)]
-    orders_spaces: bool,
-    /// Show the orders of a grid, including zero powers.
-    #[arg(long)]
-    orders_long: bool,
     /// Show the bins of a grid.
     #[arg(long, short)]
     bins: bool,
     /// Show the channel definition of a grid.
     #[arg(alias = "lumis", long)]
     channels: bool,
-    /// Check if input is an FK table.
-    #[arg(long)]
-    fktable: bool,
-
     /// For each order print a list of the largest EW order.
     #[arg(long)]
     ew: bool,
+    /// Check if input is an FK table.
+    #[arg(long)]
+    fk_table: bool,
+    /// Return the (squared) factorization scale of the FK-table.
+    #[arg(long)]
+    fk_table_fac0: bool,
+    /// Return the (squared) fragmentation scale of the FK-table.
+    #[arg(long)]
+    fk_table_frg0: bool,
     /// Gets an internal key-value pair.
     #[arg(long, num_args = 1, value_name = "KEY")]
     get: Option<String>,
     /// Show all keys stored in the grid.
     #[arg(long)]
     keys: bool,
+    /// Show the orders of a grid, stripping zero powers.
+    #[arg(long, short)]
+    orders: bool,
+    /// Show the orders of a grid, including zero powers.
+    #[arg(long)]
+    orders_long: bool,
+    /// Show the orders of a grid, replacing zero powers with spaces.
+    #[arg(long)]
+    orders_spaces: bool,
     /// For each order print a list of the largest QCD order.
     #[arg(long)]
     qcd: bool,
@@ -60,7 +65,7 @@ pub struct Opts {
 
 impl Subcommand for Opts {
     fn run(&self, _: &GlobalConfiguration) -> Result<ExitCode> {
-        let mut grid = helpers::read_grid(&self.input)?;
+        let grid = helpers::read_grid(&self.input)?;
 
         let mut table = helpers::create_table();
 
@@ -77,33 +82,17 @@ impl Subcommand for Opts {
 
             table.set_titles(titles);
 
-            let left_limits: Vec<_> = (0..grid.bin_info().dimensions())
-                .map(|i| grid.bin_info().left(i))
-                .collect();
-            let right_limits: Vec<_> = (0..grid.bin_info().dimensions())
-                .map(|i| grid.bin_info().right(i))
-                .collect();
-            let normalizations = grid.bin_info().normalizations();
-
-            for bin in 0..grid.bin_info().bins() {
+            for (bin_index, bin) in grid.bwfl().bins().iter().enumerate() {
                 let row = table.add_empty_row();
-                row.add_cell(cell!(bin.to_string()));
+                row.add_cell(cell!(bin_index.to_string()));
 
-                for (left, right) in left_limits.iter().zip(right_limits.iter()) {
-                    row.add_cell(cell!(r->format!("{}", left[bin])));
-                    row.add_cell(cell!(r->format!("{}", right[bin])));
+                for (left, right) in bin.limits() {
+                    row.add_cell(cell!(r->left.to_string()));
+                    row.add_cell(cell!(r->right.to_string()));
                 }
 
-                row.add_cell(cell!(r->format!("{}", normalizations[bin])));
+                row.add_cell(cell!(r->bin.normalization().to_string()));
             }
-        } else if self.group.fktable {
-            if let Err(err) = FkTable::try_from(grid) {
-                println!("no\n{err}");
-                return Ok(ExitCode::FAILURE);
-            }
-
-            println!("yes");
-            return Ok(ExitCode::SUCCESS);
         } else if self.group.channels {
             let mut titles = row![c => "c"];
 
@@ -124,8 +113,11 @@ impl Subcommand for Opts {
 
                 row.add_cell(cell!(format!("{index}")));
 
-                for (id1, id2, factor) in channel.entry() {
-                    row.add_cell(cell!(format!("{factor} \u{d7} ({id1:2}, {id2:2})")));
+                for (pids, factor) in channel.entry() {
+                    row.add_cell(cell!(format!(
+                        "{factor} \u{d7} ({})",
+                        pids.iter().map(|pid| format!("{pid:2}")).join(", ")
+                    )));
                 }
             }
         } else if self.group.ew || self.group.qcd {
@@ -160,46 +152,43 @@ impl Subcommand for Opts {
                 .join(",");
 
             println!("{orders}");
+        } else if self.group.fk_table {
+            if let Err(err) = FkTable::try_from(grid) {
+                println!("no\n{err}");
+                return Ok(ExitCode::FAILURE);
+            }
+
+            println!("yes");
+            return Ok(ExitCode::SUCCESS);
+        } else if self.group.fk_table_fac0 {
+            let fk_table = FkTable::try_from(grid)?;
+
+            if let Some(fac0) = fk_table.fac0() {
+                println!("{fac0}");
+            } else {
+                println!("None");
+            }
+
+            return Ok(ExitCode::SUCCESS);
+        } else if self.group.fk_table_frg0 {
+            let fk_table = FkTable::try_from(grid)?;
+
+            if let Some(frg0) = fk_table.frg0() {
+                println!("{frg0}");
+            } else {
+                println!("None");
+            }
+
+            return Ok(ExitCode::SUCCESS);
         } else if let Some(key) = &self.group.get {
-            grid.upgrade();
-
-            grid.key_values().map_or_else(
-                || unreachable!(),
-                |key_values| {
-                    if let Some(value) = key_values.get(key) {
-                        println!("{value}");
-                    }
-                },
-            );
+            if let Some(value) = grid.metadata().get(key) {
+                println!("{value}");
+            }
         } else if self.group.keys {
-            grid.upgrade();
-
-            grid.key_values().map_or_else(
-                || unreachable!(),
-                |key_values| {
-                    let mut vector = key_values.iter().collect::<Vec<_>>();
-                    vector.sort();
-
-                    for (key, _) in &vector {
-                        println!("{key}");
-                    }
-                },
-            );
-        } else if self.group.show {
-            grid.upgrade();
-
-            grid.key_values().map_or_else(
-                || unreachable!(),
-                |key_values| {
-                    let mut vector = key_values.iter().collect::<Vec<_>>();
-                    vector.sort();
-
-                    for (key, value) in &vector {
-                        println!("{key}: {value}");
-                    }
-                },
-            );
-        } else {
+            for key in grid.metadata().keys() {
+                println!("{key}");
+            }
+        } else if self.group.orders || self.group.orders_spaces || self.group.orders_long {
             table.set_titles(row![c => "o", "order"]);
 
             for (index, order) in grid.orders().iter().enumerate() {
@@ -210,11 +199,12 @@ impl Subcommand for Opts {
                     alpha,
                     logxir,
                     logxif,
+                    logxia,
                 } = order;
 
-                let order_string = [alphas, alpha, logxir, logxif]
+                let order_string = [alphas, alpha, logxir, logxif, logxia]
                     .iter()
-                    .zip(["as^", "a^", "lr^", "lf^"].iter())
+                    .zip(["as^", "a^", "lr^", "lf^", "la^"].iter())
                     .filter_map(|(num, string)| {
                         if **num == 0 && self.group.orders {
                             None
@@ -230,6 +220,10 @@ impl Subcommand for Opts {
 
                 row.add_cell(cell!(index.to_string()));
                 row.add_cell(cell!(format!("O({order_string})")));
+            }
+        } else if self.group.show {
+            for (key, value) in grid.metadata() {
+                println!("{key}: {value}");
             }
         }
 

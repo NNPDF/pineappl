@@ -29,7 +29,7 @@ pub struct Opts {
         value_delimiter = ',',
         value_parser = helpers::parse_order
     )]
-    normalize: Vec<(u32, u32)>,
+    normalize: Vec<(u8, u8)>,
     /// Set the number of fractional digits shown for absolute numbers.
     #[arg(default_value_t = 7, long, value_name = "ABS")]
     digits_abs: usize,
@@ -66,6 +66,7 @@ impl Subcommand for Opts {
                 helpers::convolve(
                     &grid,
                     &mut conv_funs,
+                    &self.conv_funs.conv_types,
                     &[(order.alphas, order.alpha)],
                     &[],
                     &[],
@@ -118,10 +119,7 @@ impl Subcommand for Opts {
             // calculate the sum of all leading orders
             for (index, order) in orders.iter().enumerate() {
                 if (self.normalize.is_empty() && ((order.alphas + order.alpha) == lo_power))
-                    || (self
-                        .normalize
-                        .iter()
-                        .any(|o| *o == (order.alphas, order.alpha)))
+                    || (self.normalize.contains(&(order.alphas, order.alpha)))
                 {
                     normalization += results[index][bin];
                 }

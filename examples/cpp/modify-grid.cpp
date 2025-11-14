@@ -51,7 +51,7 @@ int main(int argc, char* argv[]) {
 
     // 3a. split channels. A grid with multiple initial states in a single channel will then have
     // multiple channels with one initial state
-    pineappl_grid_split_lumi(grid);
+    pineappl_grid_split_channels(grid);
 
     // 3b. undo the previous operation, detecting equal subgrids by allowing them to differ by up to
     // 64 ULPS
@@ -59,7 +59,7 @@ int main(int argc, char* argv[]) {
 
     // 4. optimize grid selectively. The following example removes all perturbative orders whose
     // subgrids are empty
-    pineappl_grid_optimize_using(grid, pineappl_gof_STRIP_EMPTY_ORDERS);
+    pineappl_grid_optimize_using(grid, PINEAPPL_GOF_STRIP_EMPTY_ORDERS);
 
     // 5. set a remapper. This function is important if one wants to generate multi-dimensional
     // differential distributions, which first must be generated one-dimensional, because
@@ -82,4 +82,3 @@ int main(int argc, char* argv[]) {
     // release memory
     pineappl_grid_delete(grid);
 }
-

@@ -26,25 +26,27 @@ int main(int argc, char* argv[]) {
     // how many perturbative orders does this grid contain?
     std::size_t orders = pineappl_grid_order_count(grid);
 
-    std::vector<std::uint32_t> order_params(4 * orders);
+    std::vector<std::uint32_t> order_params(5 * orders);
 
     // read out all exponents of the perturbative orders in the grid
-    pineappl_grid_order_params(grid, order_params.data());
+    pineappl_grid_order_params2(grid, order_params.data());
 
     for (std::size_t order = 0; order != orders; ++order) {
-        std::cout << std::setw(4) << order << ' ';
+        std::cout << std::setw(5) << order << ' ';
 
         // exponent of the strong coupling
-        std::uint32_t exp_as = order_params.at(4 * order + 0);
+        std::uint32_t exp_as = order_params.at(5 * order + 0);
         // exponent of the electromagnetic/electroweak coupling
-        std::uint32_t exp_al = order_params.at(4 * order + 1);
+        std::uint32_t exp_al = order_params.at(5 * order + 1);
         // exponent of the renormalization log
-        std::uint32_t exp_lr = order_params.at(4 * order + 2);
+        std::uint32_t exp_lr = order_params.at(5 * order + 2);
         // exponent of the factorization log
-        std::uint32_t exp_lf = order_params.at(4 * order + 3);
+        std::uint32_t exp_lf = order_params.at(5 * order + 3);
+        // exponent of the fragmentation log
+        std::uint32_t exp_la = order_params.at(5 * order + 4);
 
         std::cout << "O(as^" << exp_as << " a^" << exp_al << " lr^" << exp_lr << " lf^" << exp_lf
-            << ")\n";
+            << " la^" << exp_la << ")\n";
     }
 
     // release memory

@@ -117,6 +117,7 @@ jobs:
             3.9
             3.11
             3.12
+            3.13
             3.10
       - name: Install dependencies
         run: |
@@ -240,21 +241,21 @@ jobs:
             # install APPLgrid
             curl -L "https://applgrid.hepforge.org/downloads?f=applgrid-${APPLGRID_V}.tgz" | tar xzf -
             cd applgrid-${APPLGRID_V}
-            patch -p0 <<EOF
+            patch -l -p0 <<EOF
             --- src/combine.cxx	2024-04-23 16:35:27.000000000 +0200
             +++ src/combine.cxx.new	2024-07-06 12:29:12.813303074 +0200
             @@ -56,12 +56,6 @@
-             } 
-             
-             
-            -double integral( appl::TH1D* h ) { 
+             }
+
+
+            -double integral( appl::TH1D* h ) {
             -  double d = 0;
             -  for ( int i=0 ; i<h->GetNbinsX() ; i++ ) d += h->GetBinContent(i+1);
             -  return d;
             -}
             -
-             
-             void print( appl::TH1D* h ) { 
+
+             void print( appl::TH1D* h ) {
                for ( int i=1 ; i<=h->GetNbinsX() ; i++ ) std::cout << h->GetBinContent(i) << " ";
             EOF
             # compile static libraries with PIC to make statically linking PineAPPL's CLI work
@@ -307,7 +308,7 @@ jobs:
           else
               gh release edit v${version} -n "" --prerelease
           fi
-          find artifacts -name 'pineappl_*' -type f -exec gh release upload v${version} {} +
+          find artifacts -name 'pineappl_*' ! -name '*.whl' -type f -exec gh release upload v${version} {} +
           gh release edit v${version} --draft=false
 
   publish-crates:
@@ -379,6 +380,7 @@ jobs:
             3.9
             3.11
             3.12
+            3.13
             3.10
       - name: Build wheels
         uses: PyO3/maturin-action@v1
@@ -429,6 +431,7 @@ jobs:
             3.9
             3.11
             3.12
+            3.13
             3.10
           architecture: ${{ matrix.target }}
       - name: Build wheels

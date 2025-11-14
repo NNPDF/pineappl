@@ -1,3 +1,5 @@
+#![allow(missing_docs)]
+
 use assert_cmd::Command;
 
 #[cfg(any(feature = "applgrid", feature = "fastnlo", feature = "fktable"))]
@@ -22,7 +24,6 @@ Options:
       --digits-abs <ABS>     Set the number of fractional digits shown for absolute numbers [default: 7]
       --digits-rel <REL>     Set the number of fractional digits shown for relative numbers [default: 7]
       --no-optimize          Do not optimize converted grid
-      --dis-pid <DIS_PID>    Particle ID for the non-hadronic initial states if it cannot be determined from the grid [default: 11]
   -h, --help                 Print help
 ";
 
@@ -45,161 +46,161 @@ Options:
       --digits-abs <ABS>     Set the number of fractional digits shown for absolute numbers [default: 7]
       --digits-rel <REL>     Set the number of fractional digits shown for relative numbers [default: 7]
       --no-optimize          Do not optimize converted grid
-      --dis-pid <DIS_PID>    Particle ID for the non-hadronic initial states if it cannot be determined from the grid [default: 11]
   -h, --help                 Print help
 ";
 
 #[cfg(feature = "fastnlo")]
 const IMPORT_FIX_GRID_STR: &str = "b   PineAPPL     fastNLO      rel. diff
 -+------------+------------+--------------
-0 2.9158424e-4 2.9158424e-4 -2.9976022e-15
-1 2.4657895e-4 2.4657895e-4 -2.8865799e-15
+0 2.9158424e-4 2.9158424e-4 -2.7755576e-15
+1 2.4657895e-4 2.4657895e-4 -2.6645353e-15
 ";
 
 #[cfg(feature = "fastnlo")]
-const IMPORT_FLEX_GRID_STR: &str = "b   PineAPPL     fastNLO      rel. diff    svmaxreldiff
--+------------+------------+--------------+-------------
-0  8.2754182e1  8.2754182e1 -1.3544721e-14 1.3544721e-14
-1  3.6097335e1  3.6097335e1 -6.8833828e-15 8.8817842e-15
-2  8.0048746e0  8.0048746e0  5.3290705e-15 6.8833828e-15
-3 9.4319392e-1 9.4319392e-1  5.5511151e-15 5.5511151e-15
+const IMPORT_FLEX_GRID_STR: &str = "b   PineAPPL     fastNLO      rel. diff     svmaxreldiff
+-+------------+------------+--------------+--------------
+0  8.2754182e1  8.2754182e1 -1.3544721e-14 -7.8825835e-15
+1  3.6097335e1  3.6097335e1 -6.8833828e-15  8.8817842e-15
+2  8.0048746e0  8.0048746e0  5.3290705e-15  6.8833828e-15
+3 9.4319392e-1 9.4319392e-1  5.5511151e-15  4.6629367e-15
 ";
 
 #[cfg(feature = "fastnlo")]
-const IMPORT_FLEX_GRID_SCALE_1_STR: &str = "b   PineAPPL     fastNLO      rel. diff    svmaxreldiff
--+------------+------------+--------------+-------------
-0  8.1965747e1  8.1965747e1  1.5543122e-15 7.6605389e-15
-1  3.6115068e1  3.6115068e1 -3.1086245e-15 1.4321877e-14
-2  8.1057136e0  8.1057136e0  8.8817842e-16 5.7731597e-15
-3 9.5444782e-1 9.5444782e-1  5.5511151e-15 5.5511151e-15
+const IMPORT_FLEX_GRID_SCALE_1_STR: &str =
+    "b   PineAPPL     fastNLO      rel. diff     svmaxreldiff
+-+------------+------------+--------------+--------------
+0  8.1965747e1  8.1965747e1  1.5543122e-15 -7.6605389e-15
+1  3.6115068e1  3.6115068e1 -3.1086245e-15 -1.4321877e-14
+2  8.1057136e0  8.1057136e0  8.8817842e-16 -5.7731597e-15
+3 9.5444782e-1 9.5444782e-1  5.5511151e-15  3.7747583e-15
 ";
 
 #[cfg(feature = "fastnlo")]
-const IMPORT_FLEX_GRID_SCALE_2_STR: &str = "b   PineAPPL     fastNLO      rel. diff   svmaxreldiff
--+------------+------------+-------------+-------------
-0  8.3815533e1  8.3815533e1 4.8849813e-15 4.8849813e-15
-1  3.6084994e1  3.6084994e1 2.6645353e-15 7.7715612e-15
-2  7.8842272e0  7.8842272e0 1.9984014e-15 4.3298698e-15
-3 9.1960866e-1 9.1960866e-1 3.1086245e-15 5.3290705e-15
+const IMPORT_FLEX_GRID_SCALE_2_STR: &str = "b   PineAPPL     fastNLO      rel. diff    svmaxreldiff
+-+------------+------------+-------------+--------------
+0  8.3815533e1  8.3815533e1 4.8849813e-15  4.4408921e-15
+1  3.6084994e1  3.6084994e1 2.6645353e-15  7.7715612e-15
+2  7.8842272e0  7.8842272e0 1.9984014e-15 -4.3298698e-15
+3 9.1960866e-1 9.1960866e-1 3.1086245e-15  5.3290705e-15
 ";
 
 #[cfg(feature = "fastnlo")]
 const IMPORT_FLEX_GRID_QUADRATIC_SUM_STR: &str =
-    "b   PineAPPL     fastNLO      rel. diff    svmaxreldiff
--+------------+------------+--------------+-------------
-0  8.1098571e1  8.1098571e1 -4.7739590e-15 7.3274720e-15
-1  3.5222658e1  3.5222658e1  1.1102230e-15 6.6613381e-15
-2  7.7939468e0  7.7939468e0  1.9984014e-15 4.5519144e-15
-3 9.1540624e-1 9.1540624e-1 -5.9952043e-15 7.7715612e-15
+    "b   PineAPPL     fastNLO      rel. diff     svmaxreldiff
+-+------------+------------+--------------+--------------
+0  8.1098571e1  8.1098571e1 -4.7739590e-15 -7.3274720e-15
+1  3.5222658e1  3.5222658e1  1.1102230e-15  6.8833828e-15
+2  7.7939468e0  7.7939468e0  1.7763568e-15 -4.5519144e-15
+3 9.1540624e-1 9.1540624e-1 -5.7731597e-15  7.7715612e-15
 ";
 
 #[cfg(feature = "fastnlo")]
 const IMPORT_FLEX_GRID_QUADRATIC_MEAN_STR: &str =
-    "b   PineAPPL     fastNLO      rel. diff    svmaxreldiff
--+------------+------------+--------------+-------------
-0  8.2712488e1  8.2712488e1  2.2204460e-16 1.0214052e-14
-1  3.6091182e1  3.6091182e1 -7.7715612e-16 5.9952043e-15
-2  7.9809031e0  7.9809031e0 -6.9944051e-15 9.5479180e-15
-3 9.3467326e-1 9.3467326e-1  6.6613381e-16 2.4424907e-15
+    "b   PineAPPL     fastNLO      rel. diff     svmaxreldiff
+-+------------+------------+--------------+--------------
+0  8.2712488e1  8.2712488e1  2.2204460e-16  1.0214052e-14
+1  3.6091182e1  3.6091182e1 -7.7715612e-16  5.9952043e-15
+2  7.9809031e0  7.9809031e0 -6.9944051e-15 -9.3258734e-15
+3 9.3467326e-1 9.3467326e-1  8.8817842e-16  2.4424907e-15
 ";
 
 #[cfg(feature = "fastnlo")]
-const IMPORT_FLEX_GRID_5_STR: &str = "b   PineAPPL     fastNLO      rel. diff    svmaxreldiff
--+------------+------------+--------------+-------------
-0  8.4122343e1  8.4122343e1  8.6597396e-15 8.6597396e-15
-1  3.6813708e1  3.6813708e1  5.9952043e-15 7.3274720e-15
-2  8.1178188e0  8.1178188e0 -1.1102230e-15 1.3322676e-14
-3 9.5090947e-1 9.5090947e-1  6.6613381e-15 6.6613381e-15
+const IMPORT_FLEX_GRID_5_STR: &str = "b   PineAPPL     fastNLO      rel. diff     svmaxreldiff
+-+------------+------------+--------------+--------------
+0  8.4122343e1  8.4122343e1  8.6597396e-15 -7.8825835e-15
+1  3.6813708e1  3.6813708e1  5.9952043e-15  7.3274720e-15
+2  8.1178188e0  8.1178188e0 -1.1102230e-15 -1.3322676e-14
+3 9.5090947e-1 9.5090947e-1  6.6613381e-15 -5.2180482e-15
 ";
 
 #[cfg(feature = "fastnlo")]
-const IMPORT_FLEX_GRID_6_STR: &str = "b   PineAPPL     fastNLO      rel. diff    svmaxreldiff
--+------------+------------+--------------+-------------
-0  8.2853942e1  8.2853942e1    0.0000000e0 5.1070259e-15
-1  3.6103118e1  3.6103118e1  7.1054274e-15 9.2148511e-15
-2  8.0161351e0  8.0161351e0 -2.6645353e-15 1.1324275e-14
-3 9.4536395e-1 9.4536395e-1  5.1070259e-15 5.8841820e-15
+const IMPORT_FLEX_GRID_6_STR: &str = "b   PineAPPL     fastNLO      rel. diff     svmaxreldiff
+-+------------+------------+--------------+--------------
+0  8.2853942e1  8.2853942e1    0.0000000e0  5.1070259e-15
+1  3.6103118e1  3.6103118e1  7.1054274e-15 -9.2148511e-15
+2  8.0161351e0  8.0161351e0 -2.6645353e-15 -1.1324275e-14
+3 9.4536395e-1 9.4536395e-1  5.1070259e-15 -5.8841820e-15
 ";
 
 #[cfg(feature = "fastnlo")]
-const IMPORT_FLEX_GRID_7_STR: &str = "b   PineAPPL     fastNLO      rel. diff    svmaxreldiff
--+------------+------------+--------------+-------------
-0  7.9163980e1  7.9163980e1  3.7747583e-15 1.2323476e-14
-1  3.4313126e1  3.4313126e1 -4.7739590e-15 9.2148511e-15
-2  7.7006079e0  7.7006079e0 -3.2196468e-15 1.1546319e-14
-3 9.2392932e-1 9.2392932e-1 -4.3298698e-15 5.5511151e-15
+const IMPORT_FLEX_GRID_7_STR: &str = "b   PineAPPL     fastNLO      rel. diff     svmaxreldiff
+-+------------+------------+--------------+--------------
+0  7.9163980e1  7.9163980e1  3.7747583e-15 -1.2323476e-14
+1  3.4313126e1  3.4313126e1 -4.7739590e-15 -9.2148511e-15
+2  7.7006079e0  7.7006079e0 -3.2196468e-15 -1.1546319e-14
+3 9.2392932e-1 9.2392932e-1 -4.3298698e-15 -5.5511151e-15
 ";
 
 #[cfg(feature = "fastnlo")]
-const IMPORT_FLEX_GRID_8_STR: &str = "b   PineAPPL     fastNLO      rel. diff    svmaxreldiff
--+------------+------------+--------------+-------------
-0  8.1965747e1  8.1965747e1  1.5543122e-15 7.6605389e-15
-1  3.5968167e1  3.5968167e1    0.0000000e0 7.7715612e-15
-2  7.9289155e0  7.9289155e0  1.3322676e-15 1.0436096e-14
-3 9.3523838e-1 9.3523838e-1 -2.6645353e-15 9.5479180e-15
+const IMPORT_FLEX_GRID_8_STR: &str = "b   PineAPPL     fastNLO      rel. diff     svmaxreldiff
+-+------------+------------+--------------+--------------
+0  8.1965747e1  8.1965747e1  1.5543122e-15 -7.6605389e-15
+1  3.5968167e1  3.5968167e1    0.0000000e0  7.7715612e-15
+2  7.9289155e0  7.9289155e0  1.3322676e-15 -1.0436096e-14
+3 9.3523838e-1 9.3523838e-1 -2.6645353e-15  9.5479180e-15
 ";
 
 #[cfg(feature = "fastnlo")]
-const IMPORT_FLEX_GRID_9_STR: &str = "b   PineAPPL     fastNLO      rel. diff    svmaxreldiff
--+------------+------------+--------------+-------------
-0  8.3760665e1  8.3760665e1  3.5527137e-15 9.5479180e-15
-1  3.6243722e1  3.6243722e1 -7.4384943e-15 1.7430501e-14
-2  8.1057136e0  8.1057136e0  8.8817842e-16 5.7731597e-15
-3 9.5444782e-1 9.5444782e-1  5.5511151e-15 5.5511151e-15
+const IMPORT_FLEX_GRID_9_STR: &str = "b   PineAPPL     fastNLO      rel. diff     svmaxreldiff
+-+------------+------------+--------------+--------------
+0  8.3760665e1  8.3760665e1  3.5527137e-15  9.5479180e-15
+1  3.6243722e1  3.6243722e1 -7.4384943e-15 -1.7430501e-14
+2  8.1057136e0  8.1057136e0  8.8817842e-16 -5.7731597e-15
+3 9.5444782e-1 9.5444782e-1  5.5511151e-15  3.7747583e-15
 ";
 
 #[cfg(feature = "fastnlo")]
-const IMPORT_FLEX_GRID_10_STR: &str = "b   PineAPPL     fastNLO      rel. diff    svmaxreldiff
--+------------+------------+--------------+-------------
-0  6.9429217e1  6.9429217e1 -2.6645353e-15 5.1070259e-15
-1  2.9273448e1  2.9273448e1 -8.8817842e-16 5.7731597e-15
-2  6.6031456e0  6.6031456e0  2.6645353e-15 5.5511151e-15
-3 8.2741590e-1 8.2741590e-1 -8.7707619e-15 8.7707619e-15
+const IMPORT_FLEX_GRID_10_STR: &str = "b   PineAPPL     fastNLO      rel. diff     svmaxreldiff
+-+------------+------------+--------------+--------------
+0  6.9429217e1  6.9429217e1 -2.6645353e-15  5.1070259e-15
+1  2.9273448e1  2.9273448e1 -8.8817842e-16  5.7731597e-15
+2  6.6031456e0  6.6031456e0  2.6645353e-15  5.5511151e-15
+3 8.2741590e-1 8.2741590e-1 -8.7707619e-15 -6.2172489e-15
 ";
 
 #[cfg(feature = "fastnlo")]
-const IMPORT_FLEX_GRID_11_STR: &str = "b   PineAPPL     fastNLO      rel. diff    svmaxreldiff
--+------------+------------+--------------+-------------
-0  8.2113143e1  8.2113143e1 -2.9976022e-15 6.4392935e-15
-1  3.5603233e1  3.5603233e1 -2.2204460e-16 1.2212453e-14
-2  7.8899185e0  7.8899185e0 -4.8849813e-15 8.4376950e-15
-3 9.3402696e-1 9.3402696e-1 -2.3314684e-15 6.8833828e-15
+const IMPORT_FLEX_GRID_11_STR: &str = "b   PineAPPL     fastNLO      rel. diff     svmaxreldiff
+-+------------+------------+--------------+--------------
+0  8.2113143e1  8.2113143e1 -2.9976022e-15  6.4392935e-15
+1  3.5603233e1  3.5603233e1 -2.2204460e-16  1.2212453e-14
+2  7.8899185e0  7.8899185e0 -4.8849813e-15  8.4376950e-15
+3 9.3402696e-1 9.3402696e-1 -2.3314684e-15 -6.8833828e-15
 ";
 
 #[cfg(feature = "fastnlo")]
-const IMPORT_FLEX_GRID_12_STR: &str = "b   PineAPPL     fastNLO      rel. diff    svmaxreldiff
--+------------+------------+--------------+-------------
-0  8.1720563e1  8.1720563e1 -8.5487173e-15 1.0658141e-14
-1  3.5668000e1  3.5668000e1  3.9968029e-15 9.4368957e-15
-2  7.9130511e0  7.9130511e0 -1.6653345e-15 6.4392935e-15
-3 9.3503500e-1 9.3503500e-1 -2.2204460e-16 5.1070259e-15
+const IMPORT_FLEX_GRID_12_STR: &str = "b   PineAPPL     fastNLO      rel. diff     svmaxreldiff
+-+------------+------------+--------------+--------------
+0  8.1720563e1  8.1720563e1 -8.5487173e-15  1.0658141e-14
+1  3.5668000e1  3.5668000e1  3.9968029e-15 -9.4368957e-15
+2  7.9130511e0  7.9130511e0 -1.6653345e-15  6.4392935e-15
+3 9.3503500e-1 9.3503500e-1 -2.2204460e-16  5.1070259e-15
 ";
 
 #[cfg(feature = "fastnlo")]
-const IMPORT_FLEX_GRID_13_STR: &str = "b   PineAPPL     fastNLO      rel. diff    svmaxreldiff
--+------------+------------+--------------+-------------
-0  8.2403226e1  8.2403226e1 -4.6629367e-15 5.5511151e-15
-1  3.6074907e1  3.6074907e1 -4.4408921e-16 5.8841820e-15
-2  7.9668487e0  7.9668487e0 -6.6613381e-16 1.0880186e-14
-3 9.3711914e-1 9.3711914e-1 -3.3306691e-15 8.6597396e-15
+const IMPORT_FLEX_GRID_13_STR: &str = "b   PineAPPL     fastNLO      rel. diff     svmaxreldiff
+-+------------+------------+--------------+--------------
+0  8.2403226e1  8.2403226e1 -4.6629367e-15 -5.5511151e-15
+1  3.6074907e1  3.6074907e1 -4.4408921e-16 -5.8841820e-15
+2  7.9668487e0  7.9668487e0 -6.6613381e-16 -1.0880186e-14
+3 9.3711914e-1 9.3711914e-1 -3.3306691e-15 -8.6597396e-15
 ";
 
 #[cfg(feature = "fastnlo")]
-const IMPORT_FLEX_GRID_14_STR: &str = "b   PineAPPL     fastNLO      rel. diff    svmaxreldiff
--+------------+------------+--------------+-------------
-0  8.2850540e1  8.2850540e1  6.8833828e-15 7.1054274e-15
-1  3.5828674e1  3.5828674e1  2.6645353e-15 1.0103030e-14
-2  7.9087501e0  7.9087501e0 -8.1046281e-15 8.1046281e-15
-3 9.3462321e-1 9.3462321e-1  4.4408921e-16 8.2156504e-15
+const IMPORT_FLEX_GRID_14_STR: &str = "b   PineAPPL     fastNLO      rel. diff     svmaxreldiff
+-+------------+------------+--------------+--------------
+0  8.2850540e1  8.2850540e1  6.8833828e-15  6.8833828e-15
+1  3.5828674e1  3.5828674e1  2.6645353e-15 -1.0103030e-14
+2  7.9087501e0  7.9087501e0 -8.2156504e-15  6.2172489e-15
+3 9.3462321e-1 9.3462321e-1  4.4408921e-16  8.2156504e-15
 ";
 
 #[cfg(feature = "fastnlo")]
-const IMPORT_FLEX_GRID_15_STR: &str = "b   PineAPPL     fastNLO      rel. diff    svmaxreldiff
--+------------+------------+--------------+-------------
-0  6.6997861e1  6.6997861e1  5.7731597e-15 1.1879386e-14
-1  2.6049196e1  2.6049196e1 -7.7715612e-16 1.3100632e-14
-2  5.2022797e0  5.2022797e0  8.4376950e-15 8.4376950e-15
-3 7.2427500e-1 7.2427500e-1  1.9984014e-15 9.5479180e-15
+const IMPORT_FLEX_GRID_15_STR: &str = "b   PineAPPL     fastNLO      rel. diff     svmaxreldiff
+-+------------+------------+--------------+--------------
+0  6.6997861e1  6.6997861e1  5.5511151e-15 -1.1879386e-14
+1  2.6049196e1  2.6049196e1 -7.7715612e-16  1.3100632e-14
+2  5.2022797e0  5.2022797e0  8.4376950e-15  8.2156504e-15
+3 7.2427500e-1 7.2427500e-1  1.9984014e-15  9.5479180e-15
 ";
 
 #[cfg(feature = "fktable")]
@@ -236,31 +237,31 @@ const IMPORT_HADRONIC_FKTABLE_STR: &str = "b x1     diff
 ";
 
 #[cfg(feature = "applgrid")]
-const IMPORT_PHOTON_GRID_STR: &str = "b   PineAPPL     APPLgrid    rel. diff
--+------------+------------+-----------
-0 5.5621307e-4 5.5621307e-4 0.0000000e0
+const IMPORT_PHOTON_GRID_STR: &str = "b   PineAPPL     APPLgrid     rel. diff
+-+------------+------------+--------------
+0 5.5621307e-4 5.5621307e-4 -1.5543122e-15
 ";
 
 #[cfg(feature = "applgrid")]
 const IMPORT_APPLGRID_STR: &str = "b  PineAPPL    APPLgrid     rel. diff
 -+-----------+-----------+--------------
-0 2.9884537e6 2.9884537e6 -6.6613381e-16
+0 2.9884537e6 2.9884537e6 -7.7715612e-16
 ";
 
 #[cfg(feature = "applgrid")]
 const IMPORT_NEW_APPLGRID_STR: &str = "b   PineAPPL    APPLgrid     rel. diff
 --+-----------+-----------+--------------
-0  6.2634897e2 6.2634897e2  1.5543122e-15
-1  6.2847078e2 6.2847078e2    0.0000000e0
-2  6.3163323e2 6.3163323e2  2.2204460e-16
-3  6.3586556e2 6.3586556e2  2.2204460e-16
-4  6.4139163e2 6.4139163e2  1.7763568e-15
-5  6.4848088e2 6.4848088e2 -2.6645353e-15
-6  6.5354150e2 6.5354150e2 -3.6637360e-15
-7  6.5377566e2 6.5377566e2 -1.7763568e-15
-8  6.5094729e2 6.5094729e2  1.7763568e-15
-9  6.3588760e2 6.3588760e2  2.2204460e-15
-10 5.9810718e2 5.9810718e2  2.6645353e-15
+0  6.2634897e2 6.2634897e2 -8.8817842e-16
+1  6.2847078e2 6.2847078e2 -2.6645353e-15
+2  6.3163323e2 6.3163323e2 -6.6613381e-16
+3  6.3586556e2 6.3586556e2 -8.8817842e-16
+4  6.4139163e2 6.4139163e2  4.4408921e-16
+5  6.4848088e2 6.4848088e2 -4.2188475e-15
+6  6.5354150e2 6.5354150e2 -4.9960036e-15
+7  6.5377566e2 6.5377566e2 -3.3306691e-15
+8  6.5094729e2 6.5094729e2  1.1102230e-15
+9  6.3588760e2 6.3588760e2  1.9984014e-15
+10 5.9810718e2 5.9810718e2  1.9984014e-15
 ";
 
 const IMPORT_FILE_FORMAT_FAILURE_STR: &str = "Error: could not detect file format
@@ -273,7 +274,7 @@ const IMPORT_GRID_COMPARISON_FAILURE_STR: &str = "Error: grids are different
 #[cfg(feature = "applgrid")]
 const IMPORT_DIS_APPLGRID_STR: &str = "b   PineAPPL     APPLgrid     rel. diff
 -+------------+------------+--------------
-0 9.3514881e-2 9.3514881e-2 -3.3306691e-16
+0 9.3514881e-2 9.3514881e-2 -4.4408921e-16
 1 3.9993061e-2 3.9993061e-2  2.2204460e-16
 2 1.3593440e-2 1.3593440e-2 -2.2204460e-16
 3 2.0825199e-3 2.0825199e-3 -4.4408921e-16
@@ -281,29 +282,41 @@ const IMPORT_DIS_APPLGRID_STR: &str = "b   PineAPPL     APPLgrid     rel. diff
 
 #[cfg(feature = "fastnlo")]
 const IMPORT_DOUBLE_HADRONIC_FASTNLO_STR: &str =
-    "b    PineAPPL     fastNLO      rel. diff    svmaxreldiff
---+------------+------------+--------------+-------------
-0   9.6382069e5  9.6382069e5  4.4408921e-16 8.3266727e-15
-1   3.7342594e5  3.7342594e5  1.7985613e-14 1.9095836e-14
-2   1.4195038e5  1.4195038e5 -1.0880186e-14 2.2648550e-14
-3   5.7043791e4  5.7043791e4  4.2188475e-15 7.9936058e-15
-4   2.3327746e4  2.3327746e4  8.4376950e-15 1.2101431e-14
-5   1.0495603e4  1.0495603e4  1.3100632e-14 1.7985613e-14
-6   4.8153483e3  4.8153483e3 -1.6098234e-14 2.9753977e-14
-7   2.2957587e3  2.2957587e3  4.8849813e-15 3.0642155e-14
-8   1.1142545e3  1.1142545e3 -2.4424907e-15 1.5765167e-14
-9   5.3699925e2  5.3699925e2 -6.5503158e-15 1.8429702e-14
-10  2.5460314e2  2.5460314e2 -7.6605389e-15 1.3544721e-14
-11  1.1847638e2  1.1847638e2  1.0658141e-14 1.2656542e-14
-12  5.7567355e1  5.7567355e1 -2.9976022e-15 9.2148511e-15
-13  2.7189719e1  2.7189719e1  1.1102230e-15 1.5543122e-14
-14  1.2791922e1  1.2791922e1 -6.9944051e-15 1.2656542e-14
-15  5.8346996e0  5.8346996e0  2.8865799e-15 1.4988011e-14
-16  2.6521590e0  2.6521590e0  7.3274720e-15 1.4765966e-14
-17  1.1726035e0  1.1726035e0  1.3100632e-14 1.4432899e-14
-18 4.8823596e-1 4.8823596e-1  8.6597396e-15 1.3655743e-14
-19 1.9564964e-1 1.9564964e-1 -4.4408921e-15 1.1102230e-14
-20 2.0326950e-2 2.0326950e-2  6.6613381e-15 1.3211654e-14
+    "b    PineAPPL     fastNLO      rel. diff     svmaxreldiff
+--+------------+------------+--------------+--------------
+0   9.6382069e5  9.6382069e5  4.4408921e-16 -8.3266727e-15
+1   3.7342594e5  3.7342594e5  1.7985613e-14  1.8651747e-14
+2   1.4195038e5  1.4195038e5 -1.0880186e-14 -2.2870594e-14
+3   5.7043791e4  5.7043791e4  4.2188475e-15  7.7715612e-15
+4   2.3327746e4  2.3327746e4  8.4376950e-15 -1.2101431e-14
+5   1.0495603e4  1.0495603e4  1.3100632e-14 -1.7874591e-14
+6   4.8153483e3  4.8153483e3 -1.6098234e-14  2.9531932e-14
+7   2.2957587e3  2.2957587e3  4.6629367e-15 -3.0198066e-14
+8   1.1142545e3  1.1142545e3 -2.4424907e-15  1.5765167e-14
+9   5.3699925e2  5.3699925e2 -6.7723605e-15  1.8429702e-14
+10  2.5460314e2  2.5460314e2 -7.6605389e-15 -1.3544721e-14
+11  1.1847638e2  1.1847638e2  1.0880186e-14 -1.2989609e-14
+12  5.7567355e1  5.7567355e1 -2.8865799e-15 -9.2148511e-15
+13  2.7189719e1  2.7189719e1  1.3322676e-15  1.5543122e-14
+14  1.2791922e1  1.2791922e1 -6.9944051e-15 -1.2878587e-14
+15  5.8346996e0  5.8346996e0  2.8865799e-15 -1.4876989e-14
+16  2.6521590e0  2.6521590e0  7.1054274e-15 -1.4765966e-14
+17  1.1726035e0  1.1726035e0  1.3100632e-14  1.3988810e-14
+18 4.8823596e-1 4.8823596e-1  8.6597396e-15 -1.3433699e-14
+19 1.9564964e-1 1.9564964e-1 -4.6629367e-15  1.1102230e-14
+20 2.0326950e-2 2.0326950e-2  6.6613381e-15 -1.2767565e-14
+";
+
+#[cfg(feature = "fastnlo")]
+const IMPORT_NPDFDIM_2_TABLE_STR: &str = "b   PineAPPL     fastNLO      rel. diff
+-+------------+------------+--------------
+0  1.0824021e0  1.0824021e0  1.4654944e-14
+1  1.0680553e0  1.0680553e0 -1.4432899e-15
+2 6.4959982e-1 6.4959982e-1  4.4408921e-15
+3 3.3033872e-1 3.3033872e-1  2.0872193e-14
+4 1.3360159e-1 1.3360159e-1 -2.2870594e-14
+5 3.2728146e-2 3.2728146e-2 -5.7731597e-15
+6 3.8508907e-3 3.8508907e-3  2.2870594e-14
 ";
 
 #[test]
@@ -659,6 +672,8 @@ fn import_flex_grid_15() {
 #[test]
 #[cfg(feature = "fktable")]
 fn import_dis_fktable() {
+    use float_cmp::assert_approx_eq;
+    use ndarray::Array3;
     use pineappl::fk_table::FkTable;
     use pineappl::grid::Grid;
     use std::fs::File;
@@ -690,17 +705,32 @@ fn import_dis_fktable() {
 
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(["read", "--fktable", output.path().to_str().unwrap()])
+        .args(["read", "--fk-table", output.path().to_str().unwrap()])
         .assert()
         .success()
         .stdout("yes\n");
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args(["read", "--fk-table-fac0", output.path().to_str().unwrap()])
+        .assert()
+        .success()
+        .stdout("2.7224999999999997\n");
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args(["read", "--fk-table-frg0", output.path().to_str().unwrap()])
+        .assert()
+        .success()
+        .stdout("None\n");
 
     let fk_table =
         FkTable::try_from(Grid::read(File::open(output.path()).unwrap()).unwrap()).unwrap();
 
     // TODO: this should ideally be a unit test, but we need an FK table that we don't convert
 
-    assert_eq!(fk_table.muf2(), 1.65 * 1.65);
+    assert_eq!(fk_table.grid().kinematics().len(), 2);
+    assert_approx_eq!(f64, fk_table.fac0().unwrap(), 1.65 * 1.65, ulps = 2);
     assert_eq!(
         fk_table.x_grid(),
         [
@@ -803,13 +833,13 @@ fn import_dis_fktable() {
             0.8837966741980419,
             0.9126417795942889,
             0.9416284084927907,
-            0.9707498946430192
+            0.9707498946430192,
         ]
     );
 
-    let table = fk_table.table();
+    let table: Array3<f64> = fk_table.table().into_dimensionality().unwrap();
 
-    assert_eq!(table.dim(), (20, 9, 100, 1));
+    assert_eq!(table.dim(), (20, 9, 100));
     assert_eq!(
         table
             .indexed_iter()
@@ -817,16 +847,16 @@ fn import_dis_fktable() {
             .take(10)
             .collect::<Vec<_>>(),
         [
-            ((0, 0, 0, 0), &4.506605409085538e-8),
-            ((0, 0, 1, 0), &1.8561090273141668e-8),
-            ((0, 0, 2, 0), &-3.3821015317570252e-9),
-            ((0, 0, 3, 0), &1.980084314325426e-9),
-            ((0, 0, 4, 0), &2.187815687938248e-9),
-            ((0, 0, 5, 0), &1.3280152778522626e-9),
-            ((0, 0, 6, 0), &1.3848470515483116e-9),
-            ((0, 0, 7, 0), &1.5145898293299224e-9),
-            ((0, 0, 8, 0), &1.6942313031679552e-9),
-            ((0, 0, 9, 0), &1.9734220063025288e-9),
+            ((0, 0, 0), &4.506605409085538e-8),
+            ((0, 0, 1), &1.8561090273141668e-8),
+            ((0, 0, 2), &-3.3821015317570252e-9),
+            ((0, 0, 3), &1.980084314325426e-9),
+            ((0, 0, 4), &2.187815687938248e-9),
+            ((0, 0, 5), &1.3280152778522626e-9),
+            ((0, 0, 6), &1.3848470515483116e-9),
+            ((0, 0, 7), &1.5145898293299224e-9),
+            ((0, 0, 8), &1.6942313031679552e-9),
+            ((0, 0, 9), &1.9734220063025288e-9),
         ]
     );
 }
@@ -836,8 +866,9 @@ fn import_dis_fktable() {
 fn import_hadronic_fktable() {
     use float_cmp::assert_approx_eq;
     use lhapdf::Pdf;
-    use pineappl::convolutions::Convolution;
-    use pineappl::convolutions::LumiCache;
+    use ndarray::Array4;
+    use pineappl::convolutions::ConvolutionCache;
+    use pineappl::convolutions::{Conv, ConvType};
     use pineappl::fk_table::{FkAssumptions, FkTable};
     use pineappl::grid::Grid;
     use std::fs::File;
@@ -875,11 +906,15 @@ fn import_hadronic_fktable() {
     let pdf = Pdf::with_setname_and_member("NNPDF31_nlo_as_0118_luxqed", 0).unwrap();
     let mut xfx = |id, x, q2| pdf.xfx_q2(id, x, q2);
     let mut alphas = |_| 0.0;
-    let mut lumi_cache = LumiCache::with_one(2212, &mut xfx, &mut alphas);
-    let results = grid.convolve(&mut lumi_cache, &[], &[], &[], &[(1.0, 1.0)]);
+    let mut convolution_cache = ConvolutionCache::new(
+        vec![Conv::new(ConvType::UnpolPDF, 2212)],
+        vec![&mut xfx],
+        &mut alphas,
+    );
+    let results = grid.convolve(&mut convolution_cache, &[], &[], &[], &[(1.0, 1.0, 1.0)]);
 
     let mut fk_table = FkTable::try_from(grid).unwrap();
-    let table = fk_table.table();
+    let table: Array4<f64> = fk_table.table().into_dimensionality().unwrap();
 
     assert_eq!(table.dim(), (1, 45, 30, 30));
     assert_eq!(
@@ -902,67 +937,69 @@ fn import_hadronic_fktable() {
         ]
     );
 
-    assert_eq!(fk_table.grid().bin_info().bins(), 1);
-    assert_eq!(fk_table.grid().bin_info().normalizations(), [1.0]);
-    assert_eq!(fk_table.grid().bin_info().dimensions(), 1);
-    assert_eq!(fk_table.grid().bin_info().left(0), [0.0]);
-    assert_eq!(fk_table.grid().bin_info().right(0), [1.0]);
+    assert_eq!(fk_table.grid().bwfl().len(), 1);
+    assert_eq!(fk_table.grid().bwfl().normalizations(), [1.0]);
+    assert_eq!(fk_table.grid().bwfl().dimensions(), 1);
+    assert_eq!(fk_table.grid().bwfl().bins()[0].limits(), [(0.0, 1.0)]);
     assert_eq!(
         fk_table.grid().convolutions(),
-        [Convolution::UnpolPDF(2212), Convolution::UnpolPDF(2212)]
+        [
+            Conv::new(ConvType::UnpolPDF, 2212),
+            Conv::new(ConvType::UnpolPDF, 2212)
+        ]
     );
     let channels = fk_table.channels();
     assert_eq!(
         channels,
         [
-            (100, 100),
-            (100, 21),
-            (100, 200),
-            (100, 203),
-            (100, 208),
-            (100, 215),
-            (100, 103),
-            (100, 108),
-            (100, 115),
-            (21, 21),
-            (21, 200),
-            (21, 203),
-            (21, 208),
-            (21, 215),
-            (21, 103),
-            (21, 108),
-            (21, 115),
-            (200, 200),
-            (200, 203),
-            (200, 208),
-            (200, 215),
-            (200, 103),
-            (200, 108),
-            (200, 115),
-            (203, 203),
-            (203, 208),
-            (203, 215),
-            (203, 103),
-            (203, 108),
-            (203, 115),
-            (208, 208),
-            (208, 215),
-            (208, 103),
-            (208, 108),
-            (208, 115),
-            (215, 215),
-            (215, 103),
-            (215, 108),
-            (215, 115),
-            (103, 103),
-            (103, 108),
-            (103, 115),
-            (108, 108),
-            (108, 115),
-            (115, 115)
+            [100, 100],
+            [100, 21],
+            [100, 200],
+            [100, 203],
+            [100, 208],
+            [100, 215],
+            [100, 103],
+            [100, 108],
+            [100, 115],
+            [21, 21],
+            [21, 200],
+            [21, 203],
+            [21, 208],
+            [21, 215],
+            [21, 103],
+            [21, 108],
+            [21, 115],
+            [200, 200],
+            [200, 203],
+            [200, 208],
+            [200, 215],
+            [200, 103],
+            [200, 108],
+            [200, 115],
+            [203, 203],
+            [203, 208],
+            [203, 215],
+            [203, 103],
+            [203, 108],
+            [203, 115],
+            [208, 208],
+            [208, 215],
+            [208, 103],
+            [208, 108],
+            [208, 115],
+            [215, 215],
+            [215, 103],
+            [215, 108],
+            [215, 115],
+            [103, 103],
+            [103, 108],
+            [103, 115],
+            [108, 108],
+            [108, 115],
+            [115, 115]
         ]
     );
-    assert_eq!(fk_table.muf2(), 1.65 * 1.65);
+    assert_approx_eq!(f64, fk_table.fac0().unwrap(), 1.65 * 1.65, ulps = 2);
     assert_eq!(
         fk_table.x_grid(),
         [
@@ -999,14 +1036,14 @@ fn import_hadronic_fktable() {
         ]
     );
 
-    assert_eq!(results, fk_table.convolve(&mut lumi_cache, &[], &[]));
+    assert_eq!(results, fk_table.convolve(&mut convolution_cache, &[], &[]));
 
     fk_table.optimize(FkAssumptions::Nf6Ind);
     assert_eq!(fk_table.channels(), channels);
     assert_approx_eq!(
         f64,
         results[0],
-        fk_table.convolve(&mut lumi_cache, &[], &[])[0],
+        fk_table.convolve(&mut convolution_cache, &[], &[])[0],
         ulps = 4
     );
     fk_table.optimize(FkAssumptions::Nf6Sym);
@@ -1014,7 +1051,7 @@ fn import_hadronic_fktable() {
     assert_approx_eq!(
         f64,
         results[0],
-        fk_table.convolve(&mut lumi_cache, &[], &[])[0],
+        fk_table.convolve(&mut convolution_cache, &[], &[])[0],
         ulps = 4
     );
     fk_table.optimize(FkAssumptions::Nf5Ind);
@@ -1022,124 +1059,124 @@ fn import_hadronic_fktable() {
     assert_approx_eq!(
         f64,
         results[0],
-        fk_table.convolve(&mut lumi_cache, &[], &[])[0]
+        fk_table.convolve(&mut convolution_cache, &[], &[])[0]
     );
     fk_table.optimize(FkAssumptions::Nf5Sym);
     assert_eq!(fk_table.channels(), channels);
     assert_approx_eq!(
         f64,
         results[0],
-        fk_table.convolve(&mut lumi_cache, &[], &[])[0]
+        fk_table.convolve(&mut convolution_cache, &[], &[])[0]
     );
     fk_table.optimize(FkAssumptions::Nf4Ind);
     assert_eq!(fk_table.channels(), channels);
     assert_approx_eq!(
         f64,
         results[0],
-        fk_table.convolve(&mut lumi_cache, &[], &[])[0]
+        fk_table.convolve(&mut convolution_cache, &[], &[])[0]
     );
 
     fk_table.optimize(FkAssumptions::Nf4Sym);
     assert_eq!(
         fk_table.channels(),
         [
-            (100, 100),
-            (100, 21),
-            (100, 203),
-            (100, 208),
-            (100, 200),
-            (100, 103),
-            (100, 108),
-            (100, 115),
-            (21, 21),
-            (21, 203),
-            (21, 208),
-            (21, 200),
-            (21, 103),
-            (21, 108),
-            (21, 115),
-            (200, 203),
-            (200, 208),
-            (203, 203),
-            (203, 208),
-            (203, 103),
-            (203, 108),
-            (203, 115),
-            (208, 208),
-            (208, 103),
-            (208, 108),
-            (208, 115),
-            (200, 200),
-            (200, 103),
-            (200, 108),
-            (200, 115),
-            (103, 103),
-            (103, 108),
-            (103, 115),
-            (108, 108),
-            (108, 115),
-            (115, 115)
+            [100, 100],
+            [100, 21],
+            [100, 203],
+            [100, 208],
+            [100, 200],
+            [100, 103],
+            [100, 108],
+            [100, 115],
+            [21, 21],
+            [21, 203],
+            [21, 208],
+            [21, 200],
+            [21, 103],
+            [21, 108],
+            [21, 115],
+            [200, 203],
+            [200, 208],
+            [203, 203],
+            [203, 208],
+            [203, 103],
+            [203, 108],
+            [203, 115],
+            [208, 208],
+            [208, 103],
+            [208, 108],
+            [208, 115],
+            [200, 200],
+            [200, 103],
+            [200, 108],
+            [200, 115],
+            [103, 103],
+            [103, 108],
+            [103, 115],
+            [108, 108],
+            [108, 115],
+            [115, 115]
         ]
     );
     fk_table.optimize(FkAssumptions::Nf3Ind);
     assert_eq!(
         fk_table.channels(),
         [
-            (100, 21),
-            (100, 203),
-            (100, 208),
-            (100, 200),
-            (100, 103),
-            (100, 108),
-            (21, 21),
-            (21, 203),
-            (21, 208),
-            (21, 200),
-            (21, 103),
-            (21, 108),
-            (200, 203),
-            (200, 208),
-            (203, 203),
-            (203, 208),
-            (203, 103),
-            (203, 108),
-            (208, 208),
-            (208, 103),
-            (208, 108),
-            (200, 200),
-            (200, 103),
-            (200, 108),
-            (103, 103),
-            (103, 108),
-            (108, 108),
-            (100, 100)
+            [100, 21],
+            [100, 203],
+            [100, 208],
+            [100, 200],
+            [100, 103],
+            [100, 108],
+            [21, 21],
+            [21, 203],
+            [21, 208],
+            [21, 200],
+            [21, 103],
+            [21, 108],
+            [200, 203],
+            [200, 208],
+            [203, 203],
+            [203, 208],
+            [203, 103],
+            [203, 108],
+            [208, 208],
+            [208, 103],
+            [208, 108],
+            [200, 200],
+            [200, 103],
+            [200, 108],
+            [103, 103],
+            [103, 108],
+            [108, 108],
+            [100, 100]
         ]
     );
     fk_table.optimize(FkAssumptions::Nf3Sym);
     assert_eq!(
         fk_table.channels(),
         [
-            (100, 21),
-            (100, 203),
-            (100, 200),
-            (100, 103),
-            (100, 108),
-            (21, 21),
-            (21, 203),
-            (21, 200),
-            (21, 103),
-            (21, 108),
-            (200, 203),
-            (203, 203),
-            (203, 103),
-            (203, 108),
-            (200, 200),
-            (200, 103),
-            (200, 108),
-            (103, 103),
-            (103, 108),
-            (108, 108),
-            (100, 100)
+            [100, 21],
+            [100, 203],
+            [100, 200],
+            [100, 103],
+            [100, 108],
+            [21, 21],
+            [21, 203],
+            [21, 200],
+            [21, 103],
+            [21, 108],
+            [200, 203],
+            [203, 203],
+            [203, 103],
+            [203, 108],
+            [200, 200],
+            [200, 103],
+            [200, 108],
+            [103, 103],
+            [103, 108],
+            [108, 108],
+            [100, 100],
         ]
     );
 }
@@ -1267,4 +1304,22 @@ fn import_double_hadronic_fastnlo() {
         .stdout(predicates::str::ends_with(
             IMPORT_DOUBLE_HADRONIC_FASTNLO_STR,
         ));
+}
+
+#[test]
+#[cfg(feature = "fastnlo")]
+fn import_npdfdim_2_table() {
+    let output = NamedTempFile::new("converted10.pineappl.lz4").unwrap();
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "import",
+            "../test-data/LHC8-Mtt-HT4-173_3-bin1.tab.gz",
+            output.path().to_str().unwrap(),
+            "NNPDF31_nlo_as_0118_luxqed",
+        ])
+        .assert()
+        .success()
+        .stdout(predicates::str::ends_with(IMPORT_NPDFDIM_2_TABLE_STR));
 }

@@ -6,6 +6,10 @@ on:
       - pycli
       - bump-pyo3-version
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   capi:
     runs-on: ubuntu-latest
@@ -19,31 +23,32 @@ jobs:
           # `-C link-dead-code` is needed to prevent 'warning: XX functions have mismatched data' warnings
           RUSTFLAGS: '-Cinstrument-coverage -Clink-dead-code'
         run: |
-          cargo cinstall --verbose --prefix=/usr/local/ --libdir=lib --manifest-path pineappl_capi/Cargo.toml
+          cd pineappl_capi
+          cargo cinstall --verbose --prefix=/usr/local/ --libdir=/usr/local/lib
           ldconfig
 
-      - name: Test C++ example
+      - name: Get test data
+        uses: ./.github/actions/cache-test-data
+
+      - name: Test C++ examples
         run: |
           cd examples/cpp
           # if `make` is too old, it doesn't support the `!=` operator
           sed -i "s/\([a-zA-Z_]\+\) != \(.*\)$/echo \1 = \$(\2)/e" Makefile
-          make test-examples
+          # run tests with sanitizer
+          make CXXFLAGS="-O0 -ggdb -Wall -Wextra -Werror -fsanitize=address,undefined" test-examples
 
-      - name: Test Fortran example
+      - name: Test Fortran examples
         run: |
           cd examples/fortran
           sed -i "s/\([a-zA-Z_]\+\) != \(.*\)$/echo \1 = \$(\2)/e" Makefile
-          make
-          ./dyaa
-          test -f ./DY-LO-AA.pineappl.lz4
+          make test-examples
 
-      - name: Test OO C++ example
+      - name: Test OO C++ examples
         run: |
           cd examples/object-oriented-cpp
           sed -i "s/\([a-zA-Z_]\+\) != \(.*\)$/echo \1 = \$(\2)/e" Makefile
-          make
-          ./dyaa
-          test -f ./DY-LO-AA.pineappl.lz4
+          make CXXFLAGS="-O0 -ggdb -Wall -Wextra -Werror -fsanitize=address,undefined" test-examples
 
       - name: Generate code coverage
         run: |

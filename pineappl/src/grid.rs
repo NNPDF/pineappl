@@ -1,190 +1,41 @@
 //! Module containing all traits and supporting structures for grids.
 
-use super::bin::{BinInfo, BinLimits, BinRemapper};
-use super::boc::{Channel, Order};
-use super::convolutions::{Convolution, LumiCache};
-use super::empty_subgrid::EmptySubgridV1;
-use super::evolution::{self, AlphasTable, EvolveInfo, OperatorInfo, OperatorSliceInfo};
+use super::boc::{BinsWithFillLimits, Channel, Kinematics, Order, ScaleFuncForm, Scales};
+use super::convolutions::{Conv, ConvolutionCache};
+use super::error::{Error, Result};
+use super::evolution::{self, AlphasTable, EvolveInfo, OperatorSliceInfo};
 use super::fk_table::FkTable;
-use super::import_only_subgrid::ImportOnlySubgridV2;
-use super::lagrange_subgrid::{LagrangeSparseSubgridV1, LagrangeSubgridV1, LagrangeSubgridV2};
-use super::ntuple_subgrid::NtupleSubgridV1;
-use super::pids::{self, PidBasis};
-use super::subgrid::{ExtraSubgridParams, Mu2, Subgrid, SubgridEnum, SubgridParams};
+use super::interpolation::Interp;
+use super::pids::PidBasis;
+use super::reference::Reference;
+use super::subgrid::{
+    self, EmptySubgridV1, ImportSubgridV1, InterpSubgridV1, Subgrid, SubgridEnum,
+};
+use super::v0;
 use bitflags::bitflags;
-use float_cmp::{approx_eq, assert_approx_eq};
+use float_cmp::approx_eq;
 use git_version::git_version;
+use itertools::Itertools;
 use lz4_flex::frame::{FrameDecoder, FrameEncoder};
-use ndarray::{s, Array3, ArrayView3, ArrayView5, ArrayViewMut3, Axis, CowArray, Dimension, Ix4};
-use serde::{Deserialize, Serialize, Serializer};
-use std::borrow::Cow;
-use std::collections::{BTreeMap, HashMap};
-use std::io::{self, BufRead, BufReader, BufWriter, Read, Write};
-use std::iter;
-use std::mem;
-use std::ops::Range;
-use thiserror::Error;
+use ndarray::{s, Array2, Array3, ArrayView3, ArrayViewMut3, Axis, CowArray, Dimension, Ix4, Zip};
+use serde::{Deserialize, Serialize};
+use std::collections::BTreeMap;
+use std::io::{BufRead, BufReader, BufWriter, Read, Write};
+use std::ops::{Bound, RangeBounds};
+use std::{iter, mem};
 
-/// This structure represents a position (`x1`, `x2`, `q2`) in a `Subgrid` together with a
-/// corresponding `weight`. The type `W` can either be a `f64` or `()`, which is used when multiple
-/// weights should be signaled.
-#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
-pub struct Ntuple<W> {
-    /// Momentum fraction of the first parton.
-    pub x1: f64,
-    /// Momentum fraction of the second parton.
-    pub x2: f64,
-    /// Squared scale.
-    pub q2: f64,
-    /// Weight of this entry.
-    pub weight: W,
-}
+const BIN_AXIS: Axis = Axis(1);
 
-/// Error returned when merging two grids fails.
-#[derive(Debug, Error)]
-pub enum GridError {
-    /// Returned when trying to merge two `Grid` objects with incompatible bin limits.
-    #[error(transparent)]
-    InvalidBinLimits(super::bin::MergeBinError),
-    /// Returned if the number of bins in the grid and in the remapper do not agree.
-    #[error("the remapper has {remapper_bins} bins, but the grid has {grid_bins}")]
-    BinNumberMismatch {
-        /// Number of bins in the grid.
-        grid_bins: usize,
-        /// Number of bins in the remapper.
-        remapper_bins: usize,
-    },
-    /// Returned when it was tried to merge bins that are non-consecutive.
-    #[error(transparent)]
-    MergeBinError(super::bin::MergeBinError),
-    /// Returned when trying to construct a `Grid` using an unknown subgrid type.
-    #[error("tried constructing a Grid with unknown Subgrid type `{0}`")]
-    UnknownSubgridType(String),
-    /// Returned when failed to read a Grid.
-    #[error(transparent)]
-    ReadFailure(bincode::Error),
-    /// Returned when failed to write a Grid.
-    #[error(transparent)]
-    WriteFailure(bincode::Error),
-    /// Returned while performing IO operations.
-    #[error(transparent)]
-    IoFailure(io::Error),
-    /// Returned when trying to read a `PineAPPL` file with file format version that is not
-    /// supported.
-    #[error("the file version is {file_version}, but supported is only {supported_version}")]
-    FileVersionMismatch {
-        /// File format version of the file read.
-        file_version: u64,
-        /// Maximum supported file format version for this library.
-        supported_version: u64,
-    },
-    /// Returned from [`Grid::evolve`] if the evolution failed.
-    #[error("failed to evolve grid: {0}")]
-    EvolutionFailure(String),
-    /// Errors that do no originate from this crate itself.
-    #[error(transparent)]
-    Other(#[from] anyhow::Error),
-}
+// const ORDER_AXIS: Axis = Axis(0);
+
+const CHANNEL_AXIS: Axis = Axis(2);
 
 #[derive(Clone, Deserialize, Serialize)]
-struct Mmv1;
+struct Mmv4;
 
-#[derive(Clone, Deserialize, Serialize)]
-struct Mmv2 {
-    remapper: Option<BinRemapper>,
-    key_value_db: HashMap<String, String>,
-}
-
-fn ordered_map_serialize<S, K: Ord + Serialize, V: Serialize>(
-    value: &HashMap<K, V>,
-    serializer: S,
-) -> Result<S::Ok, S::Error>
-where
-    S: Serializer,
-{
-    let ordered: BTreeMap<_, _> = value.iter().collect();
-    ordered.serialize(serializer)
-}
-
-#[derive(Clone, Deserialize, Serialize)]
-struct Mmv3 {
-    remapper: Option<BinRemapper>,
-    // order the HashMap before serializing it to make the output stable
-    #[serde(serialize_with = "ordered_map_serialize")]
-    key_value_db: HashMap<String, String>,
-    subgrid_template: SubgridEnum,
-}
-
-impl Default for Mmv2 {
-    fn default() -> Self {
-        Self {
-            remapper: None,
-            key_value_db: [
-                (
-                    "pineappl_gitversion".to_owned(),
-                    git_version!(
-                        args = ["--always", "--dirty", "--long", "--tags"],
-                        cargo_prefix = "cargo:",
-                        fallback = "unknown"
-                    )
-                    .to_owned(),
-                ),
-                // by default we assume there are protons in the initial state
-                ("initial_state_1".to_owned(), "2212".to_owned()),
-                ("initial_state_2".to_owned(), "2212".to_owned()),
-            ]
-            .iter()
-            .cloned()
-            .collect(),
-        }
-    }
-}
-
-impl Mmv3 {
-    fn new(subgrid_template: SubgridEnum) -> Self {
-        Self {
-            remapper: None,
-            key_value_db: [
-                (
-                    "pineappl_gitversion".to_owned(),
-                    git_version!(
-                        args = ["--always", "--dirty", "--long", "--tags"],
-                        cargo_prefix = "cargo:",
-                        fallback = "unknown"
-                    )
-                    .to_owned(),
-                ),
-                // by default we assume there are unpolarized protons in the initial state
-                // do not change these to the new metadata to not break backwards compatibility
-                ("initial_state_1".to_owned(), "2212".to_owned()),
-                ("initial_state_2".to_owned(), "2212".to_owned()),
-            ]
-            .iter()
-            .cloned()
-            .collect(),
-            subgrid_template,
-        }
-    }
-}
-
-// ALLOW: fixing the warning will break the file format
-#[allow(clippy::large_enum_variant)]
 #[derive(Clone, Deserialize, Serialize)]
 enum MoreMembers {
-    V1(Mmv1),
-    V2(Mmv2),
-    V3(Mmv3),
-}
-
-impl MoreMembers {
-    fn upgrade(&mut self) {
-        match self {
-            Self::V1(_) => {
-                *self = Self::V2(Mmv2::default());
-            }
-            Self::V2(_) | Self::V3(_) => {}
-        }
-    }
+    V4(Mmv4),
 }
 
 bitflags! {
@@ -192,11 +43,12 @@ bitflags! {
     #[derive(Clone, Copy)]
     #[repr(transparent)]
     pub struct GridOptFlags: u32 {
-        /// Change the [`Subgrid`] type to optimize storage effeciency.
+        /// Change the [`Subgrid`] type to optimize storage efficiency.
         const OPTIMIZE_SUBGRID_TYPE = 0b1;
         /// Recognize whether a subgrid was filled with events with a static scale and if this is
-        /// the case, optimize it by undoing the interpolation in the scale. This flag requires
-        /// [`Self::OPTIMIZE_SUBGRID_TYPE`] to be active.
+        /// the case, optimize it by undoing the interpolation in the scale.
+        const OPTIMIZE_NODES = 0b10;
+        /// Deprecated name for [`GridOptFlags::OPTIMIZE_NODES`].
         const STATIC_SCALE_DETECTION = 0b10;
         /// If two channels differ by transposition of the two initial states and the functions
         /// this grid is convolved with are the same for both initial states, this will merge one
@@ -216,112 +68,125 @@ bitflags! {
 #[derive(Clone, Deserialize, Serialize)]
 pub struct Grid {
     subgrids: Array3<SubgridEnum>,
-    channels: Vec<Channel>,
-    bin_limits: BinLimits,
+    bwfl: BinsWithFillLimits,
     orders: Vec<Order>,
-    subgrid_params: SubgridParams,
+    channels: Vec<Channel>,
+    pid_basis: PidBasis,
+    convolutions: Vec<Conv>,
+    interps: Vec<Interp>,
+    kinematics: Vec<Kinematics>,
+    scales: Scales,
+    metadata: BTreeMap<String, String>,
     more_members: MoreMembers,
+    reference: Reference,
 }
 
 impl Grid {
     /// Constructor.
+    ///
+    /// # Panics
+    ///
+    /// Panics when the number of PIDs in `channels` is not equal to `convolutions.len()`, or
+    /// `interps` and `kinematics` have different lengths or if `kinematics` are not compatible
+    /// with `scales`.
     #[must_use]
     pub fn new(
-        channels: Vec<Channel>,
+        bwfl: BinsWithFillLimits,
         orders: Vec<Order>,
-        bin_limits: Vec<f64>,
-        subgrid_params: SubgridParams,
+        channels: Vec<Channel>,
+        pid_basis: PidBasis,
+        convolutions: Vec<Conv>,
+        interps: Vec<Interp>,
+        kinematics: Vec<Kinematics>,
+        scales: Scales,
     ) -> Self {
+        for (channel_idx, channel) in channels.iter().enumerate() {
+            let offending_entry = channel
+                .entry()
+                .iter()
+                .find_map(|(pids, _)| (pids.len() != convolutions.len()).then_some(pids.len()));
+
+            if let Some(pids_len) = offending_entry {
+                panic!("channel #{channel_idx} has wrong number of PIDs: expected {}, found {pids_len}", convolutions.len());
+            }
+        }
+
+        assert_eq!(
+            interps.len(),
+            kinematics.len(),
+            "interps and kinematics have different lengths: {} vs. {}",
+            interps.len(),
+            kinematics.len(),
+        );
+
+        assert!(
+            scales.compatible_with(&kinematics),
+            "scales and kinematics are not compatible"
+        );
+
         Self {
             subgrids: Array3::from_shape_simple_fn(
-                (orders.len(), bin_limits.len() - 1, channels.len()),
+                (orders.len(), bwfl.len(), channels.len()),
                 || EmptySubgridV1.into(),
             ),
+            bwfl,
             orders,
             channels,
-            bin_limits: BinLimits::new(bin_limits),
-            more_members: MoreMembers::V3(Mmv3::new(
-                LagrangeSubgridV2::new(&subgrid_params, &ExtraSubgridParams::from(&subgrid_params))
-                    .into(),
-            )),
-            subgrid_params,
+            pid_basis,
+            convolutions,
+            interps,
+            kinematics,
+            scales,
+            metadata: iter::once((
+                "pineappl_gitversion".to_owned(),
+                git_version!(
+                    args = ["--always", "--dirty", "--long", "--tags"],
+                    cargo_prefix = "cargo:",
+                    fallback = "unknown"
+                )
+                .to_owned(),
+            ))
+            .collect(),
+            more_members: MoreMembers::V4(Mmv4),
+            reference: Reference::default(),
         }
     }
 
-    /// Constructor. This function can be used like `new`, but the additional parameter
-    /// `subgrid_type` selects the underlying `Subgrid` type. Supported values are:
-    /// - `LagrangeSubgrid`
-    /// - `LagrangeSparseSubgrid`
-    /// - `NtupleSubgrid`
-    ///
-    /// # Errors
-    ///
-    /// If `subgrid_type` is none of the values listed above, an error is returned.
-    pub fn with_subgrid_type(
-        channels: Vec<Channel>,
-        orders: Vec<Order>,
-        bin_limits: Vec<f64>,
-        subgrid_params: SubgridParams,
-        extra: ExtraSubgridParams,
-        subgrid_type: &str,
-    ) -> Result<Self, GridError> {
-        let subgrid_template: SubgridEnum = match subgrid_type {
-            "LagrangeSubgrid" | "LagrangeSubgridV2" => {
-                LagrangeSubgridV2::new(&subgrid_params, &extra).into()
-            }
-            "LagrangeSubgridV1" => LagrangeSubgridV1::new(&subgrid_params).into(),
-            "NtupleSubgrid" => NtupleSubgridV1::new().into(),
-            "LagrangeSparseSubgrid" => LagrangeSparseSubgridV1::new(&subgrid_params).into(),
-            _ => return Err(GridError::UnknownSubgridType(subgrid_type.to_owned())),
-        };
-
-        Ok(Self {
-            subgrids: Array3::from_shape_simple_fn(
-                (orders.len(), bin_limits.len() - 1, channels.len()),
-                || EmptySubgridV1.into(),
-            ),
-            orders,
-            channels,
-            bin_limits: BinLimits::new(bin_limits),
-            subgrid_params,
-            more_members: MoreMembers::V3(Mmv3::new(subgrid_template)),
-        })
-    }
-
-    /// Return by which convention the particle IDs are encoded.
+    /// TODO
     #[must_use]
-    pub fn pid_basis(&self) -> PidBasis {
-        if let Some(key_values) = self.key_values() {
-            if let Some(lumi_id_types) = key_values.get("lumi_id_types") {
-                match lumi_id_types.as_str() {
-                    "pdg_mc_ids" => return PidBasis::Pdg,
-                    "evol" => return PidBasis::Evol,
-                    _ => unimplemented!("unknown particle ID convention {lumi_id_types}"),
-                }
-            }
-        }
-
-        // if there's no basis explicitly set we're assuming to use PDG IDs
-        PidBasis::Pdg
+    pub const fn reference(&self) -> &Reference {
+        &self.reference
     }
 
-    /// Set the convention by which PIDs of channels are interpreted.
-    pub fn set_pid_basis(&mut self, pid_basis: PidBasis) {
-        match pid_basis {
-            PidBasis::Pdg => self.set_key_value("lumi_id_types", "pdg_mc_ids"),
-            PidBasis::Evol => self.set_key_value("lumi_id_types", "evol"),
-        }
+    /// TODO
+    pub fn set_reference(&mut self, reference: Reference) {
+        // TODO: check that the number of bins and channels is consistent between the grid and
+        // `reference`
+        self.reference = reference;
     }
 
-    fn pdg_channels(&self) -> Cow<[Channel]> {
-        match self.pid_basis() {
-            PidBasis::Evol => self
-                .channels
-                .iter()
-                .map(|entry| Channel::translate(entry, &pids::evol_to_pdg_mc_ids))
-                .collect(),
-            PidBasis::Pdg => Cow::Borrowed(self.channels()),
-        }
+    /// Return the convention by which the channels' PIDs are encoded.
+    #[must_use]
+    pub const fn pid_basis(&self) -> &PidBasis {
+        &self.pid_basis
+    }
+
+    /// Return a vector containing the interpolation specifications for this grid.
+    #[must_use]
+    pub fn interpolations(&self) -> &[Interp] {
+        &self.interps
+    }
+
+    /// Return a vector containing the kinematic specifications for this grid.
+    #[must_use]
+    pub fn kinematics(&self) -> &[Kinematics] {
+        &self.kinematics
+    }
+
+    /// Return a vector containg the scale specifications for this grid.
+    #[must_use]
+    pub const fn scales(&self) -> &Scales {
+        &self.scales
     }
 
     /// Perform a convolution using the PDFs and strong coupling in `lumi_cache`, and
@@ -335,28 +200,31 @@ impl Grid {
     /// TODO
     pub fn convolve(
         &self,
-        lumi_cache: &mut LumiCache,
+        cache: &mut ConvolutionCache,
         order_mask: &[bool],
         bin_indices: &[usize],
         channel_mask: &[bool],
-        xi: &[(f64, f64)],
+        xi: &[(f64, f64, f64)],
     ) -> Vec<f64> {
-        lumi_cache.setup(self, xi).unwrap();
+        let mut cache = cache.new_grid_conv_cache(self, xi);
 
         let bin_indices = if bin_indices.is_empty() {
-            (0..self.bin_info().bins()).collect()
+            (0..self.bwfl().len()).collect()
         } else {
             bin_indices.to_vec()
         };
         let mut bins = vec![0.0; bin_indices.len() * xi.len()];
-        let normalizations = self.bin_info().normalizations();
-        let pdg_channels = self.pdg_channels();
+        let normalizations = self.bwfl().normalizations();
+        let pdg_channels = self.channels_pdg();
 
-        for (xi_index, &(xir, xif)) in xi.iter().enumerate() {
+        for (xi_index, &xis @ (xir, xif, xia)) in xi.iter().enumerate() {
             for ((ord, bin, chan), subgrid) in self.subgrids.indexed_iter() {
                 let order = &self.orders[ord];
 
-                if ((order.logxir > 0) && (xir == 1.0)) || ((order.logxif > 0) && (xif == 1.0)) {
+                if ((order.logxir != 0) && approx_eq!(f64, xir, 1.0, ulps = 4))
+                    || ((order.logxif != 0) && approx_eq!(f64, xif, 1.0, ulps = 4))
+                    || ((order.logxia != 0) && approx_eq!(f64, xia, 1.0, ulps = 4))
+                {
                     continue;
                 }
 
@@ -375,36 +243,32 @@ impl Grid {
                 }
 
                 let channel = &pdg_channels[chan];
-                let mu2_grid = subgrid.mu2_grid();
-                let x1_grid = subgrid.x1_grid();
-                let x2_grid = subgrid.x2_grid();
+                let mut value = 0.0;
 
-                lumi_cache.set_grids(&mu2_grid, &x1_grid, &x2_grid, xir, xif);
+                cache.set_grids(self, subgrid, xis);
 
-                let mut value =
-                    subgrid.convolve(&x1_grid, &x2_grid, &mu2_grid, &mut |ix1, ix2, imu2| {
-                        let x1 = x1_grid[ix1];
-                        let x2 = x2_grid[ix2];
-                        let mut lumi = 0.0;
+                for (idx, v) in subgrid.indexed_iter() {
+                    let mut lumi = 0.0;
 
-                        for entry in channel.entry() {
-                            let xfx1 = lumi_cache.xfx1(entry.0, ix1, imu2);
-                            let xfx2 = lumi_cache.xfx2(entry.1, ix2, imu2);
-                            lumi += xfx1 * xfx2 * entry.2 / (x1 * x2);
-                        }
+                    for entry in channel.entry() {
+                        // TODO: we assume `idx` to be ordered as scale, x1, x2
+                        let fx_prod = cache.as_fx_prod(&entry.0, order.alphas, &idx);
+                        lumi += fx_prod * entry.1;
+                    }
 
-                        let alphas = lumi_cache.alphas(imu2);
-
-                        lumi *= alphas.powi(order.alphas.try_into().unwrap());
-                        lumi
-                    });
-
-                if order.logxir > 0 {
-                    value *= (xir * xir).ln().powi(order.logxir.try_into().unwrap());
+                    value += lumi * v;
                 }
 
-                if order.logxif > 0 {
-                    value *= (xif * xif).ln().powi(order.logxif.try_into().unwrap());
+                if order.logxir != 0 {
+                    value *= (xir * xir).ln().powi(order.logxir.into());
+                }
+
+                if order.logxif != 0 {
+                    value *= (xif * xif).ln().powi(order.logxif.into());
+                }
+
+                if order.logxia != 0 {
+                    value *= (xia * xia).ln().powi(order.logxia.into());
                 }
 
                 bins[xi_index + xi.len() * bin_index] += value / normalizations[bin];
@@ -414,87 +278,28 @@ impl Grid {
         bins
     }
 
-    /// Convolutes a single subgrid `(order, bin, channel)` with the PDFs strong coupling given by
-    /// `xfx1`, `xfx2` and `alphas`. The convolution result is fully differentially, such that the
-    /// axes of the result correspond to the values given by the subgrid `q2`, `x1` and `x2` grid
-    /// values.
+    /// Fills the grid with an ntuple for the given `order`, `observable`, and `channel`. The
+    /// parameter `ntuple` must contain the variables specified by the `kinematics` parameter in
+    /// the constructor [`Grid::new`] in the same order.
     ///
     /// # Panics
     ///
     /// TODO
-    pub fn convolve_subgrid(
-        &self,
-        lumi_cache: &mut LumiCache,
-        ord: usize,
-        bin: usize,
+    pub fn fill(
+        &mut self,
+        order: usize,
+        observable: f64,
         channel: usize,
-        xir: f64,
-        xif: f64,
-    ) -> Array3<f64> {
-        lumi_cache.setup(self, &[(xir, xif)]).unwrap();
-
-        let normalizations = self.bin_info().normalizations();
-        let pdg_channels = self.pdg_channels();
-
-        let subgrid = &self.subgrids[[ord, bin, channel]];
-        let order = &self.orders[ord];
-
-        let channel = &pdg_channels[channel];
-        let mu2_grid = subgrid.mu2_grid();
-        let x1_grid = subgrid.x1_grid();
-        let x2_grid = subgrid.x2_grid();
-
-        lumi_cache.set_grids(&mu2_grid, &x1_grid, &x2_grid, xir, xif);
-
-        let mut array = Array3::zeros((mu2_grid.len(), x1_grid.len(), x2_grid.len()));
-
-        for ((imu2, ix1, ix2), value) in subgrid.indexed_iter() {
-            let x1 = x1_grid[ix1];
-            let x2 = x2_grid[ix2];
-            let mut lumi = 0.0;
-
-            for entry in channel.entry() {
-                let xfx1 = lumi_cache.xfx1(entry.0, ix1, imu2);
-                let xfx2 = lumi_cache.xfx2(entry.1, ix2, imu2);
-                lumi += xfx1 * xfx2 * entry.2 / (x1 * x2);
-            }
-
-            let alphas = lumi_cache.alphas(imu2);
-
-            lumi *= alphas.powi(order.alphas.try_into().unwrap());
-
-            array[[imu2, ix1, ix2]] = lumi * value;
-        }
-
-        if order.logxir > 0 {
-            array *= (xir * xir).ln().powi(order.logxir.try_into().unwrap());
-        }
-
-        if order.logxif > 0 {
-            array *= (xif * xif).ln().powi(order.logxif.try_into().unwrap());
-        }
-
-        array /= normalizations[bin];
-        array
-    }
-
-    /// Fills the grid with an ntuple for the given `order`, `observable`, and `channel`.
-    ///
-    /// # Panics
-    ///
-    /// TODO
-    pub fn fill(&mut self, order: usize, observable: f64, channel: usize, ntuple: &Ntuple<f64>) {
-        if let Some(bin) = self.bin_limits.index(observable) {
+        ntuple: &[f64],
+        weight: f64,
+    ) {
+        if let Some(bin) = self.bwfl().fill_index(observable) {
             let subgrid = &mut self.subgrids[[order, bin, channel]];
             if let SubgridEnum::EmptySubgridV1(_) = subgrid {
-                if let MoreMembers::V3(mmv3) = &self.more_members {
-                    *subgrid = mmv3.subgrid_template.clone_empty();
-                } else {
-                    unreachable!();
-                }
+                *subgrid = InterpSubgridV1::new(&self.interps).into();
             }
 
-            subgrid.fill(ntuple);
+            subgrid.fill(&self.interps, ntuple, weight);
         }
     }
 
@@ -503,9 +308,9 @@ impl Grid {
     /// # Errors
     ///
     /// If reading from the compressed or uncompressed stream fails an error is returned.
-    pub fn read(reader: impl Read) -> Result<Self, GridError> {
+    pub fn read(reader: impl Read) -> Result<Self> {
         let mut reader = BufReader::new(reader);
-        let buffer = reader.fill_buf().map_err(GridError::IoFailure)?;
+        let buffer = reader.fill_buf().map_err(|err| Error::Other(err.into()))?;
         let magic_bytes: [u8; 4] = buffer[0..4].try_into().unwrap_or_else(|_| unreachable!());
 
         if u32::from_le_bytes(magic_bytes) == 0x18_4D_22_04 {
@@ -515,8 +320,9 @@ impl Grid {
         }
     }
 
-    fn read_uncompressed(mut reader: impl BufRead) -> Result<Self, GridError> {
-        let magic_bytes: [u8; 16] = reader.fill_buf().map_err(GridError::IoFailure)?[0..16]
+    fn read_uncompressed(mut reader: impl BufRead) -> Result<Self> {
+        let magic_bytes: [u8; 16] = reader.fill_buf().map_err(|err| Error::Other(err.into()))?
+            [0..16]
             .try_into()
             .unwrap_or_else(|_| unreachable!());
 
@@ -531,14 +337,13 @@ impl Grid {
             0
         };
 
-        if file_version != 0 {
-            return Err(GridError::FileVersionMismatch {
-                file_version,
-                supported_version: 0,
-            });
+        match file_version {
+            0 => v0::read_uncompressed_v0(reader),
+            1 => bincode::deserialize_from(reader).map_err(|err| Error::Other(err.into())),
+            _ => Err(Error::General(format!(
+                "file version {file_version} is not supported"
+            ))),
         }
-
-        bincode::deserialize_from(reader).map_err(GridError::ReadFailure)
     }
 
     /// Serializes `self` into `writer`. Writing is buffered.
@@ -546,15 +351,17 @@ impl Grid {
     /// # Errors
     ///
     /// If writing fails an error is returned.
-    pub fn write(&self, writer: impl Write) -> Result<(), GridError> {
+    pub fn write(&self, writer: impl Write) -> Result<()> {
         let mut writer = BufWriter::new(writer);
-        let file_header = b"PineAPPL\0\0\0\0\0\0\0\0";
+        let file_header = b"PineAPPL\x01\0\0\0\0\0\0\0";
 
         // first write PineAPPL file header
-        writer.write(file_header).map_err(GridError::IoFailure)?;
+        writer
+            .write(file_header)
+            .map_err(|err| Error::Other(err.into()))?;
 
         // then serialize
-        bincode::serialize_into(writer, self).map_err(GridError::WriteFailure)
+        bincode::serialize_into(writer, self).map_err(|err| Error::Other(err.into()))
     }
 
     /// Serializes `self` into `writer`, using LZ4 compression. Writing is buffered.
@@ -562,42 +369,14 @@ impl Grid {
     /// # Errors
     ///
     /// If writing or compression fails an error is returned.
-    ///
-    /// # Panics
-    ///
-    /// TODO
-    pub fn write_lz4(&self, writer: impl Write) -> Result<(), GridError> {
+    pub fn write_lz4(&self, writer: impl Write) -> Result<()> {
         let mut encoder = FrameEncoder::new(writer);
         self.write(&mut encoder)?;
-        // TODO: get rid of the unwrap call and return the error
-        encoder.try_finish().unwrap();
+        encoder
+            .try_finish()
+            .map_err(|err| Error::Other(err.into()))?;
 
         Ok(())
-    }
-
-    /// Fills the grid with events for the parton momentum fractions `x1` and `x2`, the scale `q2`,
-    /// and the `order` and `observable`. The events are stored in `weights` and their ordering
-    /// corresponds to the ordering of [`Grid::channels`].
-    pub fn fill_all(
-        &mut self,
-        order: usize,
-        observable: f64,
-        ntuple: &Ntuple<()>,
-        weights: &[f64],
-    ) {
-        for (channel, weight) in weights.iter().enumerate() {
-            self.fill(
-                order,
-                observable,
-                channel,
-                &Ntuple {
-                    x1: ntuple.x1,
-                    x2: ntuple.x2,
-                    q2: ntuple.q2,
-                    weight: *weight,
-                },
-            );
-        }
     }
 
     /// Return the channels for this `Grid`.
@@ -606,144 +385,162 @@ impl Grid {
         &self.channels
     }
 
-    /// Merges the bins for the corresponding range together in a single one.
+    fn channels_pdg(&self) -> Vec<Channel> {
+        self.channels()
+            .iter()
+            .cloned()
+            .map(|channel| self.pid_basis().translate(PidBasis::Pdg, channel))
+            .collect()
+    }
+
+    /// Merge the bins in indices in `range` together in a single one.
     ///
     /// # Errors
     ///
     /// When the given bins are non-consecutive, an error is returned.
-    pub fn merge_bins(&mut self, bins: Range<usize>) -> Result<(), GridError> {
-        self.bin_limits
-            .merge_bins(bins.clone())
-            .map_err(GridError::MergeBinError)?;
+    pub fn merge_bins(&mut self, range: impl RangeBounds<usize>) -> Result<()> {
+        let range_start = match range.start_bound().cloned() {
+            Bound::Included(start) => start,
+            Bound::Excluded(start) => start + 1,
+            Bound::Unbounded => 0,
+        };
+        let range_end = match range.end_bound().cloned() {
+            Bound::Included(end) => end + 1,
+            Bound::Excluded(end) => end,
+            Bound::Unbounded => self.bwfl().len(),
+        };
 
-        if let Some(remapper) = self.remapper_mut() {
-            remapper
-                .merge_bins(bins.clone())
-                .map_err(GridError::MergeBinError)?;
-        }
+        // check if the bins in `range` can be merged - if not return without changing `self`
+        self.bwfl = self
+            .bwfl()
+            .merge(range_start..range_end)
+            // TODO: use proper error handling
+            .unwrap_or_else(|_| unreachable!());
 
-        let bin_count = self.bin_info().bins();
-        let mut old_subgrids = mem::replace(
-            &mut self.subgrids,
-            Array3::from_shape_simple_fn(
-                (self.orders.len(), bin_count, self.channels.len()),
-                || EmptySubgridV1.into(),
-            ),
+        let (intermediate, right) = self.subgrids.view().split_at(BIN_AXIS, range_end);
+        let (left, merge) = intermediate.split_at(BIN_AXIS, range_start);
+
+        let mut merged: Array2<SubgridEnum> = Array2::from_elem(
+            (self.orders().len(), self.channels().len()),
+            EmptySubgridV1.into(),
         );
 
-        for ((order, bin, channel), subgrid) in old_subgrids.indexed_iter_mut() {
-            if subgrid.is_empty() {
-                continue;
-            }
-
-            if bins.contains(&bin) {
-                let new_subgrid = &mut self.subgrids[[order, bins.start, channel]];
-
-                if new_subgrid.is_empty() {
-                    mem::swap(new_subgrid, subgrid);
-                } else {
-                    new_subgrid.merge(subgrid, false);
-                }
-            } else {
-                let new_bin = if bin > bins.start {
-                    bin - (bins.end - bins.start) + 1
-                } else {
-                    bin
-                };
-
-                mem::swap(&mut self.subgrids[[order, new_bin, channel]], subgrid);
-            }
+        // merge the corresponding subgrids
+        for subview in merge.axis_iter(BIN_AXIS) {
+            Zip::from(&mut merged)
+                .and(subview)
+                .for_each(|lhs, rhs| lhs.merge(rhs, None));
         }
+        let merged = merged.insert_axis(BIN_AXIS);
+
+        self.subgrids = ndarray::concatenate(BIN_AXIS, &[left, merged.view(), right])
+            // UNWRAP: if this fails there's a bug
+            .unwrap_or_else(|_| unreachable!());
 
         Ok(())
     }
 
-    /// Merges the non-empty `Subgrid`s contained in `other` into `self`.
+    /// Merge non-empty `Subgrid`s contained in `other` into `self`. Subgrids with the same bin
+    /// limits are summed and subgrids with non-overlapping bin limits create new bins in `self`.
     ///
     /// # Errors
     ///
-    /// If the bin limits of `self` and `other` are different and if the bin limits of `other` can
-    /// not be merged with `self` an error is returned.
-    ///
-    /// # Panics
-    ///
-    /// TODO
-    pub fn merge(&mut self, mut other: Self) -> Result<(), GridError> {
-        let mut new_orders: Vec<Order> = Vec::new();
-        let mut new_bins = 0;
-        let mut new_entries: Vec<Channel> = Vec::new();
-
-        if self.bin_info() != other.bin_info() {
-            let lhs_bins = self.bin_info().bins();
-            new_bins = other.bin_info().bins();
-
-            let lhs_remapper = self.remapper_mut();
-            let rhs_remapper = other.remapper();
-
-            if let Some(lhs) = lhs_remapper {
-                if let Some(rhs) = rhs_remapper {
-                    lhs.merge(rhs).map_err(GridError::MergeBinError)?;
-
-                    let a = u32::try_from(lhs_bins).unwrap_or_else(|_| unreachable!());
-                    let b = u32::try_from(lhs_bins + new_bins).unwrap_or_else(|_| unreachable!());
-
-                    self.bin_limits = BinLimits::new((0..=b).map(f64::from).collect());
-                    other.bin_limits = BinLimits::new((a..=b).map(f64::from).collect());
-                } else {
-                    // Return an error
-                    todo!();
-                }
-            } else if rhs_remapper.is_none() {
-                self.bin_limits
-                    .merge(&other.bin_limits)
-                    .map_err(GridError::InvalidBinLimits)?;
-            } else {
-                // Return an error
-                todo!();
-            }
+    /// If `self` and `other` in have different convolutions, PID bases, kinematics,
+    /// interpolations, or scales an error is returned. If the bin limits of `self` and `other`
+    /// are different and if the bin limits of `other` cannot be merged with `self` an error is
+    /// returned.
+    pub fn merge(&mut self, mut other: Self) -> Result<()> {
+        if self.convolutions() != other.convolutions() {
+            return Err(Error::General("convolutions do not match".to_owned()));
+        }
+        if self.pid_basis() != other.pid_basis() {
+            return Err(Error::General("PID bases do not match".to_owned()));
+        }
+        // TODO: relax check if kinematic variables are permutations of each other
+        if self.kinematics() != other.kinematics() {
+            return Err(Error::General("kinematics do not match".to_owned()));
+        }
+        // TODO: relax check if subgrid types don't use interpolation
+        if self.interpolations() != other.interpolations() {
+            return Err(Error::General("interpolations do not match".to_owned()));
+        }
+        if self.scales() != other.scales() {
+            return Err(Error::General("scales do not match".to_owned()));
         }
 
-        for ((i, _, k), _) in other
-            .subgrids
-            .indexed_iter_mut()
-            .filter(|((_, _, _), subgrid)| !subgrid.is_empty())
-        {
+        let mut new_orders = Vec::new();
+        let mut new_bins = Vec::new();
+        let mut new_entries = Vec::new();
+
+        for ((i, j, k), subgrid) in other.subgrids.indexed_iter_mut() {
             let other_order = &other.orders[i];
+            let other_bin = &other.bwfl.bins()[j];
             let other_entry = &other.channels[k];
 
-            if !self
-                .orders
-                .iter()
-                .chain(new_orders.iter())
-                .any(|x| x == other_order)
+            if !subgrid.is_empty()
+                && !self
+                    .orders
+                    .iter()
+                    .chain(new_orders.iter())
+                    .any(|x| x == other_order)
             {
                 new_orders.push(other_order.clone());
             }
 
+            // add bins even if there are only empty subgrids
             if !self
-                .channels()
+                .bwfl
+                .bins()
                 .iter()
-                .chain(new_entries.iter())
-                .any(|y| y == other_entry)
+                .chain(new_bins.iter())
+                .any(|b| b.partial_eq_with_ulps(other_bin, 8))
+            {
+                new_bins.push(other_bin.clone());
+            }
+
+            if !subgrid.is_empty()
+                && !self
+                    .channels()
+                    .iter()
+                    .chain(new_entries.iter())
+                    .any(|y| y == other_entry)
             {
                 new_entries.push(other_entry.clone());
             }
         }
 
-        if !new_orders.is_empty() || !new_entries.is_empty() || (new_bins != 0) {
-            self.increase_shape(&(new_orders.len(), new_bins, new_entries.len()));
+        if !new_orders.is_empty() || !new_entries.is_empty() || !new_bins.is_empty() {
+            let old_dim = self.subgrids.raw_dim().into_pattern();
+            let mut new_subgrids = Array3::from_shape_simple_fn(
+                (
+                    old_dim.0 + new_orders.len(),
+                    old_dim.1 + new_bins.len(),
+                    old_dim.2 + new_entries.len(),
+                ),
+                || EmptySubgridV1.into(),
+            );
+
+            for (index, subgrid) in self.subgrids.indexed_iter_mut() {
+                mem::swap(&mut new_subgrids[<[usize; 3]>::from(index)], subgrid);
+            }
+
+            self.subgrids = new_subgrids;
+        }
+
+        let total_bins = u32::try_from(self.bwfl.bins().len() + new_bins.len())
+            // UNWRAP: if we have more than 2^32 bins something else is surely wrong
+            .unwrap_or_else(|_| unreachable!());
+
+        // if there are no new bins preserve the fill limits
+        if !new_bins.is_empty() {
+            self.bwfl = BinsWithFillLimits::new(
+                self.bwfl.bins().iter().chain(&new_bins).cloned().collect(),
+                (0..=total_bins).map(f64::from).collect(),
+            )?;
         }
 
         self.orders.append(&mut new_orders);
         self.channels.append(&mut new_entries);
-
-        let bin_indices: Vec<_> = (0..other.bin_info().bins())
-            .map(|bin| {
-                self.bin_info()
-                    .find_bin(&other.bin_info().bin_limits(bin))
-                    .unwrap_or_else(|| panic!("failed for {bin}"))
-            })
-            .collect();
 
         for ((i, j, k), subgrid) in other
             .subgrids
@@ -751,16 +548,33 @@ impl Grid {
             .filter(|((_, _, _), subgrid)| !subgrid.is_empty())
         {
             let other_order = &other.orders[i];
+            let other_bin = &other.bwfl.bins()[j];
             let other_entry = &other.channels[k];
 
-            let self_i = self.orders.iter().position(|x| x == other_order).unwrap();
-            let self_j = bin_indices[j];
-            let self_k = self.channels.iter().position(|y| y == other_entry).unwrap();
+            let self_i = self
+                .orders
+                .iter()
+                .position(|x| x == other_order)
+                // UNWRAP: we added the orders previously so we must find it
+                .unwrap_or_else(|| unreachable!());
+            let self_j = self
+                .bwfl()
+                .bins()
+                .iter()
+                .position(|b| b.partial_eq_with_ulps(other_bin, 8))
+                // UNWRAP: we added the channels previously so we must find it
+                .unwrap_or_else(|| unreachable!());
+            let self_k = self
+                .channels
+                .iter()
+                .position(|y| y == other_entry)
+                // UNWRAP: we added the channels previously so we must find it
+                .unwrap_or_else(|| unreachable!());
 
             if self.subgrids[[self_i, self_j, self_k]].is_empty() {
                 mem::swap(&mut self.subgrids[[self_i, self_j, self_k]], subgrid);
             } else {
-                self.subgrids[[self_i, self_j, self_k]].merge(&mut *subgrid, false);
+                self.subgrids[[self_i, self_j, self_k]].merge(subgrid, None);
             }
         }
 
@@ -774,119 +588,37 @@ impl Grid {
     /// Panics if the metadata key--value pairs `convolution_particle_1` and `convolution_type_1`,
     /// or `convolution_particle_2` and `convolution_type_2` are not correctly set.
     #[must_use]
-    pub fn convolutions(&self) -> Vec<Convolution> {
-        self.key_values().map_or_else(
-            // if there isn't any metadata, we assume two unpolarized proton-PDFs are used
-            || vec![Convolution::UnpolPDF(2212), Convolution::UnpolPDF(2212)],
-            |kv| {
-                // the current file format only supports exactly two convolutions
-                (1..=2)
-                    .map(|index| {
-                        // if there are key-value pairs `convolution_particle_1` and
-                        // `convolution_type_1` and the same with a higher index, we convert this
-                        // metadata into `Convolution`
-                        match (
-                            kv.get(&format!("convolution_particle_{index}"))
-                                .map(|s| s.parse::<i32>()),
-                            kv.get(&format!("convolution_type_{index}"))
-                                .map(String::as_str),
-                        ) {
-                            (_, Some("None")) => Convolution::None,
-                            (Some(Ok(pid)), Some("UnpolPDF")) => Convolution::UnpolPDF(pid),
-                            (Some(Ok(pid)), Some("PolPDF")) => Convolution::PolPDF(pid),
-                            (Some(Ok(pid)), Some("UnpolFF")) => Convolution::UnpolFF(pid),
-                            (Some(Ok(pid)), Some("PolFF")) => Convolution::PolFF(pid),
-                            (None, None) => {
-                                // if these key-value pairs are missing use the old metadata
-                                match kv
-                                    .get(&format!("initial_state_{index}"))
-                                    .map(|s| s.parse::<i32>())
-                                {
-                                    Some(Ok(pid)) => {
-                                        let condition = !self.channels().iter().all(|entry| {
-                                            entry.entry().iter().all(|&channels| match index {
-                                                1 => channels.0 == pid,
-                                                2 => channels.1 == pid,
-                                                _ => unreachable!(),
-                                            })
-                                        });
+    pub fn convolutions(&self) -> &[Conv] {
+        &self.convolutions
+    }
 
-                                        if condition {
-                                            Convolution::UnpolPDF(pid)
-                                        } else {
-                                            Convolution::None
-                                        }
-                                    }
-                                    None => Convolution::UnpolPDF(2212),
-                                    Some(Err(err)) => panic!("metadata 'initial_state_{index}' could not be parsed: {err}"),
-                                }
-                            }
-                            (None, Some(_)) => {
-                                panic!("metadata 'convolution_type_{index}' is missing")
-                            }
-                            (Some(_), None) => {
-                                panic!("metadata 'convolution_particle_{index}' is missing")
-                            }
-                            (Some(Ok(_)), Some(type_)) => {
-                                panic!("metadata 'convolution_type_{index} = {type_}' is unknown")
-                            }
-                            (Some(Err(err)), Some(_)) => panic!(
-                                "metadata 'convolution_particle_{index}' could not be parsed: {err}"
-                            ),
-                        }
+    /// Return the convolution types.
+    pub fn convolutions_mut(&mut self) -> &mut [Conv] {
+        &mut self.convolutions
+    }
+
+    /// Charge conjugate both the convolution function with index `convolution` and the PIDs in the
+    /// channel definition corresponding to it. This leaves the the results returned by
+    /// [`Grid::convolve`] invariant.
+    pub fn charge_conjugate(&mut self, convolution: usize) {
+        let pid_basis = *self.pid_basis();
+
+        for channel in self.channels_mut() {
+            *channel = Channel::new(
+                channel
+                    .entry()
+                    .iter()
+                    .cloned()
+                    .map(|(mut pids, f)| {
+                        let (cc_pid, f1) = pid_basis.charge_conjugate(pids[convolution]);
+                        pids[convolution] = cc_pid;
+                        (pids, f * f1)
                     })
-                    .collect()
-            },
-        )
-    }
-
-    /// Set the convolution type for this grid for the corresponding `index`.
-    pub fn set_convolution(&mut self, index: usize, convolution: Convolution) {
-        // remove outdated metadata
-        self.key_values_mut()
-            .remove(&format!("initial_state_{}", index + 1));
-
-        let (type_, particle) = match convolution {
-            Convolution::UnpolPDF(pid) => ("UnpolPDF".to_owned(), pid.to_string()),
-            Convolution::PolPDF(pid) => ("PolPDF".to_owned(), pid.to_string()),
-            Convolution::UnpolFF(pid) => ("UnpolFF".to_owned(), pid.to_string()),
-            Convolution::PolFF(pid) => ("PolFF".to_owned(), pid.to_string()),
-            Convolution::None => ("None".to_owned(), String::new()),
-        };
-
-        self.set_key_value(&format!("convolution_type_{}", index + 1), &type_);
-        self.set_key_value(&format!("convolution_particle_{}", index + 1), &particle);
-
-        // update the remaining metadata
-        for (index, convolution) in self.convolutions().into_iter().enumerate() {
-            if self
-                .key_values()
-                // UNWRAP: we set some key-values before so there must be a storage
-                .unwrap_or_else(|| unreachable!())
-                .get(&format!("initial_state_{}", index + 1))
-                .is_some()
-            {
-                self.set_convolution(index, convolution);
-            }
-        }
-    }
-
-    fn increase_shape(&mut self, new_dim: &(usize, usize, usize)) {
-        let old_dim = self.subgrids.raw_dim().into_pattern();
-        let mut new_subgrids = Array3::from_shape_simple_fn(
-            (
-                old_dim.0 + new_dim.0,
-                old_dim.1 + new_dim.1,
-                old_dim.2 + new_dim.2,
-            ),
-            || EmptySubgridV1.into(),
-        );
-
-        for ((i, j, k), subgrid) in self.subgrids.indexed_iter_mut() {
-            mem::swap(&mut new_subgrids[[i, j, k]], subgrid);
+                    .collect(),
+            );
         }
 
-        self.subgrids = new_subgrids;
+        self.convolutions_mut()[convolution] = self.convolutions()[convolution].cc();
     }
 
     /// Scale all subgrids by `factor`.
@@ -894,6 +626,26 @@ impl Grid {
         self.subgrids
             .iter_mut()
             .for_each(|subgrid| subgrid.scale(factor));
+    }
+
+    /// Repair the grid if it was written by bugged versions to disk.
+    ///
+    /// Returns `true` if this operations did anything. Currently, this scans for these problems:
+    /// - <https://github.com/NNPDF/pineappl/issues/338>
+    pub fn repair(&mut self) -> bool {
+        let mut repaired = false;
+
+        for subgrid in &mut self.subgrids {
+            // if the subgrid states it isn't empty and also doesn't return any elements it's
+            // broken; we need to fix that to avoid <https://github.com/NNPDF/pineappl/issues/338>
+            if !subgrid.is_empty() && subgrid.indexed_iter().count() == 0 {
+                *subgrid = EmptySubgridV1.into();
+
+                repaired = true;
+            }
+        }
+
+        repaired
     }
 
     /// Scales each subgrid by a factor which is the product of the given values `alphas`, `alpha`,
@@ -909,15 +661,17 @@ impl Grid {
         alpha: f64,
         logxir: f64,
         logxif: f64,
+        logxia: f64,
         global: f64,
     ) {
         for ((i, _, _), subgrid) in self.subgrids.indexed_iter_mut() {
             let order = &self.orders[i];
             let factor = global
-                * alphas.powi(order.alphas.try_into().unwrap())
-                * alpha.powi(order.alpha.try_into().unwrap())
-                * logxir.powi(order.logxir.try_into().unwrap())
-                * logxif.powi(order.logxif.try_into().unwrap());
+                * alphas.powi(order.alphas.into())
+                * alpha.powi(order.alpha.into())
+                * logxir.powi(order.logxir.into())
+                * logxif.powi(order.logxif.into())
+                * logxia.powi(order.logxia.into());
 
             subgrid.scale(factor);
         }
@@ -953,71 +707,40 @@ impl Grid {
 
     /// Return all subgrids as an `ArrayView3`.
     #[must_use]
-    pub fn subgrids(&self) -> ArrayView3<SubgridEnum> {
+    pub fn subgrids(&self) -> ArrayView3<'_, SubgridEnum> {
         self.subgrids.view()
     }
 
     /// Return all subgrids as an `ArrayViewMut3`.
     #[must_use]
-    pub fn subgrids_mut(&mut self) -> ArrayViewMut3<SubgridEnum> {
+    pub fn subgrids_mut(&mut self) -> ArrayViewMut3<'_, SubgridEnum> {
         self.subgrids.view_mut()
     }
 
-    /// Sets a remapper. A remapper can change the dimensions and limits of each bin in this grid.
-    /// This is useful because many Monte Carlo integrators and also `PineAPPL` do not support
-    /// multi-dimensional bins. To work around the problem the multi-dimensional bins can be
-    /// projected to one-dimensional bins, and the remapper can be used to restore the multi
-    /// dimensionality. Furthermore, it allows to normalize each bin separately, and independently
-    /// of the bin widths.
+    /// TODO
     ///
     /// # Errors
     ///
-    /// Returns an error if the number of bins in the grid and in the remapper do not agree.
-    ///
-    /// # Panics
-    ///
     /// TODO
-    pub fn set_remapper(&mut self, remapper: BinRemapper) -> Result<(), GridError> {
-        if remapper.bins() != self.bin_info().bins() {
-            return Err(GridError::BinNumberMismatch {
-                grid_bins: self.bin_info().bins(),
-                remapper_bins: remapper.bins(),
-            });
+    pub fn set_bwfl(&mut self, bwfl: BinsWithFillLimits) -> Result<()> {
+        let bins = bwfl.len();
+        let grid_bins = self.bwfl().len();
+
+        if bins != grid_bins {
+            return Err(Error::General(format!(
+                "{bins} are given, but the grid has {grid_bins}"
+            )));
         }
 
-        self.more_members.upgrade();
-
-        match &mut self.more_members {
-            MoreMembers::V1(_) => unreachable!(),
-            MoreMembers::V2(mmv2) => mmv2.remapper = Some(remapper),
-            MoreMembers::V3(mmv3) => mmv3.remapper = Some(remapper),
-        }
+        self.bwfl = bwfl;
 
         Ok(())
     }
 
-    /// Return the currently set remapper, if there is any.
+    /// TODO
     #[must_use]
-    pub const fn remapper(&self) -> Option<&BinRemapper> {
-        match &self.more_members {
-            MoreMembers::V1(_) => None,
-            MoreMembers::V2(mmv2) => mmv2.remapper.as_ref(),
-            MoreMembers::V3(mmv3) => mmv3.remapper.as_ref(),
-        }
-    }
-
-    fn remapper_mut(&mut self) -> Option<&mut BinRemapper> {
-        match &mut self.more_members {
-            MoreMembers::V1(_) => None,
-            MoreMembers::V2(mmv2) => mmv2.remapper.as_mut(),
-            MoreMembers::V3(mmv3) => mmv3.remapper.as_mut(),
-        }
-    }
-
-    /// Returns all information about the bins in this grid.
-    #[must_use]
-    pub const fn bin_info(&self) -> BinInfo {
-        BinInfo::new(&self.bin_limits, self.remapper())
+    pub const fn bwfl(&self) -> &BinsWithFillLimits {
+        &self.bwfl
     }
 
     /// Calls [`Self::optimize_using`] with all possible optimization options
@@ -1029,9 +752,11 @@ impl Grid {
     /// Optimizes the internal datastructures for space efficiency. The parameter `flags`
     /// determines which optimizations are applied, see [`GridOptFlags`].
     pub fn optimize_using(&mut self, flags: GridOptFlags) {
+        if flags.contains(GridOptFlags::OPTIMIZE_NODES) {
+            self.optimize_nodes();
+        }
         if flags.contains(GridOptFlags::OPTIMIZE_SUBGRID_TYPE) {
-            let ssd = flags.contains(GridOptFlags::STATIC_SCALE_DETECTION);
-            self.optimize_subgrid_type(ssd);
+            self.optimize_subgrid_type();
         }
         if flags.contains(GridOptFlags::SYMMETRIZE_CHANNELS) {
             self.symmetrize_channels();
@@ -1047,26 +772,22 @@ impl Grid {
         }
     }
 
-    fn optimize_subgrid_type(&mut self, static_scale_detection: bool) {
+    fn optimize_nodes(&mut self) {
+        for subgrid in &mut self.subgrids {
+            subgrid.optimize_nodes();
+        }
+    }
+
+    fn optimize_subgrid_type(&mut self) {
         for subgrid in &mut self.subgrids {
             match subgrid {
                 // replace empty subgrids of any type with `EmptySubgridV1`
                 _ if subgrid.is_empty() => {
                     *subgrid = EmptySubgridV1.into();
                 }
-                // can't be optimized without losing information
-                SubgridEnum::NtupleSubgridV1(_) => continue,
                 _ => {
-                    // TODO: this requires a `pub(crate)` in `LagrangeSubgridV2`; we should
-                    // replace this with a method
-                    if !static_scale_detection {
-                        if let SubgridEnum::LagrangeSubgridV2(subgrid) = subgrid {
-                            // disable static-scale detection
-                            subgrid.static_q2 = -1.0;
-                        }
-                    }
-
-                    *subgrid = ImportOnlySubgridV2::from(&*subgrid).into();
+                    // TODO: check if we should remove this
+                    *subgrid = ImportSubgridV1::from(&*subgrid).into();
                 }
             }
         }
@@ -1141,11 +862,11 @@ impl Grid {
                         rhs.scale(1.0 / factor);
                         if lhs.is_empty() {
                             // we can't merge into an EmptySubgridV1
-                            *lhs = rhs.clone_empty();
+                            *lhs = mem::replace(rhs, EmptySubgridV1.into());
+                        } else {
+                            lhs.merge(rhs, None);
+                            *rhs = EmptySubgridV1.into();
                         }
-                        lhs.merge(rhs, false);
-
-                        *rhs = EmptySubgridV1.into();
                     }
                 }
             }
@@ -1185,30 +906,55 @@ impl Grid {
     }
 
     fn symmetrize_channels(&mut self) {
-        let convolutions = self.convolutions();
-        if convolutions[0] != convolutions[1] {
-            return;
-        }
+        let pairs: Vec<_> = self
+            .convolutions()
+            .iter()
+            .enumerate()
+            .tuple_combinations()
+            .filter(|((_, conv_a), (_, conv_b))| conv_a == conv_b)
+            .map(|((idx_a, _), (idx_b, _))| (idx_a, idx_b))
+            .collect();
+
+        let (idx_a, idx_b) = match *pairs.as_slice() {
+            [] => return,
+            [pair] => pair,
+            _ => panic!("more than two equal convolutions found"),
+        };
+        let a_subgrid = self
+            .kinematics()
+            .iter()
+            .position(|&kin| kin == Kinematics::X(idx_a))
+            // UNWRAP: should be guaranteed by the constructor
+            .unwrap();
+        let b_subgrid = self
+            .kinematics()
+            .iter()
+            .position(|&kin| kin == Kinematics::X(idx_b))
+            // UNWRAP: should be guaranteed by the constructor
+            .unwrap();
 
         let mut indices: Vec<usize> = (0..self.channels.len()).rev().collect();
 
         while let Some(index) = indices.pop() {
             let channel_entry = &self.channels[index];
 
-            if *channel_entry == channel_entry.transpose() {
+            if *channel_entry == channel_entry.transpose(idx_a, idx_b) {
                 // check if in all cases the limits are compatible with merging
                 self.subgrids
                     .slice_mut(s![.., .., index])
                     .iter_mut()
                     .for_each(|subgrid| {
-                        if !subgrid.is_empty() && (subgrid.x1_grid() == subgrid.x2_grid()) {
-                            subgrid.symmetrize();
+                        if !subgrid.is_empty()
+                            && (subgrid.node_values()[a_subgrid]
+                                == subgrid.node_values()[b_subgrid])
+                        {
+                            subgrid.symmetrize(a_subgrid, b_subgrid);
                         }
                     });
             } else if let Some((j, &other_index)) = indices
                 .iter()
                 .enumerate()
-                .find(|(_, i)| self.channels[**i] == channel_entry.transpose())
+                .find(|(_, i)| self.channels[**i] == channel_entry.transpose(idx_a, idx_b))
             {
                 indices.remove(j);
 
@@ -1218,72 +964,39 @@ impl Grid {
                     .multi_slice_mut((s![.., .., index], s![.., .., other_index]));
 
                 for (lhs, rhs) in a.iter_mut().zip(b.iter_mut()) {
-                    if !rhs.is_empty() {
-                        if lhs.is_empty() {
-                            // we can't merge into an EmptySubgridV1
-                            *lhs = rhs.clone_empty();
-                        }
-
-                        lhs.merge(rhs, true);
-                        *rhs = EmptySubgridV1.into();
-                    }
+                    lhs.merge(rhs, Some((a_subgrid, b_subgrid)));
+                    *rhs = EmptySubgridV1.into();
                 }
             }
         }
     }
 
     /// Upgrades the internal data structures to their latest versions.
-    pub fn upgrade(&mut self) {
-        self.more_members.upgrade();
-    }
+    pub fn upgrade(&mut self) {}
 
-    /// Returns a map with key-value pairs, if there are any stored in this grid.
+    /// Return the metadata of this grid.
     #[must_use]
-    pub const fn key_values(&self) -> Option<&HashMap<String, String>> {
-        match &self.more_members {
-            MoreMembers::V3(mmv3) => Some(&mmv3.key_value_db),
-            MoreMembers::V2(mmv2) => Some(&mmv2.key_value_db),
-            MoreMembers::V1(_) => None,
-        }
+    pub const fn metadata(&self) -> &BTreeMap<String, String> {
+        &self.metadata
     }
 
-    /// Returns a map with key-value pairs, if there are any stored in this grid.
+    /// Return the metadata of this grid.
     ///
     /// # Panics
     ///
     /// TODO
     #[must_use]
-    pub fn key_values_mut(&mut self) -> &mut HashMap<String, String> {
-        self.more_members.upgrade();
-
-        match &mut self.more_members {
-            MoreMembers::V1(_) => unreachable!(),
-            MoreMembers::V2(mmv2) => &mut mmv2.key_value_db,
-            MoreMembers::V3(mmv3) => &mut mmv3.key_value_db,
-        }
-    }
-
-    /// Sets a specific key-value pair in this grid.
-    ///
-    /// # Panics
-    ///
-    /// TODO
-    pub fn set_key_value(&mut self, key: &str, value: &str) {
-        self.key_values_mut()
-            .insert(key.to_owned(), value.to_owned());
+    pub fn metadata_mut(&mut self) -> &mut BTreeMap<String, String> {
+        &mut self.metadata
     }
 
     /// Returns information for the generation of evolution operators that are being used in
-    /// [`Grid::evolve`] with the parameter `order_mask`.
+    /// [`Grid::convolve`] with the parameter `order_mask`.
     #[must_use]
     pub fn evolve_info(&self, order_mask: &[bool]) -> EvolveInfo {
-        use super::evolution::EVOLVE_INFO_TOL_ULPS;
-
-        let has_pdf1 = self.convolutions()[0] != Convolution::None;
-        let has_pdf2 = self.convolutions()[1] != Convolution::None;
-
         let mut ren1 = Vec::new();
         let mut fac1 = Vec::new();
+        let mut frg1 = Vec::new();
         let mut x1 = Vec::new();
         let mut pids1 = Vec::new();
 
@@ -1292,32 +1005,50 @@ impl Grid {
             .indexed_iter()
             .filter_map(|(tuple, subgrid)| {
                 (!subgrid.is_empty() && (order_mask.is_empty() || order_mask[tuple.0]))
-                    .then_some((tuple.2, subgrid))
+                    .then_some((&self.channels()[tuple.2], subgrid))
             })
         {
-            ren1.extend(subgrid.mu2_grid().iter().map(|Mu2 { ren, .. }| *ren));
+            ren1.extend(
+                self.scales()
+                    .ren
+                    .calc(&subgrid.node_values(), self.kinematics())
+                    .iter(),
+            );
             ren1.sort_by(f64::total_cmp);
-            ren1.dedup_by(|a, b| approx_eq!(f64, *a, *b, ulps = EVOLVE_INFO_TOL_ULPS));
+            ren1.dedup_by(subgrid::node_value_eq_ref_mut);
 
-            fac1.extend(subgrid.mu2_grid().iter().map(|Mu2 { fac, .. }| *fac));
+            fac1.extend(
+                self.scales()
+                    .fac
+                    .calc(&subgrid.node_values(), self.kinematics())
+                    .iter(),
+            );
             fac1.sort_by(f64::total_cmp);
-            fac1.dedup_by(|a, b| approx_eq!(f64, *a, *b, ulps = EVOLVE_INFO_TOL_ULPS));
+            fac1.dedup_by(subgrid::node_value_eq_ref_mut);
 
-            if has_pdf1 {
-                x1.extend(subgrid.x1_grid().iter().copied());
-            }
-            if has_pdf2 {
-                x1.extend(subgrid.x2_grid().iter());
-            }
+            frg1.extend(
+                self.scales()
+                    .frg
+                    .calc(&subgrid.node_values(), self.kinematics())
+                    .iter(),
+            );
+            frg1.sort_by(f64::total_cmp);
+            frg1.dedup_by(subgrid::node_value_eq_ref_mut);
+
+            x1.extend(
+                subgrid
+                    .node_values()
+                    .iter()
+                    .zip(self.kinematics())
+                    .filter(|(_, kin)| matches!(kin, Kinematics::X(_)))
+                    .flat_map(|(nv, _)| nv),
+            );
 
             x1.sort_by(f64::total_cmp);
-            x1.dedup_by(|a, b| approx_eq!(f64, *a, *b, ulps = EVOLVE_INFO_TOL_ULPS));
+            x1.dedup_by(subgrid::node_value_eq_ref_mut);
 
-            if has_pdf1 {
-                pids1.extend(self.channels()[channel].entry().iter().map(|(a, _, _)| a));
-            }
-            if has_pdf2 {
-                pids1.extend(self.channels()[channel].entry().iter().map(|(_, b, _)| b));
+            for (index, _) in self.convolutions().iter().enumerate() {
+                pids1.extend(channel.entry().iter().map(|(pids, _)| pids[index]));
             }
 
             pids1.sort_unstable();
@@ -1326,337 +1057,273 @@ impl Grid {
 
         EvolveInfo {
             fac1,
+            frg1,
             pids1,
             x1,
             ren1,
         }
     }
 
-    /// Converts this `Grid` into an [`FkTable`] using an evolution kernel operator (EKO) given as
-    /// `operator`. The dimensions and properties of this operator must be described using `info`.
-    /// The parameter `order_mask` can be used to include or exclude orders from this operation,
-    /// and must correspond to the ordering given by [`Grid::orders`]. Orders that are not given
-    /// are enabled, and in particular if `order_mask` is empty all orders are activated.
-    ///
-    /// # Errors
-    ///
-    /// Returns a [`GridError::EvolutionFailure`] if either the `operator` or its `info` is
-    /// incompatible with this `Grid`.
-    #[deprecated(since = "0.7.4", note = "use evolve_with_slice_iter instead")]
-    pub fn evolve(
-        &self,
-        operator: ArrayView5<f64>,
-        info: &OperatorInfo,
-        order_mask: &[bool],
-    ) -> Result<FkTable, GridError> {
-        self.evolve_with_slice_iter(
-            info.fac1
-                .iter()
-                .zip(operator.axis_iter(Axis(0)))
-                .map(|(&fac1, op)| {
-                    Ok::<_, GridError>((
-                        OperatorSliceInfo {
-                            fac0: info.fac0,
-                            pids0: info.pids0.clone(),
-                            x0: info.x0.clone(),
-                            fac1,
-                            pids1: info.pids1.clone(),
-                            x1: info.x1.clone(),
-                            pid_basis: info.pid_basis,
-                        },
-                        CowArray::from(op),
-                    ))
-                }),
-            order_mask,
-            (info.xir, info.xif),
-            &AlphasTable {
-                ren1: info.ren1.clone(),
-                alphas: info.alphas.clone(),
-            },
-        )
-    }
-
     // TODO:
     // - try to find a better solution than to require that E must be convertible into
     //   anyhow::Error
 
-    /// Converts this `Grid` into an [`FkTable`] using `slices` that must iterate over a [`Result`]
-    /// of tuples of an [`OperatorSliceInfo`] and the corresponding sliced operator. The parameter
-    /// `order_mask` can be used to include or exclude orders from this operation, and must
-    /// correspond to the ordering given by [`Grid::orders`]. Orders that are not given are
-    /// enabled, and in particular if `order_mask` is empty all orders are activated.
+    /// Convert this `Grid` into an [`FkTable`] using `slices.len()` evolution operators, which for
+    /// each entry must iterate over a [`Result`] of tuples of an [`OperatorSliceInfo`] and the
+    /// corresponding sliced operator. The parameter `order_mask` can be used to include or exclude
+    /// orders from this operation, and must correspond to the ordering given by [`Grid::orders`].
+    /// Orders that are not given are enabled, and in particular if `order_mask` is empty all
+    /// orders are activated.
     ///
     /// # Errors
     ///
-    /// Returns a [`GridError::EvolutionFailure`] if either the `operator` or its `info` is
-    /// incompatible with this `Grid`. Returns a [`GridError::Other`] if the iterator from `slices`
-    /// return an error.
-    pub fn evolve_with_slice_iter<'a, E: Into<anyhow::Error>>(
+    /// Returns an error if either the `operator` or its `info` is incompatible with this `Grid`,
+    /// or if the iterator from `slices` return an error.
+    pub fn evolve<
+        'a,
+        E: Into<anyhow::Error>,
+        S: IntoIterator<Item = std::result::Result<(OperatorSliceInfo, CowArray<'a, f64, Ix4>), E>>,
+    >(
         &self,
-        slices: impl IntoIterator<Item = Result<(OperatorSliceInfo, CowArray<'a, f64, Ix4>), E>>,
+        slices: Vec<S>,
         order_mask: &[bool],
-        xi: (f64, f64),
+        xi: (f64, f64, f64),
         alphas_table: &AlphasTable,
-    ) -> Result<FkTable, GridError> {
-        use super::evolution::EVOLVE_INFO_TOL_ULPS;
+    ) -> Result<FkTable> {
+        struct Iter<T> {
+            iters: Vec<T>,
+        }
 
-        let mut lhs: Option<Self> = None;
-        // Q2 slices we use
-        let mut used_op_fac1 = Vec::new();
-        // Q2 slices we encounter, but possibly don't use
-        let mut op_fac1 = Vec::new();
-        // Q2 slices needed by the grid
-        let grid_fac1: Vec<_> = self
-            .evolve_info(order_mask)
-            .fac1
-            .into_iter()
-            .map(|fac| xi.1 * xi.1 * fac)
-            .collect();
+        impl<T: Iterator> Iterator for Iter<T> {
+            type Item = Vec<T::Item>;
 
-        for result in slices {
-            let (info, operator) = result.map_err(|err| GridError::Other(err.into()))?;
+            fn next(&mut self) -> Option<Self::Item> {
+                // this will return `None` as soon as one of the Iterators retuns `None`
+                self.iters.iter_mut().map(Iterator::next).collect()
+            }
+        }
 
-            op_fac1.push(info.fac1);
+        // convert a `Vec<IntoIterator<Item = T>>` to a `IntoIterator<Item = Vec<T>>`
+        fn zip_n<O, T>(iters: O) -> impl Iterator<Item = Vec<T::Item>>
+        where
+            O: IntoIterator<Item = T>,
+            T: IntoIterator,
+        {
+            Iter {
+                iters: iters.into_iter().map(IntoIterator::into_iter).collect(),
+            }
+        }
 
-            // it's possible that due to small numerical differences we get two slices which are
-            // almost the same. We have to skip those in order not to evolve the 'same' slice twice
-            if used_op_fac1
-                .iter()
-                .any(|&fac| approx_eq!(f64, fac, info.fac1, ulps = EVOLVE_INFO_TOL_ULPS))
-            {
-                continue;
+        // result of this method
+        let mut result: Option<Self> = None;
+        // the EKOs' indices matching this Grid's convolutions
+        let mut eko_map = Vec::new();
+
+        // initial factorization and fragmentation scales
+        let mut scales0 = [None, None];
+        // factorization and fragmentation slices we use
+        let mut op_scales1 = [Vec::new(), Vec::new()];
+        // names for the scales in the same ordering
+        let names = ["fac", "frg"];
+
+        let EvolveInfo {
+            fac1: grid_fac1,
+            frg1: grid_frg1,
+            ..
+        } = self.evolve_info(order_mask);
+        let grid_scales1: [Vec<_>; 2] = [
+            // factorization scales needed by the grid
+            grid_fac1.into_iter().map(|fac| xi.1 * xi.1 * fac).collect(),
+            // fragmentation scales needed by the grid
+            grid_frg1.into_iter().map(|frg| xi.2 * xi.2 * frg).collect(),
+        ];
+
+        for slice in zip_n(slices) {
+            let (infos, operators): (Vec<_>, Vec<_>) = slice
+                .into_iter()
+                .map(|res| res.map_err(|err| Error::Other(err.into())))
+                .collect::<Result<_>>()?;
+
+            let pid_basis = infos[0].pid_basis;
+
+            if !infos.iter().all(|info| info.pid_basis == pid_basis) {
+                return Err(Error::General(
+                    "the EKOs' PID bases are not all equal".to_owned(),
+                ));
             }
 
-            // skip slices that the grid doesn't use
-            if !grid_fac1
-                .iter()
-                .any(|&fac| approx_eq!(f64, fac, info.fac1, ulps = EVOLVE_INFO_TOL_ULPS))
-            {
-                continue;
+            let mut scales1 = [None, None];
+
+            // check that all operators are compatible with each other
+            for (info, operator) in infos.iter().zip(&operators) {
+                let dim_op_info = (
+                    info.pids1.len(),
+                    info.x1.len(),
+                    info.pids0.len(),
+                    info.x0.len(),
+                );
+
+                if operator.dim() != dim_op_info {
+                    return Err(Error::General(format!(
+                        "operator information {dim_op_info:?} does not match the operator's dimensions: {:?}",
+                        operator.dim()
+                    )));
+                }
+
+                let idx = usize::from(!info.conv_type.is_pdf());
+
+                // check that both initial- and process-level scales agree among all operators of
+                // the same convolution type
+                for (scale, op_scale) in [
+                    (&mut scales0[idx], info.fac0),
+                    (&mut scales1[idx], info.fac1),
+                ] {
+                    if let &mut Some(scale) = scale {
+                        // check that the initial scale of all EKOs in this slice agree with each other
+                        if !approx_eq!(f64, scale, op_scale, ulps = 8) {
+                            return Err(Error::General(format!(
+                                "EKO slice's {0}{idx} = '{op_scale}' is incompatible with previous slices' {0}{idx} = '{scale}'",
+                                names[idx],
+                            )));
+                        }
+                    } else {
+                        *scale = Some(op_scale);
+                    }
+                }
             }
 
-            let op_info_dim = (
-                info.pids1.len(),
-                info.x1.len(),
-                info.pids0.len(),
-                info.x0.len(),
-            );
+            if eko_map.is_empty() {
+                let eko_conv_types: Vec<_> = infos.iter().map(|info| info.conv_type).collect();
 
-            assert_eq!(
-                operator.dim(),
-                op_info_dim,
-                "operator information {:?} does not match the operator's dimensions: {:?}",
-                op_info_dim,
-                operator.dim(),
-            );
+                // match this Grid's convolution types to the EKOs' convolution types
+                eko_map = self
+                    .convolutions()
+                    .iter()
+                    .map(|conv| {
+                        eko_conv_types
+                            .iter()
+                            .position(|&eko_conv_type| eko_conv_type == conv.conv_type())
+                            .ok_or_else(|| {
+                                Error::General(format!(
+                                    "no EKO for convolution type `{conv:?}` found"
+                                ))
+                            })
+                    })
+                    .collect::<Result<_>>()?;
+            }
 
-            let view = operator.view();
-
-            let (subgrids, channels) = if self.convolutions()[0] != Convolution::None
-                && self.convolutions()[1] != Convolution::None
+            for ((&scale1, op_scales1), grid_scales1) in
+                scales1.iter().zip(&mut op_scales1).zip(&grid_scales1)
             {
-                evolution::evolve_slice_with_two(self, &view, &info, order_mask, xi, alphas_table)
-            } else {
-                evolution::evolve_slice_with_one(self, &view, &info, order_mask, xi, alphas_table)
-            }?;
+                if let Some(scale1) = scale1 {
+                    // it's possible that due to small numerical differences we get two slices which
+                    // are almost the same. We have to skip those in order not to evolve the 'same'
+                    // slice twice
+                    if op_scales1
+                        .iter()
+                        .any(|&s| subgrid::node_value_eq(s, scale1))
+                    {
+                        continue;
+                    }
 
-            let mut rhs = Self {
-                subgrids,
-                channels,
-                bin_limits: self.bin_limits.clone(),
-                orders: vec![Order::new(0, 0, 0, 0)],
-                subgrid_params: SubgridParams::default(),
-                more_members: self.more_members.clone(),
+                    // skip slices that the grid doesn't use
+                    if !grid_scales1
+                        .iter()
+                        .any(|&s| subgrid::node_value_eq(s, scale1))
+                    {
+                        continue;
+                    }
+
+                    op_scales1.push(scale1);
+                }
+            }
+
+            let operators: Vec<_> = eko_map.iter().map(|&idx| operators[idx].view()).collect();
+            let infos: Vec<_> = eko_map.iter().map(|&idx| infos[idx].clone()).collect();
+
+            let (fac, frg, scale_values) = match scales0 {
+                [None, None] => unreachable!(),
+                [Some(fac0), None] => (ScaleFuncForm::Scale(0), ScaleFuncForm::NoScale, vec![fac0]),
+                [None, Some(frg0)] => (ScaleFuncForm::NoScale, ScaleFuncForm::Scale(0), vec![frg0]),
+                [Some(fac0), Some(frg0)] => {
+                    if approx_eq!(f64, fac0, frg0, ulps = 8) {
+                        (ScaleFuncForm::Scale(0), ScaleFuncForm::Scale(0), vec![fac0])
+                    } else {
+                        (
+                            ScaleFuncForm::Scale(0),
+                            ScaleFuncForm::Scale(1),
+                            vec![fac0, frg0],
+                        )
+                    }
+                }
             };
 
-            // TODO: use a new constructor to set this information
-            rhs.set_pid_basis(info.pid_basis);
-
-            if let Some(lhs) = &mut lhs {
-                lhs.merge(rhs)?;
-            } else {
-                lhs = Some(rhs);
-            }
-
-            used_op_fac1.push(info.fac1);
-        }
-
-        // UNWRAP: if we can't compare two numbers there's a bug
-        op_fac1.sort_by(|a, b| a.partial_cmp(b).unwrap_or_else(|| unreachable!()));
-
-        // make sure we've evolved all slices
-        if let Some(muf2) = grid_fac1.into_iter().find(|&grid_mu2| {
-            !used_op_fac1
-                .iter()
-                .any(|&eko_mu2| approx_eq!(f64, grid_mu2, eko_mu2, ulps = EVOLVE_INFO_TOL_ULPS))
-        }) {
-            return Err(GridError::EvolutionFailure(format!(
-                "no operator for muf2 = {muf2} found in {op_fac1:?}"
-            )));
-        }
-
-        // TODO: convert this unwrap into error
-        let grid = lhs.unwrap();
-
-        // UNWRAP: merging evolved slices should be a proper FkTable again
-        Ok(FkTable::try_from(grid).unwrap_or_else(|_| unreachable!()))
-    }
-
-    /// Converts this `Grid` into an [`FkTable`] using `slices` that must iterate over a [`Result`]
-    /// of tuples of an [`OperatorSliceInfo`] and the corresponding sliced operator. The parameter
-    /// `order_mask` can be used to include or exclude orders from this operation, and must
-    /// correspond to the ordering given by [`Grid::orders`]. Orders that are not given are
-    /// enabled, and in particular if `order_mask` is empty all orders are activated.
-    ///
-    /// # Errors
-    ///
-    /// Returns a [`GridError::EvolutionFailure`] if either the `operator` or its `info` is
-    /// incompatible with this `Grid`. Returns a [`GridError::Other`] if the iterator from `slices`
-    /// return an error.
-    pub fn evolve_with_slice_iter2<'a, E: Into<anyhow::Error>>(
-        &self,
-        slices_a: impl IntoIterator<Item = Result<(OperatorSliceInfo, CowArray<'a, f64, Ix4>), E>>,
-        slices_b: impl IntoIterator<Item = Result<(OperatorSliceInfo, CowArray<'a, f64, Ix4>), E>>,
-        order_mask: &[bool],
-        xi: (f64, f64),
-        alphas_table: &AlphasTable,
-    ) -> Result<FkTable, GridError> {
-        use super::evolution::EVOLVE_INFO_TOL_ULPS;
-        use itertools::izip;
-
-        let mut lhs: Option<Self> = None;
-        // Q2 slices we use
-        let mut used_op_fac1 = Vec::new();
-        // Q2 slices we encounter, but possibly don't use
-        let mut op_fac1 = Vec::new();
-        // Q2 slices needed by the grid
-        let grid_fac1: Vec<_> = self
-            .evolve_info(order_mask)
-            .fac1
-            .into_iter()
-            .map(|fac| xi.1 * xi.1 * fac)
-            .collect();
-
-        // TODO: simplify the ugly repetition below by offloading some ops into fn
-        for (result_a, result_b) in izip!(slices_a, slices_b) {
-            // Operate on `slices_a`
-            let (info_a, operator_a) = result_a.map_err(|err| GridError::Other(err.into()))?;
-            // Operate on `slices_b`
-            let (info_b, operator_b) = result_b.map_err(|err| GridError::Other(err.into()))?;
-
-            // TODO: what if the scales of the EKOs don't agree? Is there an ordering problem?
-            assert_approx_eq!(f64, info_a.fac1, info_b.fac1, ulps = EVOLVE_INFO_TOL_ULPS);
-
-            // also the PID bases must be the same
-            assert_eq!(info_a.pid_basis, info_b.pid_basis);
-
-            op_fac1.push(info_a.fac1);
-
-            // it's possible that due to small numerical differences we get two slices which are
-            // almost the same. We have to skip those in order not to evolve the 'same' slice twice
-            if used_op_fac1
-                .iter()
-                .any(|&fac| approx_eq!(f64, fac, info_a.fac1, ulps = EVOLVE_INFO_TOL_ULPS))
-            {
-                continue;
-            }
-
-            // skip slices that the grid doesn't use
-            if !grid_fac1
-                .iter()
-                .any(|&fac| approx_eq!(f64, fac, info_a.fac1, ulps = EVOLVE_INFO_TOL_ULPS))
-            {
-                continue;
-            }
-
-            let op_info_dim_a = (
-                info_a.pids1.len(),
-                info_a.x1.len(),
-                info_a.pids0.len(),
-                info_a.x0.len(),
-            );
-
-            assert_eq!(
-                operator_a.dim(),
-                op_info_dim_a,
-                "operator information {:?} does not match the operator's dimensions: {:?}",
-                op_info_dim_a,
-                operator_a.dim(),
-            );
-
-            let op_info_dim_b = (
-                info_b.pids1.len(),
-                info_b.x1.len(),
-                info_b.pids0.len(),
-                info_b.x0.len(),
-            );
-
-            assert_eq!(
-                operator_b.dim(),
-                op_info_dim_b,
-                "operator information {:?} does not match the operator's dimensions: {:?}",
-                op_info_dim_b,
-                operator_b.dim(),
-            );
-
-            let views = [operator_a.view(), operator_b.view()];
-            let infos = [info_a, info_b];
-
-            assert!(
-                (self.convolutions()[0] != Convolution::None)
-                    && (self.convolutions()[1] != Convolution::None),
-                "only one convolution found, use `Grid::evolve_with_slice_iter` instead"
-            );
-
-            let (subgrids, channels) = evolution::evolve_slice_with_two2(
+            let (subgrids, channels) = evolution::evolve_slice(
                 self,
-                &views,
+                &operators,
                 &infos,
+                &scale_values,
                 order_mask,
                 xi,
                 alphas_table,
             )?;
 
-            let mut rhs = Self {
+            let evolved_slice = Self {
                 subgrids,
+                bwfl: self.bwfl().clone(),
+                orders: vec![Order::new(0, 0, 0, 0, 0)],
                 channels,
-                bin_limits: self.bin_limits.clone(),
-                orders: vec![Order::new(0, 0, 0, 0)],
-                subgrid_params: SubgridParams::default(),
+                pid_basis,
+                convolutions: self.convolutions.clone(),
+                // TODO: the next line is probably wrong for flexible-scale grids
+                interps: self.interps.clone(),
+                kinematics: (0..scale_values.len())
+                    .map(Kinematics::Scale)
+                    .chain(
+                        self.kinematics
+                            .iter()
+                            .filter(|kin| matches!(kin, Kinematics::X(_)))
+                            .copied(),
+                    )
+                    .collect(),
+                scales: Scales {
+                    // FK-tables have their renormalization scales burnt in
+                    ren: ScaleFuncForm::NoScale,
+                    fac,
+                    frg,
+                },
+                metadata: self.metadata.clone(),
                 more_members: self.more_members.clone(),
+                // TODO: transform the reference result to match the FKTable structure
+                reference: self.reference.clone(),
             };
 
-            // TODO: use a new constructor to set this information
-            rhs.set_pid_basis(infos[0].pid_basis);
-
-            if let Some(lhs) = &mut lhs {
-                lhs.merge(rhs)?;
+            if let Some(result) = &mut result {
+                result.merge(evolved_slice)?;
             } else {
-                lhs = Some(rhs);
+                result = Some(evolved_slice);
             }
-
-            used_op_fac1.push(infos[0].fac1);
         }
 
-        // UNWRAP: if we can't compare two numbers there's a bug
-        op_fac1.sort_by(|a, b| a.partial_cmp(b).unwrap_or_else(|| unreachable!()));
-
-        // make sure we've evolved all slices
-        if let Some(muf2) = grid_fac1.into_iter().find(|&grid_mu2| {
-            !used_op_fac1
+        // make sure we've evolved all slices in the grid
+        for ((grid_scales1, op_scales1), name) in grid_scales1.iter().zip(&op_scales1).zip(&names) {
+            if let Some(scale1) = grid_scales1
                 .iter()
-                .any(|&eko_mu2| approx_eq!(f64, grid_mu2, eko_mu2, ulps = EVOLVE_INFO_TOL_ULPS))
-        }) {
-            return Err(GridError::EvolutionFailure(format!(
-                "no operator for muf2 = {muf2} found in {op_fac1:?}"
-            )));
+                .find(|&&a| !op_scales1.iter().any(|&b| subgrid::node_value_eq(a, b)))
+            {
+                return Err(Error::General(format!(
+                    "no operator for {name}1 = '{scale1}' found"
+                )));
+            }
         }
 
-        // TODO: convert this unwrap into error
-        let grid = lhs.unwrap();
+        // if we didn't actually perform an evolution an empty grid isn't guaranteed to be an
+        // FK-table
+        let result =
+            result.ok_or_else(|| Error::General("no evolution was performed".to_owned()))?;
 
         // UNWRAP: merging evolved slices should be a proper FkTable again
-        Ok(FkTable::try_from(grid).unwrap_or_else(|_| unreachable!()))
+        Ok(FkTable::try_from(result).unwrap_or_else(|_| unreachable!()))
     }
 
     /// Deletes bins with the corresponding `bin_indices`. Repeated indices and indices larger or
@@ -1666,7 +1333,7 @@ impl Grid {
             .iter()
             .copied()
             // ignore indices corresponding to bin that don't exist
-            .filter(|&index| index < self.bin_info().bins())
+            .filter(|&index| index < self.bwfl().len())
             .collect();
 
         // sort and remove repeated indices
@@ -1674,91 +1341,19 @@ impl Grid {
         bin_indices.dedup();
         let bin_indices = bin_indices;
 
-        let mut bin_ranges: Vec<Range<_>> = Vec::new();
-
-        // convert indices into consecutive ranges
-        for &bin_index in &bin_indices {
-            match bin_ranges.last_mut() {
-                Some(range) if range.end == bin_index => range.end += 1,
-                _ => bin_ranges.push(bin_index..(bin_index + 1)),
-            }
-        }
-
-        let bin_ranges = bin_ranges;
-        let mut ranges = bin_ranges.as_slice();
-        let old_limits = self.bin_limits.limits();
-
-        // remove the bins from the right first, so as not to invalidate any indices
-        if let Some((range, remainder)) = ranges.split_last() {
-            if range.end == self.bin_info().bins() {
-                self.bin_limits.delete_bins_right(range.end - range.start);
-                ranges = remainder;
-            }
-        }
-
-        // indices on the left aren't affected by removal of bins to their right
-        if let Some((range, remainder)) = ranges.split_first() {
-            if range.start == 0 {
-                self.bin_limits.delete_bins_left(range.end);
-                ranges = remainder;
-            }
-        }
-
-        if !ranges.is_empty() {
-            // if there's no remapper we need to store the bin limits in a new remapper
-            if self.remapper_mut().is_none() {
-                self.set_remapper(
-                    BinRemapper::new(
-                        old_limits.windows(2).map(|win| win[1] - win[0]).collect(),
-                        old_limits.windows(2).map(|win| (win[0], win[1])).collect(),
-                    )
-                    .unwrap_or_else(|_| unreachable!()),
-                )
-                .unwrap_or_else(|_| unreachable!());
-            }
-
-            // the following should not be needed, but let's set these limits to integer values
-            self.bin_limits = BinLimits::new(
-                iter::successors(Some(0.0), |x| Some(x + 1.0))
-                    .take(old_limits.len() - bin_indices.len())
-                    .collect(),
-            );
-        }
-
-        if let Some(remapper) = self.remapper_mut() {
-            remapper.delete_bins(&bin_ranges);
-        }
-
         for &bin_index in bin_indices.iter().rev() {
             self.subgrids.remove_index(Axis(1), bin_index);
+            self.bwfl.remove(bin_index);
         }
     }
 
     /// Change the particle ID convention.
     pub fn rotate_pid_basis(&mut self, pid_basis: PidBasis) {
-        match (self.pid_basis(), pid_basis) {
-            (PidBasis::Pdg, PidBasis::Evol) => {
-                self.channels = self
-                    .channels()
-                    .iter()
-                    .map(|channel| Channel::translate(channel, &pids::pdg_mc_pids_to_evol))
-                    .collect();
-
-                self.set_pid_basis(PidBasis::Evol);
-            }
-            (PidBasis::Evol, PidBasis::Pdg) => {
-                self.channels = self
-                    .channels()
-                    .iter()
-                    .map(|channel| Channel::translate(channel, &pids::evol_to_pdg_mc_ids))
-                    .collect();
-
-                self.set_pid_basis(PidBasis::Pdg);
-            }
-            (PidBasis::Evol, PidBasis::Evol) | (PidBasis::Pdg, PidBasis::Pdg) => {
-                // here's nothing to do
-            }
+        let self_pid_basis = *self.pid_basis();
+        for channel in &mut self.channels {
+            *channel = self_pid_basis.translate(pid_basis, channel.clone());
         }
+        self.pid_basis = pid_basis;
     }
 
     /// Deletes channels with the corresponding `channel_indices`. Repeated indices and indices
@@ -1805,42 +1400,6 @@ impl Grid {
         }
     }
 
-    pub(crate) fn rewrite_channels(&mut self, add: &[(i32, i32)], del: &[i32]) {
-        self.channels = self
-            .channels()
-            .iter()
-            .map(|entry| {
-                Channel::new(
-                    entry
-                        .entry()
-                        .iter()
-                        .map(|(a, b, f)| {
-                            (
-                                // if `a` is to be added to another pid replace it with this pid
-                                add.iter().fold(
-                                    *a,
-                                    |id, &(source, target)| if id == source { target } else { id },
-                                ),
-                                // if `b` is to be added to another pid replace it with this pid
-                                add.iter().fold(
-                                    *b,
-                                    |id, &(source, target)| if id == source { target } else { id },
-                                ),
-                                // if any of the pids `a` or `b` are to b deleted set the factor to
-                                // zero
-                                if del.iter().any(|id| id == a || id == b) {
-                                    0.0
-                                } else {
-                                    *f
-                                },
-                            )
-                        })
-                        .collect(),
-                )
-            })
-            .collect();
-    }
-
     /// Splits the grid such that each channel contains only a single tuple of PIDs.
     pub fn split_channels(&mut self) {
         let indices: Vec<_> = self
@@ -1858,126 +1417,287 @@ impl Grid {
                 entry
                     .entry()
                     .iter()
-                    .copied()
+                    .cloned()
                     .map(move |entry| Channel::new(vec![entry]))
             })
             .collect();
+    }
+
+    /// Merges the factors of the channels into the subgrids to normalize channel coefficients.
+    ///
+    /// This method factors out the smallest absolute coefficient from each channel using
+    /// [`boc::Channel::factor`] and then scales the corresponding subgrids by these factors.
+    pub fn merge_channel_factors(&mut self) {
+        let (factors, new_channels): (Vec<_>, Vec<_>) =
+            self.channels().iter().map(Channel::factor).unzip();
+
+        for (mut subgrids_bo, &factor) in self.subgrids.axis_iter_mut(CHANNEL_AXIS).zip(&factors) {
+            subgrids_bo.map_inplace(|subgrid| subgrid.scale(factor));
+        }
+
+        self.channels = new_channels;
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::boc::ScaleFuncForm;
     use crate::channel;
+    use crate::convolutions::ConvType;
+    use crate::interpolation::Map;
+    use float_cmp::assert_approx_eq;
     use std::fs::File;
 
     #[test]
-    fn grid_with_subgrid_type() {
-        let subgrid_type = String::from("Idontexist");
-        let result = Grid::with_subgrid_type(
-            vec![],
-            vec![],
-            vec![],
-            SubgridParams::default(),
-            ExtraSubgridParams::default(),
-            &subgrid_type,
+    fn interpolations() {
+        let grid = Grid::new(
+            BinsWithFillLimits::from_fill_limits([0.0, 1.0].to_vec()).unwrap(),
+            vec![Order::new(0, 2, 0, 0, 0)],
+            vec![Channel::new(vec![(vec![1, -1], 1.0), (vec![2, -2], 1.0)])],
+            PidBasis::Pdg,
+            vec![
+                Conv::new(ConvType::UnpolPDF, 2212),
+                Conv::new(ConvType::UnpolPDF, 2212),
+            ],
+            v0::default_interps(false, 2),
+            vec![Kinematics::Scale(0), Kinematics::X(0), Kinematics::X(1)],
+            Scales {
+                ren: ScaleFuncForm::Scale(0),
+                fac: ScaleFuncForm::Scale(0),
+                frg: ScaleFuncForm::NoScale,
+            },
         );
 
-        matches!(result, Err(GridError::UnknownSubgridType(x)) if x == subgrid_type);
+        let interps = grid.interpolations();
+        assert!(matches!(interps[0].map(), Map::ApplGridH0));
+        assert!(matches!(interps[1].map(), Map::ApplGridF2));
+        assert!(matches!(interps[2].map(), Map::ApplGridF2));
+    }
+
+    #[test]
+    #[should_panic(expected = "channel #0 has wrong number of PIDs: expected 2, found 3")]
+    fn grid_new_panic0() {
+        let channel = vec![(vec![1, -1, 1], 1.0), (vec![2, -2, 2], 1.0)];
+
+        let _ = Grid::new(
+            BinsWithFillLimits::from_fill_limits([0.0, 1.0].to_vec()).unwrap(),
+            vec![Order::new(0, 2, 0, 0, 0)],
+            vec![Channel::new(channel)],
+            PidBasis::Pdg,
+            vec![
+                Conv::new(ConvType::UnpolPDF, 2212),
+                Conv::new(ConvType::UnpolPDF, 2212),
+            ],
+            v0::default_interps(false, 2),
+            vec![Kinematics::Scale(0), Kinematics::X(0), Kinematics::X(1)],
+            Scales {
+                ren: ScaleFuncForm::Scale(0),
+                fac: ScaleFuncForm::Scale(0),
+                frg: ScaleFuncForm::NoScale,
+            },
+        );
+    }
+
+    #[test]
+    #[should_panic(expected = "interps and kinematics have different lengths: 2 vs. 3")]
+    fn grid_new_panic1() {
+        let channel = vec![(vec![1, -1], 1.0), (vec![2, -2], 1.0)];
+
+        let _ = Grid::new(
+            BinsWithFillLimits::from_fill_limits([0.0, 1.0].to_vec()).unwrap(),
+            vec![Order::new(0, 2, 0, 0, 0)],
+            vec![Channel::new(channel)],
+            PidBasis::Pdg,
+            vec![
+                Conv::new(ConvType::UnpolPDF, 2212),
+                Conv::new(ConvType::UnpolPDF, 2212),
+            ],
+            v0::default_interps(false, 1),
+            vec![Kinematics::Scale(0), Kinematics::X(0), Kinematics::X(1)],
+            Scales {
+                ren: ScaleFuncForm::Scale(0),
+                fac: ScaleFuncForm::Scale(0),
+                frg: ScaleFuncForm::NoScale,
+            },
+        );
+    }
+
+    #[test]
+    #[should_panic(expected = "scales and kinematics are not compatible")]
+    fn grid_new_panic2() {
+        let channel = vec![(vec![1, -1], 1.0), (vec![2, -2], 1.0)];
+
+        let _ = Grid::new(
+            BinsWithFillLimits::from_fill_limits([0.0, 1.0].to_vec()).unwrap(),
+            vec![Order::new(0, 2, 0, 0, 0)],
+            vec![Channel::new(channel)],
+            PidBasis::Pdg,
+            vec![
+                Conv::new(ConvType::UnpolPDF, 2212),
+                Conv::new(ConvType::UnpolPDF, 2212),
+            ],
+            v0::default_interps(false, 2),
+            vec![Kinematics::Scale(0), Kinematics::X(0), Kinematics::X(1)],
+            Scales {
+                ren: ScaleFuncForm::Scale(0),
+                fac: ScaleFuncForm::Scale(1),
+                frg: ScaleFuncForm::NoScale,
+            },
+        );
+    }
+
+    #[test]
+    fn grid_read_file_version_unsupported() {
+        let result = Grid::read(
+            &[
+                b'P', b'i', b'n', b'e', b'A', b'P', b'P', b'L', 99, 0, 0, 0, 0, 0, 0, 0,
+            ][..],
+        );
+
+        assert!(
+            matches!(result, Err(Error::General(msg)) if msg == "file version 99 is not supported")
+        );
     }
 
     #[test]
     fn grid_merge_empty_subgrids() {
         let mut grid = Grid::new(
+            BinsWithFillLimits::from_fill_limits([0.0, 0.25, 0.5, 0.75, 1.0].to_vec()).unwrap(),
+            vec![Order::new(0, 2, 0, 0, 0)],
             vec![
-                channel![2, 2, 1.0; 4, 4, 1.0],
-                channel![1, 1, 1.0; 3, 3, 1.0],
+                channel![1.0 * (2, 2) + 1.0 * (4, 4)],
+                channel![1.0 * (1, 1) + 1.0 * (3, 3)],
             ],
-            vec![Order::new(0, 2, 0, 0)],
-            vec![0.0, 0.25, 0.5, 0.75, 1.0],
-            SubgridParams::default(),
+            PidBasis::Pdg,
+            vec![Conv::new(ConvType::UnpolPDF, 2212); 2],
+            v0::default_interps(false, 2),
+            vec![Kinematics::Scale(0), Kinematics::X(0), Kinematics::X(1)],
+            Scales {
+                ren: ScaleFuncForm::Scale(0),
+                fac: ScaleFuncForm::Scale(0),
+                frg: ScaleFuncForm::NoScale,
+            },
         );
 
-        assert_eq!(grid.bin_info().bins(), 4);
+        assert_eq!(grid.bwfl().len(), 4);
         assert_eq!(grid.channels().len(), 2);
         assert_eq!(grid.orders().len(), 1);
 
         let other = Grid::new(
+            BinsWithFillLimits::from_fill_limits([0.0, 0.25, 0.5, 0.75, 1.0].to_vec()).unwrap(),
+            vec![Order::new(1, 2, 0, 0, 0), Order::new(1, 2, 0, 1, 0)],
             vec![
                 // differently ordered than `grid`
-                channel![1, 1, 1.0; 3, 3, 1.0],
-                channel![2, 2, 1.0; 4, 4, 1.0],
+                channel![1.0 * (1, 1) + 1.0 * (3, 3)],
+                channel![1.0 * (2, 2) + 1.0 * (4, 4)],
             ],
-            vec![Order::new(1, 2, 0, 0), Order::new(1, 2, 0, 1)],
-            vec![0.0, 0.25, 0.5, 0.75, 1.0],
-            SubgridParams::default(),
+            PidBasis::Pdg,
+            vec![Conv::new(ConvType::UnpolPDF, 2212); 2],
+            v0::default_interps(false, 2),
+            vec![Kinematics::Scale(0), Kinematics::X(0), Kinematics::X(1)],
+            Scales {
+                ren: ScaleFuncForm::Scale(0),
+                fac: ScaleFuncForm::Scale(0),
+                frg: ScaleFuncForm::NoScale,
+            },
         );
 
         // merging with empty subgrids should not change the grid
         grid.merge(other).unwrap();
 
-        assert_eq!(grid.bin_info().bins(), 4);
+        assert_eq!(grid.bwfl().len(), 4);
         assert_eq!(grid.channels().len(), 2);
         assert_eq!(grid.orders().len(), 1);
     }
 
     #[test]
+    fn grid_repair() {
+        use super::super::packed_array::PackedArray;
+        // create emtpy grid
+        let mut grid = Grid::new(
+            BinsWithFillLimits::from_fill_limits([0.0, 0.25, 0.5, 0.75, 1.0].to_vec()).unwrap(),
+            vec![Order::new(0, 2, 0, 0, 0)],
+            vec![channel![1.0 * (2, 2) + 1.0 * (4, 4)]],
+            PidBasis::Pdg,
+            vec![Conv::new(ConvType::UnpolPDF, 2212); 2],
+            v0::default_interps(false, 2),
+            vec![Kinematics::Scale(0), Kinematics::X(0), Kinematics::X(1)],
+            Scales {
+                ren: ScaleFuncForm::Scale(0),
+                fac: ScaleFuncForm::Scale(0),
+                frg: ScaleFuncForm::NoScale,
+            },
+        );
+        let was_repaired = grid.repair();
+        assert!(!was_repaired);
+        // insert nothing
+        let x = vec![
+            0.015625, 0.03125, 0.0625, 0.125, 0.1875, 0.25, 0.375, 0.5, 0.75, 1.0,
+        ];
+        let mut ar = PackedArray::new(vec![1, 10, 10]);
+        ar[[0, 0, 0]] = 0.;
+        let sg: SubgridEnum = ImportSubgridV1::new(ar, vec![vec![0.0], x.clone(), x]).into();
+        grid.subgrids_mut()[[0, 0, 0]] = sg;
+        let was_repaired = grid.repair();
+        assert!(was_repaired);
+    }
+
+    #[test]
     fn grid_merge_orders() {
         let mut grid = Grid::new(
+            BinsWithFillLimits::from_fill_limits([0.0, 0.25, 0.5, 0.75, 1.0].to_vec()).unwrap(),
+            vec![Order::new(0, 2, 0, 0, 0)],
             vec![
-                channel![2, 2, 1.0; 4, 4, 1.0],
-                channel![1, 1, 1.0; 3, 3, 1.0],
+                channel![1.0 * (2, 2) + 1.0 * (4, 4)],
+                channel![1.0 * (1, 1) + 1.0 * (3, 3)],
             ],
-            vec![Order::new(0, 2, 0, 0)],
-            vec![0.0, 0.25, 0.5, 0.75, 1.0],
-            SubgridParams::default(),
+            PidBasis::Pdg,
+            vec![Conv::new(ConvType::UnpolPDF, 2212); 2],
+            v0::default_interps(false, 2),
+            vec![Kinematics::Scale(0), Kinematics::X(0), Kinematics::X(1)],
+            Scales {
+                ren: ScaleFuncForm::Scale(0),
+                fac: ScaleFuncForm::Scale(0),
+                frg: ScaleFuncForm::NoScale,
+            },
         );
 
-        assert_eq!(grid.bin_info().bins(), 4);
+        assert_eq!(grid.bwfl().len(), 4);
         assert_eq!(grid.channels().len(), 2);
         assert_eq!(grid.orders().len(), 1);
 
         let mut other = Grid::new(
+            BinsWithFillLimits::from_fill_limits([0.0, 0.25, 0.5, 0.75, 1.0].to_vec()).unwrap(),
             vec![
-                channel![2, 2, 1.0; 4, 4, 1.0],
-                channel![1, 1, 1.0; 3, 3, 1.0],
+                Order::new(1, 2, 0, 0, 0),
+                Order::new(1, 2, 0, 1, 0),
+                Order::new(0, 2, 0, 0, 0),
             ],
             vec![
-                Order::new(1, 2, 0, 0),
-                Order::new(1, 2, 0, 1),
-                Order::new(0, 2, 0, 0),
+                channel![1.0 * (2, 2) + 1.0 * (4, 4)],
+                channel![1.0 * (1, 1) + 1.0 * (3, 3)],
             ],
-            vec![0.0, 0.25, 0.5, 0.75, 1.0],
-            SubgridParams::default(),
+            PidBasis::Pdg,
+            vec![Conv::new(ConvType::UnpolPDF, 2212); 2],
+            v0::default_interps(false, 2),
+            vec![Kinematics::Scale(0), Kinematics::X(0), Kinematics::X(1)],
+            Scales {
+                ren: ScaleFuncForm::Scale(0),
+                fac: ScaleFuncForm::Scale(0),
+                frg: ScaleFuncForm::NoScale,
+            },
         );
 
-        other.fill_all(
-            0,
-            0.1,
-            &Ntuple {
-                x1: 0.1,
-                x2: 0.2,
-                q2: 90.0_f64.powi(2),
-                weight: (),
-            },
-            &[1.0, 2.0],
-        );
-        other.fill_all(
-            1,
-            0.1,
-            &Ntuple {
-                x1: 0.1,
-                x2: 0.2,
-                q2: 90.0_f64.powi(2),
-                weight: (),
-            },
-            &[1.0, 2.0],
-        );
+        other.fill(0, 0.1, 0, &[90.0_f64.powi(2), 0.1, 0.2], 1.0);
+        other.fill(0, 0.1, 1, &[90.0_f64.powi(2), 0.1, 0.2], 2.0);
+        other.fill(1, 0.1, 0, &[90.0_f64.powi(2), 0.1, 0.2], 1.0);
+        other.fill(1, 0.1, 1, &[90.0_f64.powi(2), 0.1, 0.2], 2.0);
 
         // merge with four non-empty subgrids
         grid.merge(other).unwrap();
 
-        assert_eq!(grid.bin_info().bins(), 4);
+        assert_eq!(grid.bwfl().len(), 4);
         assert_eq!(grid.channels().len(), 2);
         assert_eq!(grid.orders().len(), 3);
     }
@@ -1985,42 +1705,51 @@ mod tests {
     #[test]
     fn grid_merge_channels_entries() {
         let mut grid = Grid::new(
+            BinsWithFillLimits::from_fill_limits([0.0, 0.25, 0.5, 0.75, 1.0].to_vec()).unwrap(),
+            vec![Order::new(0, 2, 0, 0, 0)],
             vec![
-                channel![2, 2, 1.0; 4, 4, 1.0],
-                channel![1, 1, 1.0; 3, 3, 1.0],
+                channel![1.0 * (2, 2) + 1.0 * (4, 4)],
+                channel![1.0 * (1, 1) + 1.0 * (3, 3)],
             ],
-            vec![Order::new(0, 2, 0, 0)],
-            vec![0.0, 0.25, 0.5, 0.75, 1.0],
-            SubgridParams::default(),
+            PidBasis::Pdg,
+            vec![Conv::new(ConvType::UnpolPDF, 2212); 2],
+            v0::default_interps(false, 2),
+            vec![Kinematics::Scale(0), Kinematics::X(0), Kinematics::X(1)],
+            Scales {
+                ren: ScaleFuncForm::Scale(0),
+                fac: ScaleFuncForm::Scale(0),
+                frg: ScaleFuncForm::NoScale,
+            },
         );
 
-        assert_eq!(grid.bin_info().bins(), 4);
+        assert_eq!(grid.bwfl().len(), 4);
         assert_eq!(grid.channels().len(), 2);
         assert_eq!(grid.orders().len(), 1);
 
         let mut other = Grid::new(
-            vec![channel![22, 22, 1.0], channel![2, 2, 1.0; 4, 4, 1.0]],
-            vec![Order::new(0, 2, 0, 0)],
-            vec![0.0, 0.25, 0.5, 0.75, 1.0],
-            SubgridParams::default(),
-        );
-
-        // fill the photon-photon entry
-        other.fill(
-            0,
-            0.1,
-            0,
-            &Ntuple {
-                x1: 0.1,
-                x2: 0.2,
-                q2: 90.0_f64.powi(2),
-                weight: 3.0,
+            BinsWithFillLimits::from_fill_limits([0.0, 0.25, 0.5, 0.75, 1.0].to_vec()).unwrap(),
+            vec![Order::new(0, 2, 0, 0, 0)],
+            vec![
+                channel![1.0 * (22, 22)],
+                channel![1.0 * (2, 2) + 1.0 * (4, 4)],
+            ],
+            PidBasis::Pdg,
+            vec![Conv::new(ConvType::UnpolPDF, 2212); 2],
+            v0::default_interps(false, 2),
+            vec![Kinematics::Scale(0), Kinematics::X(0), Kinematics::X(1)],
+            Scales {
+                ren: ScaleFuncForm::Scale(0),
+                fac: ScaleFuncForm::Scale(0),
+                frg: ScaleFuncForm::NoScale,
             },
         );
 
+        // fill the photon-photon entry
+        other.fill(0, 0.1, 0, &[90.0_f64.powi(2), 0.1, 0.2], 3.0);
+
         grid.merge(other).unwrap();
 
-        assert_eq!(grid.bin_info().bins(), 4);
+        assert_eq!(grid.bwfl().len(), 4);
         assert_eq!(grid.channels().len(), 3);
         assert_eq!(grid.orders().len(), 1);
     }
@@ -2028,77 +1757,117 @@ mod tests {
     #[test]
     fn grid_merge_bins() {
         let mut grid = Grid::new(
+            BinsWithFillLimits::from_fill_limits([0.0, 0.25, 0.5].to_vec()).unwrap(),
+            vec![Order::new(0, 2, 0, 0, 0)],
             vec![
-                channel![2, 2, 1.0; 4, 4, 1.0],
-                channel![1, 1, 1.0; 3, 3, 1.0],
+                channel![1.0 * (2, 2) + 1.0 * (4, 4)],
+                channel![1.0 * (1, 1) + 1.0 * (3, 3)],
             ],
-            vec![Order::new(0, 2, 0, 0)],
-            vec![0.0, 0.25, 0.5],
-            SubgridParams::default(),
+            PidBasis::Pdg,
+            vec![Conv::new(ConvType::UnpolPDF, 2212); 2],
+            v0::default_interps(false, 2),
+            vec![Kinematics::Scale(0), Kinematics::X(0), Kinematics::X(1)],
+            Scales {
+                ren: ScaleFuncForm::Scale(0),
+                fac: ScaleFuncForm::Scale(0),
+                frg: ScaleFuncForm::NoScale,
+            },
         );
 
-        assert_eq!(grid.bin_info().bins(), 2);
+        assert_eq!(grid.bwfl().len(), 2);
         assert_eq!(grid.channels().len(), 2);
         assert_eq!(grid.orders().len(), 1);
 
         let mut other = Grid::new(
+            BinsWithFillLimits::from_fill_limits([0.5, 0.75, 1.0].to_vec()).unwrap(),
+            vec![Order::new(0, 2, 0, 0, 0)],
             vec![
                 // channels are differently sorted
-                channel![1, 1, 1.0; 3, 3, 1.0],
-                channel![2, 2, 1.0; 4, 4, 1.0],
+                channel![1.0 * (1, 1) + 1.0 * (3, 3)],
+                channel![1.0 * (2, 2) + 1.0 * (4, 4)],
             ],
-            vec![Order::new(0, 2, 0, 0)],
-            vec![0.5, 0.75, 1.0],
-            SubgridParams::default(),
+            PidBasis::Pdg,
+            vec![Conv::new(ConvType::UnpolPDF, 2212); 2],
+            v0::default_interps(false, 2),
+            vec![Kinematics::Scale(0), Kinematics::X(0), Kinematics::X(1)],
+            Scales {
+                ren: ScaleFuncForm::Scale(0),
+                fac: ScaleFuncForm::Scale(0),
+                frg: ScaleFuncForm::NoScale,
+            },
         );
 
-        other.fill_all(
-            0,
-            0.1,
-            &Ntuple {
-                x1: 0.1,
-                x2: 0.2,
-                q2: 90.0_f64.powi(2),
-                weight: (),
-            },
-            &[2.0, 3.0],
-        );
+        other.fill(0, 0.1, 0, &[90.0_f64.powi(2), 0.1, 0.2], 2.0);
+        other.fill(0, 0.1, 1, &[90.0_f64.powi(2), 0.1, 0.2], 3.0);
 
         grid.merge(other).unwrap();
 
-        assert_eq!(grid.bin_info().bins(), 4);
+        assert_eq!(grid.bwfl().len(), 4);
         assert_eq!(grid.channels().len(), 2);
         assert_eq!(grid.orders().len(), 1);
     }
 
-    // TODO: convolve_subgrid, merge_bins, subgrid, set_subgrid
+    #[test]
+    fn grid_merge_channel_factors() {
+        let mut grid = Grid::new(
+            BinsWithFillLimits::from_fill_limits([0.0, 1.0].to_vec()).unwrap(),
+            vec![Order::new(0, 2, 0, 0, 0)],
+            vec![Channel::new(vec![(vec![1, -1], 0.5), (vec![2, -2], 2.5)])],
+            PidBasis::Pdg,
+            vec![Conv::new(ConvType::UnpolPDF, 2212); 2],
+            v0::default_interps(false, 2),
+            vec![Kinematics::Scale(0), Kinematics::X(0), Kinematics::X(1)],
+            Scales {
+                ren: ScaleFuncForm::Scale(0),
+                fac: ScaleFuncForm::Scale(0),
+                frg: ScaleFuncForm::NoScale,
+            },
+        );
+
+        grid.merge_channel_factors();
+        grid.channels().iter().all(|channel| {
+            channel
+                .entry()
+                .iter()
+                .all(|(_, fac)| (*fac - 1.0).abs() < f64::EPSILON)
+        });
+    }
 
     #[test]
     fn grid_convolutions() {
         let mut grid = Grid::new(
-            vec![channel![21, 21, 1.0]],
-            vec![Order {
-                alphas: 0,
-                alpha: 0,
-                logxir: 0,
-                logxif: 0,
-            }],
-            vec![0.0, 1.0],
-            SubgridParams::default(),
+            BinsWithFillLimits::from_fill_limits([0.0, 1.0].to_vec()).unwrap(),
+            vec![Order::new(0, 0, 0, 0, 0)],
+            vec![channel![1.0 * (21, 21)]],
+            PidBasis::Pdg,
+            vec![Conv::new(ConvType::UnpolPDF, 2212); 2],
+            v0::default_interps(false, 2),
+            vec![Kinematics::Scale(0), Kinematics::X(0), Kinematics::X(1)],
+            Scales {
+                ren: ScaleFuncForm::Scale(0),
+                fac: ScaleFuncForm::Scale(0),
+                frg: ScaleFuncForm::NoScale,
+            },
         );
 
         // by default we assume unpolarized proton PDFs are used
         assert_eq!(
             grid.convolutions(),
-            [Convolution::UnpolPDF(2212), Convolution::UnpolPDF(2212)]
+            [
+                Conv::new(ConvType::UnpolPDF, 2212),
+                Conv::new(ConvType::UnpolPDF, 2212)
+            ]
         );
 
-        grid.set_convolution(0, Convolution::UnpolPDF(-2212));
-        grid.set_convolution(1, Convolution::UnpolPDF(-2212));
+        grid.convolutions_mut()[0] = Conv::new(ConvType::UnpolPDF, -2212);
+        grid.convolutions_mut()[1] = Conv::new(ConvType::UnpolPDF, -2212);
 
         assert_eq!(
             grid.convolutions(),
-            [Convolution::UnpolPDF(-2212), Convolution::UnpolPDF(-2212)]
+            [
+                Conv::new(ConvType::UnpolPDF, -2212),
+                Conv::new(ConvType::UnpolPDF, -2212)
+            ]
         );
     }
 

@@ -1,8 +1,9 @@
 use super::GlobalConfiguration;
-use anyhow::{anyhow, ensure, Context, Error, Result};
+use anyhow::{anyhow, bail, Context, Error, Result};
+use itertools::Itertools;
 use lhapdf::{Pdf, PdfSet};
-use ndarray::Array3;
-use pineappl::convolutions::LumiCache;
+use pineappl::boc::{ScaleFuncForm, Scales};
+use pineappl::convolutions::{Conv, ConvType, ConvolutionCache};
 use pineappl::grid::Grid;
 use prettytable::format::{FormatBuilder, LinePosition, LineSeparator};
 use prettytable::Table;
@@ -17,6 +18,7 @@ use std::str::FromStr;
 pub struct ConvFuns {
     pub lhapdf_names: Vec<String>,
     pub members: Vec<Option<usize>>,
+    pub conv_types: Vec<ConvType>,
     pub label: String,
 }
 
@@ -25,22 +27,38 @@ impl FromStr for ConvFuns {
 
     fn from_str(arg: &str) -> std::result::Result<Self, Self::Err> {
         let (names, label) = arg.split_once('=').unwrap_or((arg, arg));
-        let (lhapdf_names, members) = names
+        let (lhapdf_names, members, conv_types) = names
             .split(',')
             .map(|fun| {
-                Ok::<_, Error>(if let Some((name, mem)) = fun.split_once('/') {
-                    (name.to_owned(), Some(mem.parse()?))
-                } else {
-                    (fun.to_owned(), None)
-                })
+                let (name, typ) = fun.split_once('+').unwrap_or((fun, ""));
+                let (name, mem) = name.split_once('/').map_or((name, None), |(name, mem)| {
+                    (
+                        name,
+                        Some(
+                            mem.parse()
+                                // TODO: do proper error handling
+                                .unwrap(),
+                        ),
+                    )
+                });
+                let name = name.to_owned();
+                let typ = match typ {
+                    "" => ConvType::UnpolPDF,
+                    "p" => ConvType::PolPDF,
+                    "f" => ConvType::UnpolFF,
+                    "pf" | "fp" => ConvType::PolFF,
+                    _ => bail!("unknown convolution type '{typ}'"),
+                };
+                Ok::<_, Error>((name, mem, typ))
             })
-            .collect::<Result<Vec<(_, _)>, _>>()?
+            .collect::<Result<Vec<(_, _, _)>, _>>()?
             .into_iter()
-            .unzip();
+            .multiunzip();
 
         Ok(Self {
             lhapdf_names,
             members,
+            conv_types,
             label: label.to_owned(),
         })
     }
@@ -109,7 +127,7 @@ pub fn write_grid(output: &Path, grid: &Grid) -> Result<ExitCode> {
         .open(output)
         .context(format!("unable to write '{}'", output.display()))?;
 
-    if output.extension().map_or(false, |ext| ext == "lz4") {
+    if output.extension().is_some_and(|ext| ext == "lz4") {
         grid.write_lz4(file)?;
     } else {
         grid.write(file)?;
@@ -129,30 +147,73 @@ pub fn create_table() -> Table {
     table
 }
 
-pub const SCALES_VECTOR: [(f64, f64); 9] = [
-    (1.0, 1.0),
-    (2.0, 2.0),
-    (0.5, 0.5),
-    (2.0, 1.0),
-    (1.0, 2.0),
-    (0.5, 1.0),
-    (1.0, 0.5),
-    (2.0, 0.5),
-    (0.5, 2.0),
+pub const SCALES_VECTOR_REN_FAC: [(f64, f64, f64); 9] = [
+    (1.0, 1.0, 1.0),
+    (2.0, 2.0, 1.0),
+    (0.5, 0.5, 1.0),
+    (2.0, 1.0, 1.0),
+    (1.0, 2.0, 1.0),
+    (0.5, 1.0, 1.0),
+    (1.0, 0.5, 1.0),
+    (2.0, 0.5, 1.0),
+    (0.5, 2.0, 1.0),
+];
+
+const SCALES_VECTOR_REN_FRG: [(f64, f64, f64); 9] = [
+    (1.0, 1.0, 1.0),
+    (2.0, 1.0, 2.0),
+    (0.5, 1.0, 0.5),
+    (2.0, 1.0, 1.0),
+    (1.0, 1.0, 2.0),
+    (0.5, 1.0, 1.0),
+    (1.0, 1.0, 0.5),
+    (2.0, 1.0, 0.5),
+    (0.5, 1.0, 2.0),
+];
+
+const SCALES_VECTOR_27: [(f64, f64, f64); 27] = [
+    (1.0, 1.0, 1.0),
+    (2.0, 2.0, 2.0),
+    (0.5, 0.5, 0.5),
+    (0.5, 0.5, 1.0),
+    (0.5, 1.0, 0.5),
+    (0.5, 1.0, 1.0),
+    (0.5, 1.0, 2.0),
+    (1.0, 0.5, 0.5),
+    (1.0, 0.5, 1.0),
+    (1.0, 1.0, 0.5),
+    (1.0, 1.0, 2.0),
+    (1.0, 2.0, 1.0),
+    (1.0, 2.0, 2.0),
+    (2.0, 1.0, 0.5),
+    (2.0, 1.0, 1.0),
+    (2.0, 1.0, 2.0),
+    (2.0, 2.0, 1.0),
+    (2.0, 0.5, 0.5),
+    (0.5, 2.0, 0.5),
+    (1.0, 2.0, 0.5),
+    (2.0, 2.0, 0.5),
+    (2.0, 0.5, 1.0),
+    (0.5, 2.0, 1.0),
+    (0.5, 0.5, 2.0),
+    (1.0, 0.5, 2.0),
+    (2.0, 0.5, 2.0),
+    (0.5, 2.0, 2.0),
 ];
 
 pub fn labels_and_units(grid: &Grid, integrated: bool) -> (Vec<(String, &str)>, &str, &str) {
-    let key_values = grid.key_values();
+    let metadata = grid.metadata();
 
     (
-        (0..grid.bin_info().dimensions())
+        (0..grid.bwfl().dimensions())
             .map(|d| {
                 (
-                    key_values
-                        .and_then(|kv| kv.get(&format!("x{}_label", d + 1)).cloned())
+                    metadata
+                        .get(&format!("x{}_label", d + 1))
+                        .cloned()
                         .unwrap_or_else(|| format!("x{}", d + 1)),
-                    key_values
-                        .and_then(|kv| kv.get(&format!("x{}_unit", d + 1)))
+                    metadata
+                        .get(&format!("x{}_unit", d + 1))
                         .map_or("", String::as_str),
                 )
             })
@@ -160,16 +221,12 @@ pub fn labels_and_units(grid: &Grid, integrated: bool) -> (Vec<(String, &str)>, 
         if integrated {
             "integ"
         } else {
-            key_values
-                .and_then(|kv| kv.get("y_label").map(String::as_str))
-                .unwrap_or("diff")
+            metadata.get("y_label").map_or("diff", String::as_str)
         },
         if integrated {
             "" // TODO: compute the units for the integrated cross section
         } else {
-            key_values
-                .and_then(|kv| kv.get("y_unit").map(String::as_str))
-                .unwrap_or("")
+            metadata.get("y_unit").map_or("", String::as_str)
         },
     )
 }
@@ -184,10 +241,11 @@ pub enum ConvoluteMode {
 pub fn convolve_scales(
     grid: &Grid,
     conv_funs: &mut [Pdf],
-    orders: &[(u32, u32)],
+    conv_types: &[ConvType],
+    orders: &[(u8, u8)],
     bins: &[usize],
     channels: &[bool],
-    scales: &[(f64, f64)],
+    scales: &[(f64, f64, f64)],
     mode: ConvoluteMode,
     cfg: &GlobalConfiguration,
 ) -> Vec<f64> {
@@ -211,7 +269,8 @@ pub fn convolve_scales(
     // TODO: promote this to an error
     assert!(
         cfg.use_alphas_from < conv_funs.len(),
-        "expected `use_alphas_from` to be `0` or `1`, is `{}`",
+        "expected `use_alphas_from` to be an integer within `[0, {})`, but got `{}`",
+        conv_funs.len(),
         cfg.use_alphas_from
     );
 
@@ -232,44 +291,36 @@ pub fn convolve_scales(
             }
         })
         .collect();
+    let xfx: Vec<_> = funs
+        .iter_mut()
+        .map(|fun| fun as &mut dyn FnMut(i32, f64, f64) -> f64)
+        .collect();
     let mut alphas_funs: Vec<_> = conv_funs
         .iter()
         .map(|fun| move |q2| fun.alphas_q2(q2))
         .collect();
-    let pdg_ids: Vec<_> = conv_funs
+    let convolutions: Vec<_> = conv_funs
         .iter()
-        .map(|fun| {
-            // if the field 'Particle' is missing we assume it's a proton PDF
-            fun.set()
+        .zip(conv_types)
+        .map(|(fun, &conv_type)| {
+            let pid = fun
+                .set()
                 .entry("Particle")
+                // if the field 'Particle' is missing we assume it's a proton PDF
                 .map_or(Ok(2212), |string| string.parse::<i32>())
                 // UNWRAP: if this fails, there's a non-integer string in the LHAPDF info file
-                .unwrap()
+                .unwrap();
+
+            Conv::new(conv_type, pid)
         })
         .collect();
 
-    // TODO: write a new constructor of `LumiCache` that accepts a vector of all the arguments
-    let mut cache = match funs.as_mut_slice() {
-        [funs0] => LumiCache::with_one(pdg_ids[0], funs0, &mut alphas_funs[cfg.use_alphas_from]),
-        [funs0, funs1] => LumiCache::with_two(
-            pdg_ids[0],
-            funs0,
-            pdg_ids[1],
-            funs1,
-            &mut alphas_funs[cfg.use_alphas_from],
-        ),
-        // TODO: convert this into an error
-        _ => panic!(
-            "convolutions with {} convolution functions is not supported",
-            conv_funs.len()
-        ),
-    };
-
+    let mut cache = ConvolutionCache::new(convolutions, xfx, &mut alphas_funs[cfg.use_alphas_from]);
     let mut results = grid.convolve(&mut cache, &orders, bins, channels, scales);
 
     match mode {
         ConvoluteMode::Asymmetry => {
-            let bin_count = grid.bin_info().bins();
+            let bin_count = grid.bwfl().len();
 
             // calculating the asymmetry for a subset of bins doesn't work
             assert!((bins.is_empty() || (bins.len() == bin_count)) && (bin_count % 2 == 0));
@@ -288,13 +339,12 @@ pub fn convolve_scales(
                 .collect()
         }
         ConvoluteMode::Integrated => {
-            let normalizations = grid.bin_info().normalizations();
-
             results
                 .iter_mut()
                 .zip(
-                    normalizations
-                        .iter()
+                    grid.bwfl()
+                        .normalizations()
+                        .into_iter()
                         .enumerate()
                         .filter(|(index, _)| (bins.is_empty() || bins.contains(index)))
                         .flat_map(|(_, norm)| iter::repeat(norm).take(scales.len())),
@@ -307,10 +357,27 @@ pub fn convolve_scales(
     }
 }
 
+pub fn scales_vector(grid: &Grid, scales: usize) -> &[(f64, f64, f64)] {
+    let Scales { fac, frg, .. } = grid.scales();
+
+    match (fac, frg, scales) {
+        (_, _, 1) => &SCALES_VECTOR_27[0..1],
+        (_, _, 3) => &SCALES_VECTOR_27[0..3],
+        (_, ScaleFuncForm::NoScale, 7) => &SCALES_VECTOR_REN_FAC[0..7],
+        (_, ScaleFuncForm::NoScale, 9) => &SCALES_VECTOR_REN_FAC[..],
+        (ScaleFuncForm::NoScale, _, 7) => &SCALES_VECTOR_REN_FRG[0..7],
+        (ScaleFuncForm::NoScale, _, 9) => &SCALES_VECTOR_REN_FRG[..],
+        (_, _, 17) => &SCALES_VECTOR_27[0..17],
+        (_, _, 27) => &SCALES_VECTOR_27[..],
+        _ => unreachable!(),
+    }
+}
+
 pub fn convolve(
     grid: &Grid,
     conv_funs: &mut [Pdf],
-    orders: &[(u32, u32)],
+    conv_types: &[ConvType],
+    orders: &[(u8, u8)],
     bins: &[usize],
     lumis: &[bool],
     scales: usize,
@@ -320,10 +387,11 @@ pub fn convolve(
     convolve_scales(
         grid,
         conv_funs,
+        conv_types,
         orders,
         bins,
         lumis,
-        &SCALES_VECTOR[0..scales],
+        scales_vector(grid, scales),
         mode,
         cfg,
     )
@@ -331,9 +399,10 @@ pub fn convolve(
 
 pub fn convolve_limits(grid: &Grid, bins: &[usize], mode: ConvoluteMode) -> Vec<Vec<(f64, f64)>> {
     let limits: Vec<_> = grid
-        .bin_info()
-        .limits()
-        .into_iter()
+        .bwfl()
+        .bins()
+        .iter()
+        .map(|bin| bin.limits().to_vec())
         .enumerate()
         .filter_map(|(index, limits)| (bins.is_empty() || bins.contains(&index)).then_some(limits))
         .collect();
@@ -342,80 +411,6 @@ pub fn convolve_limits(grid: &Grid, bins: &[usize], mode: ConvoluteMode) -> Vec<
         ConvoluteMode::Asymmetry => limits[limits.len() / 2..].to_vec(),
         ConvoluteMode::Integrated | ConvoluteMode::Normal => limits,
     }
-}
-
-pub fn convolve_subgrid(
-    grid: &Grid,
-    conv_funs: &mut [Pdf],
-    order: usize,
-    bin: usize,
-    lumi: usize,
-    cfg: &GlobalConfiguration,
-) -> Array3<f64> {
-    if cfg.force_positive {
-        for fun in conv_funs.iter_mut() {
-            fun.set_force_positive(1);
-        }
-    }
-
-    // TODO: promote this to an error
-    assert!(
-        cfg.use_alphas_from < conv_funs.len(),
-        "expected `use_alphas_from` to be `0` or `1`, is `{}`",
-        cfg.use_alphas_from
-    );
-
-    let x_min_max: Vec<_> = conv_funs
-        .iter_mut()
-        .map(|fun| (fun.x_min(), fun.x_max()))
-        .collect();
-    let mut funs: Vec<_> = conv_funs
-        .iter()
-        .zip(x_min_max)
-        .map(|(fun, (x_min, x_max))| {
-            move |id, x, q2| {
-                if !cfg.allow_extrapolation && (x < x_min || x > x_max) {
-                    0.0
-                } else {
-                    fun.xfx_q2(id, x, q2)
-                }
-            }
-        })
-        .collect();
-    let mut alphas_funs: Vec<_> = conv_funs
-        .iter()
-        .map(|fun| move |q2| fun.alphas_q2(q2))
-        .collect();
-    let pdg_ids: Vec<_> = conv_funs
-        .iter()
-        .map(|fun| {
-            // if the field 'Particle' is missing we assume it's a proton PDF
-            fun.set()
-                .entry("Particle")
-                .map_or(Ok(2212), |string| string.parse::<i32>())
-                // UNWRAP: if this fails, there's a non-integer string in the LHAPDF info file
-                .unwrap()
-        })
-        .collect();
-
-    // TODO: write a new constructor of `LumiCache` that accepts a vector of all the arguments
-    let mut cache = match funs.as_mut_slice() {
-        [funs0] => LumiCache::with_one(pdg_ids[0], funs0, &mut alphas_funs[cfg.use_alphas_from]),
-        [funs0, funs1] => LumiCache::with_two(
-            pdg_ids[0],
-            funs0,
-            pdg_ids[1],
-            funs1,
-            &mut alphas_funs[cfg.use_alphas_from],
-        ),
-        // TODO: convert this into an error
-        _ => panic!(
-            "convolutions with {} convolution functions is not supported",
-            conv_funs.len()
-        ),
-    };
-
-    grid.convolve_subgrid(&mut cache, order, bin, lumi, 1.0, 1.0)
 }
 
 pub fn parse_integer_range(range: &str) -> Result<RangeInclusive<usize>> {
@@ -437,57 +432,133 @@ pub fn parse_integer_range(range: &str) -> Result<RangeInclusive<usize>> {
     }
 }
 
-pub fn parse_order(order: &str) -> Result<(u32, u32)> {
-    let mut alphas = 0;
-    let mut alpha = 0;
+pub fn parse_order(order: &str) -> Result<(u8, u8)> {
+    const FORMAT: &str = "must be one of `asX`, `aY`, `asXaY` or `aYasX` with `X` and `Y` integer";
 
-    let matches: Vec<_> = order.match_indices('a').collect();
+    // since 'a' is a substring of 'as', the latter must be given first
+    let couplings = ["as", "a"];
+    let mut variables = [None, None];
+    let mut parsed;
 
-    ensure!(
-        matches.len() <= 2,
-        "unable to parse order; too many couplings in '{}'",
-        order
-    );
+    let mut chunk = order;
 
-    for (index, _) in matches {
-        if &order[index..index + 2] == "as" {
-            let len = order[index + 2..]
-                .chars()
-                .take_while(|c| c.is_numeric())
-                .count();
-            alphas = str::parse::<u32>(&order[index + 2..index + 2 + len])
-                .context(format!("unable to parse order '{order}'"))?;
-        } else {
-            let len = order[index + 1..]
-                .chars()
-                .take_while(|c| c.is_numeric())
-                .count();
-            alpha = str::parse::<u32>(&order[index + 1..index + 1 + len])
-                .context(format!("unable to parse order '{order}'"))?;
+    loop {
+        parsed = false;
+
+        for (coupling, variable) in couplings.iter().zip(&mut variables) {
+            if let Some(stripped) = chunk.strip_prefix(*coupling) {
+                // find the index of the next coupling
+                let len = couplings
+                    .iter()
+                    .filter_map(|c| stripped.find(c))
+                    .min()
+                    .unwrap_or(stripped.len());
+
+                let (exponent, new_chunk) = stripped.split_at(len);
+                chunk = new_chunk;
+
+                if let Some(var) = variable {
+                    bail!("exponent of '{coupling}' has already been set to '{var}'");
+                } else if exponent.is_empty() {
+                    // if there's no exponent, we assume it to be one
+                    *variable = Some(1);
+                } else {
+                    *variable = Some(exponent.parse().map_err(|err| {
+                        anyhow!("parsing exponent '{exponent}' of '{coupling}' failed with '{err}'")
+                    })?);
+                }
+
+                parsed = true;
+                break;
+            }
+        }
+
+        if !parsed {
+            break;
         }
     }
 
-    Ok((alphas, alpha))
+    if !chunk.is_empty() {
+        bail!("found remainder '{chunk}', but order {FORMAT}");
+    }
+
+    Ok(match variables {
+        [Some(alphas), Some(alpha)] => (alphas, alpha),
+        [Some(alphas), None] => (alphas, 0),
+        [None, Some(alpha)] => (0, alpha),
+        [None, None] => bail!("{FORMAT}"),
+    })
 }
 
 #[cfg(test)]
 mod test {
     use super::ConvFuns;
+    use pineappl::convolutions::ConvType;
 
     #[test]
     fn conv_fun_from_str() {
         assert_eq!(
-            "A/2,B/1,C/0,D=X".parse::<ConvFuns>().unwrap(),
+            "A/2+p,B/1+f,C/0+fp,D+pf,E=X".parse::<ConvFuns>().unwrap(),
             ConvFuns {
                 lhapdf_names: vec![
                     "A".to_owned(),
                     "B".to_owned(),
                     "C".to_owned(),
-                    "D".to_owned()
+                    "D".to_owned(),
+                    "E".to_owned()
                 ],
-                members: vec![Some(2), Some(1), Some(0), None],
+                members: vec![Some(2), Some(1), Some(0), None, None],
+                conv_types: vec![
+                    ConvType::PolPDF,
+                    ConvType::UnpolFF,
+                    ConvType::PolFF,
+                    ConvType::PolFF,
+                    ConvType::UnpolPDF
+                ],
                 label: "X".to_owned()
             }
+        );
+    }
+
+    #[test]
+    fn parse_order() {
+        // that's OK
+        assert_eq!(super::parse_order("as16a28").unwrap(), (16, 28));
+
+        // empty exponents are set to 1
+        assert_eq!(super::parse_order("asa28").unwrap(), (1, 28));
+        assert_eq!(super::parse_order("as16a").unwrap(), (16, 1));
+        assert_eq!(super::parse_order("asa").unwrap(), (1, 1));
+        assert_eq!(super::parse_order("aas").unwrap(), (1, 1));
+
+        // exponent is not an integer
+        assert_eq!(
+            format!("{}", super::parse_order("asBLA").unwrap_err()),
+            "parsing exponent 'BLA' of 'as' failed with 'invalid digit found in string'"
+        );
+
+        // 'LO' was previous accepted: https://github.com/NNPDF/pineappl/issues/347
+        assert_eq!(
+            format!("{}", super::parse_order("LO").unwrap_err()),
+            "found remainder 'LO', but order must be one of `asX`, `aY`, `asXaY` or `aYasX` with `X` and `Y` integer"
+        );
+
+        // repeated couplings must raise an error
+        assert_eq!(
+            format!("{}", super::parse_order("as3as2").unwrap_err()),
+            "exponent of 'as' has already been set to '3'"
+        );
+
+        // different repeat coupling
+        assert_eq!(
+            format!("{}", super::parse_order("a3a2as2").unwrap_err()),
+            "exponent of 'a' has already been set to '3'"
+        );
+
+        // empty is wrong as well
+        assert_eq!(
+            format!("{}", super::parse_order("").unwrap_err()),
+            "must be one of `asX`, `aY`, `asXaY` or `aYasX` with `X` and `Y` integer"
         );
     }
 }

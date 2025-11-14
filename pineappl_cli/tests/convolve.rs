@@ -1,3 +1,5 @@
+#![allow(missing_docs)]
+
 use assert_cmd::Command;
 use predicates::str;
 
@@ -13,6 +15,9 @@ Options:
   -b, --bins <BINS>       Selects a subset of bins
   -i, --integrated        Show integrated numbers (without bin widths) instead of differential ones
   -o, --orders <ORDERS>   Select orders manually
+      --xir <XIR>         Set the variation of the renormalization scale [default: 1.0]
+      --xif <XIF>         Set the variation of the factorization scale [default: 1.0]
+      --xia <XIA>         Set the variation of the fragmentation scale [default: 1.0]
       --digits-abs <ABS>  Set the number of fractional digits shown for absolute numbers [default: 7]
       --digits-rel <REL>  Set the number of fractional digits shown for relative numbers [default: 2]
   -h, --help              Print help
@@ -31,10 +36,8 @@ const DEFAULT_STR: &str = "b   etal    dsig/detal
 7    4  4.5 2.7517266e1
 ";
 
-const USE_ALPHAS_FROM_ERROR_STR: &str = "expected `use_alphas_from` to be `0` or `1`, is `2`
-";
-
-const THREE_PDF_ERROR_STR: &str = "convolutions with 3 convolution functions is not supported
+const USE_ALPHAS_FROM_ERROR_STR: &str =
+    "expected `use_alphas_from` to be an integer within `[0, 2)`, but got `2`
 ";
 
 const FORCE_POSITIVE_STR: &str = "b   etal    dsig/detal 
@@ -166,9 +169,59 @@ const ORDERS_A2_A3_STR: &str = "b   etal    dsig/detal
 7    4  4.5 2.2163265e1
 ";
 
-const WRONG_ORDERS_STR: &str = "error: invalid value 'a2a2as2' for '--orders <ORDERS>': unable to parse order; too many couplings in 'a2a2as2'
+const WRONG_ORDERS_STR: &str = "error: invalid value 'a2a3as2' for '--orders <ORDERS>': exponent of 'a' has already been set to '2'
 
 For more information, try '--help'.
+";
+
+const XIR_XIF_STR: &str = "b   etal    dsig/detal 
+     []        [pb]    
+-+----+----+-----------
+0    2 2.25 7.6241231e2
+1 2.25  2.5 6.9755130e2
+2  2.5 2.75 6.0636076e2
+3 2.75    3 4.9019741e2
+4    3 3.25 3.6518490e2
+5 3.25  3.5 2.4783934e2
+6  3.5    4 1.1656958e2
+7    4  4.5 2.7565811e1
+";
+
+const THREE_CONVOLUTIONS_STR: &str = "b                  pT                  dsig/dpT (pol)
+                 [GeV]                    [pb/GeV]   
+-+-----------------+------------------+--------------
+0 5.108395099639893  6.045444965362549    2.2605116e3
+1 6.045444965362549  6.982494831085205    1.0361301e3
+2 6.982494831085205  7.992245197296143    4.8947508e2
+3 7.992245197296143  8.960753917694092    2.4023939e2
+4 8.960753917694092  9.929026126861572    1.2464463e2
+5 9.929026126861572 11.660773754119873    5.2680349e1
+";
+
+const NO_CHANNELS_GRID_STR: &str =
+    "b    Q2                            x                             F2d    
+   [GeV^2]                        []                             []     
+--+---+---+------------------------+------------------------+-----------
+ 0   5   5                0.0000005                0.0000005 0.0000000e0
+ 1   5   5 0.0000019407667236782136 0.0000019407667236782136 0.0000000e0
+ 2   5   5  0.000007533150951473337  0.000007533150951473337 0.0000000e0
+ 3   5   5  0.000029240177382128657  0.000029240177382128657 0.0000000e0
+ 4   5   5   0.00011349672651536727   0.00011349672651536727 0.0000000e0
+ 5   5   5   0.00044054134013486355   0.00044054134013486355 0.0000000e0
+ 6   5   5    0.0017099759466766963    0.0017099759466766963 0.0000000e0
+ 7   5   5     0.006637328831200572     0.006637328831200572 0.0000000e0
+ 8   5   5      0.02576301385940815      0.02576301385940815 0.0000000e0
+ 9   5   5                      0.1                      0.1 0.0000000e0
+10   5   5                     0.18                     0.18 0.0000000e0
+11   5   5                     0.26                     0.26 0.0000000e0
+12   5   5      0.33999999999999997      0.33999999999999997 0.0000000e0
+13   5   5      0.42000000000000004      0.42000000000000004 0.0000000e0
+14   5   5                      0.5                      0.5 0.0000000e0
+15   5   5                     0.58                     0.58 0.0000000e0
+16   5   5                     0.66                     0.66 0.0000000e0
+17   5   5                     0.74                     0.74 0.0000000e0
+18   5   5                     0.82                     0.82 0.0000000e0
+19   5   5                      0.9                      0.9 0.0000000e0
 ";
 
 #[test]
@@ -209,20 +262,6 @@ fn use_alphas_from_error() {
         .assert()
         .failure()
         .stderr(str::contains(USE_ALPHAS_FROM_ERROR_STR));
-}
-
-#[test]
-fn three_pdf_error() {
-    Command::cargo_bin("pineappl")
-        .unwrap()
-        .args([
-            "convolve",
-            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
-            "NNPDF31_nlo_as_0118_luxqed,NNPDF31_nlo_as_0118_luxqed,NNPDF31_nlo_as_0118_luxqed",
-        ])
-        .assert()
-        .failure()
-        .stderr(str::contains(THREE_PDF_ERROR_STR));
 }
 
 #[test]
@@ -384,11 +423,55 @@ fn wrong_orders() {
         .unwrap()
         .args([
             "convolve",
-            "--orders=a2a2as2",
+            "--orders=a2a3as2",
             "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed",
         ])
         .assert()
         .failure()
         .stderr(WRONG_ORDERS_STR);
+}
+
+#[test]
+fn xir_xif() {
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "convolve",
+            "--xir=2.34",
+            "--xif=1.79",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
+            "NNPDF31_nlo_as_0118_luxqed",
+        ])
+        .assert()
+        .success()
+        .stdout(XIR_XIF_STR);
+}
+
+#[test]
+fn three_convolutions() {
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "convolve",
+            "../test-data/SIHP-PP-POLARIZED-STAR-NLO.pineappl.lz4",
+            "NNPDFpol11_100+p,MAPFF10NLOPIsum+f",
+        ])
+        .assert()
+        .success()
+        .stdout(THREE_CONVOLUTIONS_STR);
+}
+
+#[test]
+fn no_channels_grid() {
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "convolve",
+            "../test-data/NNPDF_POS_F2D_40.pineappl.lz4",
+            "NNPDF31_nlo_as_0118_luxqed",
+        ])
+        .assert()
+        .success()
+        .stdout(NO_CHANNELS_GRID_STR);
 }

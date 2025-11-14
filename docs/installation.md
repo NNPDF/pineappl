@@ -75,7 +75,7 @@ If you want to build the CAPI from its sources instead, you first need to
 3. Now install `pineappl_capi`, PineAPPL's C API:
 
        cd pineappl_capi
-       cargo cinstall --release --prefix=${prefix} --libdir=lib
+       cargo cinstall --release --prefix=${prefix} --libdir=${prefix}/lib
        cd ..
 
    where `${prefix}` points to the desired installation directory.
@@ -149,6 +149,13 @@ see below.
 To update the CLI simply repeat the `cargo install` step; if a newer version is
 available it will be automatically downloaded, otherwise `cargo` will exit with
 a message saying that the most recent version is already installed.
+
+If `LHAPDF` is not found, you need to update your `PKG_CONFIG_PATH` variable,
+which must point to the directory where LHAPDF's `.pc` file is installed:
+
+    export PKG_CONFIG_PATH=${lhapdf_prefix}/lib/pkgconfig:$PKG_CONFIG_PATH
+
+(replace `${lhapdf_prefix}` with your LHAPDF installation root).
 
 #### Optional: APPLgrid exporter/importer
 
@@ -244,7 +251,7 @@ already installed, make sure it is recent enough:
 
     cargo --version
 
-This should show a version that is at least 1.70.0. If you do not have `cargo`
+This should show a version that is at least 1.80.1. If you do not have `cargo`
 or if it is too old, go to <https://www.rust-lang.org/tools/install> and follow
 the instructions there.
 

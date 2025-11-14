@@ -1,5 +1,8 @@
 [package]
-authors = ["Christopher Schwan <handgranaten-herbert@posteo.de>"]
+authors = [
+    "Christopher Schwan <handgranaten-herbert@posteo.de>",
+    "Tanjona R. Rabemananjara <tanjona.hepc@gmail.com>"
+]
 description = "C language interface to PineAPPL"
 name = "pineappl_capi"
 readme = "README.md"
@@ -16,14 +19,12 @@ version.workspace = true
 workspace = true
 
 [dependencies]
-pineappl = { path = "../pineappl", version = "=0.8.2" }
+pineappl = { path = "../pineappl", version = "=1.2.0" }
 itertools = "0.10.1"
+ndarray = "0.15.4"
 
 [features]
 capi = []
 
 [package.metadata.capi]
 min_version = "0.9.0"
-
-[package.metadata.capi.install.include]
-asset = [{from = "include/PineAPPL.hpp"}]

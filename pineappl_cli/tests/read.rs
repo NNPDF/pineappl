@@ -1,22 +1,26 @@
+#![allow(missing_docs)]
+
 use assert_cmd::Command;
 
 const HELP_STR: &str = "Read out information of a grid
 
-Usage: pineappl read <--orders|--orders-spaces|--orders-long|--bins|--channels|--fktable|--ew|--get <KEY>|--keys|--qcd|--show> <INPUT>
+Usage: pineappl read <--bins|--channels|--ew|--fk-table|--fk-table-fac0|--fk-table-frg0|--get <KEY>|--keys|--orders|--orders-long|--orders-spaces|--qcd|--show> <INPUT>
 
 Arguments:
   <INPUT>  Path to the input grid
 
 Options:
-  -o, --orders         Show the orders of a grid, stripping zero powers
-      --orders-spaces  Show the orders of a grid, replacing zero powers with spaces
-      --orders-long    Show the orders of a grid, including zero powers
   -b, --bins           Show the bins of a grid
       --channels       Show the channel definition of a grid
-      --fktable        Check if input is an FK table
       --ew             For each order print a list of the largest EW order
+      --fk-table       Check if input is an FK table
+      --fk-table-fac0  Return the (squared) factorization scale of the FK-table
+      --fk-table-frg0  Return the (squared) fragmentation scale of the FK-table
       --get <KEY>      Gets an internal key-value pair
       --keys           Show all keys stored in the grid
+  -o, --orders         Show the orders of a grid, stripping zero powers
+      --orders-long    Show the orders of a grid, including zero powers
+      --orders-spaces  Show the orders of a grid, replacing zero powers with spaces
       --qcd            For each order print a list of the largest QCD order
       --show           Shows all key-value pairs stored in the grid
   -h, --help           Print help
@@ -52,22 +56,22 @@ const ORDERS_STR: &str = "o      order
 4 O(a^3 lf^1)
 ";
 
-const ORDERS_LONG_STR: &str = "o         order
--+---------------------
-0 O(as^0 a^2 lr^0 lf^0)
-1 O(as^1 a^2 lr^0 lf^0)
-2 O(as^1 a^2 lr^0 lf^1)
-3 O(as^0 a^3 lr^0 lf^0)
-4 O(as^0 a^3 lr^0 lf^1)
+const ORDERS_LONG_STR: &str = "o           order
+-+--------------------------
+0 O(as^0 a^2 lr^0 lf^0 la^0)
+1 O(as^1 a^2 lr^0 lf^0 la^0)
+2 O(as^1 a^2 lr^0 lf^1 la^0)
+3 O(as^0 a^3 lr^0 lf^0 la^0)
+4 O(as^0 a^3 lr^0 lf^1 la^0)
 ";
 
-const ORDERS_SPACES_STR: &str = "o         order
--+---------------------
-0 O(     a^2          )
-1 O(as^1 a^2          )
-2 O(as^1 a^2      lf^1)
-3 O(     a^3          )
-4 O(     a^3      lf^1)
+const ORDERS_SPACES_STR: &str = "o           order
+-+--------------------------
+0 O(     a^2               )
+1 O(as^1 a^2               )
+2 O(as^1 a^2      lf^1     )
+3 O(     a^3               )
+4 O(     a^3      lf^1     )
 ";
 
 const FKTABLE_STR: &str = "no
@@ -76,7 +80,7 @@ multiple orders detected
 
 const WRONG_ORDERS_STR: &str = "error: the argument '--orders' cannot be used with '--orders-long'
 
-Usage: pineappl read <--orders|--orders-spaces|--orders-long|--bins|--channels|--fktable|--ew|--get <KEY>|--keys|--qcd|--show> <INPUT>
+Usage: pineappl read <--bins|--channels|--ew|--fk-table|--fk-table-fac0|--fk-table-frg0|--get <KEY>|--keys|--orders|--orders-long|--orders-spaces|--qcd|--show> <INPUT>
 
 For more information, try '--help'.
 ";
@@ -543,7 +547,7 @@ y_unit: pb
 
 const WRONG_ARGUMENTS_STR: &str = "error: the argument '--ew' cannot be used with '--qcd'
 
-Usage: pineappl read <--orders|--orders-spaces|--orders-long|--bins|--channels|--fktable|--ew|--get <KEY>|--keys|--qcd|--show> <INPUT>
+Usage: pineappl read <--bins|--channels|--ew|--fk-table|--fk-table-fac0|--fk-table-frg0|--get <KEY>|--keys|--orders|--orders-long|--orders-spaces|--qcd|--show> <INPUT>
 
 For more information, try '--help'.
 ";
@@ -629,12 +633,12 @@ fn orders_spaces() {
 }
 
 #[test]
-fn fktable() {
+fn fk_table() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
             "read",
-            "--fktable",
+            "--fk-table",
             "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
         ])
         .assert()

@@ -1,3 +1,5 @@
+#![allow(missing_docs)]
+
 use assert_cmd::Command;
 use assert_fs::{fixture::FileWriteStr, NamedTempFile};
 
@@ -10,30 +12,31 @@ Arguments:
   <OUTPUT>  Path of the modified PineAPPL file
 
 Options:
-      --cc1[=<ENABLE>]                 Charge conjugate the first initial state [possible values: true, false]
-      --cc2[=<ENABLE>]                 Charge conjugate the second initial state [possible values: true, false]
-      --dedup-channels[=<ULPS>]        Deduplicate channels assuming numbers differing by ULPS are the same
-      --delete-bins <BIN1-BIN2,...>    Delete bins with the specified indices
-      --delete-channels <CH1-CH2,...>  Delete channels with the specified indices
-      --delete-orders <O1-O2,...>      Delete orders with the specified indices
-      --delete-key <KEY>               Delete an internal key-value pair
-      --merge-bins <BIN1-BIN2,...>     Merge specific bins together
-      --optimize[=<ENABLE>]            Optimize internal data structure to minimize memory and disk usage [possible values: true, false]
-      --optimize-fk-table <OPTIMI>     Optimize internal data structure of an FkTable to minimize memory and disk usage [possible values: Nf6Ind, Nf6Sym, Nf5Ind, Nf5Sym, Nf4Ind, Nf4Sym, Nf3Ind, Nf3Sym]
-      --remap <REMAPPING>              Modify the bin dimensions and widths
-      --remap-norm <NORM>              Modify the bin normalizations with a common factor
-      --remap-norm-ignore <DIM1,...>   Modify the bin normalizations by multiplying with the bin lengths for the given dimensions
-      --rewrite-channel <IDX> <CHAN>   Rewrite the definition of the channel with index IDX
-      --rewrite-order <IDX> <ORDER>    Rewrite the definition of the order with index IDX
-      --rotate-pid-basis <BASIS>       Rotate the PID basis for this grid [possible values: PDG, EVOL]
-  -s, --scale <SCALE>                  Scales all grids with the given factor
-      --scale-by-bin <BIN1,BIN2,...>   Scale each bin with a different factor
-      --scale-by-order <AS,AL,LR,LF>   Scales all grids with order-dependent factors
-      --set-key-value <KEY> <VALUE>    Set an internal key-value pair
-      --set-key-file <KEY> <FILE>      Set an internal key-value pair, with value being read from a file
-      --split-channels[=<ENABLE>]      Split the grid such that each channel contains only a single PID combination [possible values: true, false]
-      --upgrade[=<ENABLE>]             Convert the file format to the most recent version [possible values: true, false]
-  -h, --help                           Print help
+      --cc <IDX>                        Charge conjugate the convolution with the specified index
+      --dedup-channels[=<ULPS>]         Deduplicate channels assuming numbers differing by ULPS are the same
+      --delete-bins <BIN1-BIN2,...>     Delete bins with the specified indices
+      --delete-channels <CH1-CH2,...>   Delete channels with the specified indices
+      --delete-orders <O1-O2,...>       Delete orders with the specified indices
+      --delete-key <KEY>                Delete an internal key-value pair
+      --div-bin-norm-dims <DIM1,...>    Divide each bin normalizations by the bin lengths for the given dimensions
+      --merge-bins <BIN1-BIN2,...>      Merge specific bins together
+      --merge-channel-factors[=<ON>]    Merge channel factors into the grid [possible values: true, false]
+      --mul-bin-norm <NORM>             Multiply all bin normalizations with the given factor
+      --optimize[=<ENABLE>]             Optimize internal data structure to minimize memory and disk usage [possible values: true, false]
+      --optimize-fk-table <OPTIMI>      Optimize internal data structure of an FkTable to minimize memory and disk usage [possible values: Nf6Ind, Nf6Sym, Nf5Ind, Nf5Sym, Nf4Ind, Nf4Sym, Nf3Ind, Nf3Sym]
+      --repair[=<ENABLE>]               Repair bugs saved in the grid [possible values: true, false]
+      --rewrite-channel <IDX> <CHAN>    Rewrite the definition of the channel with index IDX
+      --rewrite-order <IDX> <ORDER>     Rewrite the definition of the order with index IDX
+      --rotate-pid-basis <BASIS>        Rotate the PID basis for this grid [possible values: PDG, EVOL]
+  -s, --scale <SCALE>                   Scales all grids with the given factor
+      --scale-by-bin <BIN1,BIN2,...>    Scale each bin with a different factor
+      --scale-by-order <FAC1,FAC2,...>  Scale subgrids with order-dependent factors
+      --set-bins <LIMITS>               Set the bin limits
+      --set-key-value <KEY> <VALUE>     Set an internal key-value pair
+      --set-key-file <KEY> <FILE>       Set an internal key-value pair, with value being read from a file
+      --split-channels[=<ENABLE>]       Split the grid such that each channel contains only a single PID combination [possible values: true, false]
+      --upgrade[=<ENABLE>]              Convert the file format to the most recent version [possible values: true, false]
+  -h, --help                            Print help
 ";
 
 const CHANNEL_STR: &str = "c    entry        entry
@@ -154,9 +157,6 @@ const REMAP_STR: &str = "b etal  x2  x3  dsig/detal
 7  1  2 2 4 4 5 2.7517266e0
 ";
 
-const REMAP_NO_REMAPPER_STR: &str = "Error: grid does not have a remapper
-";
-
 const REWRITE_CHANNELS_CONVOLVE_STR: &str = "b   etal    dsig/detal 
      []        [pb]    
 -+----+----+-----------
@@ -244,14 +244,14 @@ const ROTATE_PID_BASIS_NO_DIFF_STR: &str = "b    x1               O(as^0 a^2)   
 
 const ROTATE_PID_BASIS_DIFF_STR: &str = "b    x1                O(as^0 a^2)                          O(as^0 a^3)                          O(as^1 a^2)            
 -+----+----+-----------+-----------+----------+-------------+-------------+----------+-----------+-----------+----------
-0    2 2.25 6.5070305e2 6.5070305e2 -2.220e-16  -7.8692484e0  -7.8692484e0 -4.441e-16 1.1175729e2 1.1175729e2 -1.221e-15
-1 2.25  2.5 5.9601236e2 5.9601236e2 -7.772e-16  -6.5623495e0  -6.5623495e0 -2.220e-16 1.0083341e2 1.0083341e2 -5.551e-16
-2  2.5 2.75 5.1561247e2 5.1561247e2 -8.882e-16  -5.2348261e0  -5.2348261e0 -6.661e-16 8.9874343e1 8.9874343e1 -1.221e-15
-3 2.75    3 4.1534629e2 4.1534629e2 -4.441e-16  -3.7590420e0  -3.7590420e0 -5.551e-16 7.3935106e1 7.3935106e1 -1.554e-15
-4    3 3.25 3.0812719e2 3.0812719e2 -3.331e-16  -2.5871885e0  -2.5871885e0 -5.551e-16 5.6414554e1 5.6414554e1 -2.220e-16
-5 3.25  3.5 2.0807482e2 2.0807482e2 -6.661e-16  -1.6762487e0  -1.6762487e0 -1.110e-16 3.9468336e1 3.9468336e1 -3.331e-16
-6  3.5    4 9.6856769e1 9.6856769e1 -3.331e-16 -8.1027456e-1 -8.1027456e-1 -1.110e-16 1.9822014e1 1.9822014e1 -1.110e-15
-7    4  4.5 2.2383492e1 2.2383492e1 -4.441e-16 -2.2022770e-1 -2.2022770e-1 -5.551e-16 5.3540011e0 5.3540011e0 -3.331e-16
+0    2 2.25 6.5070305e2 6.5070305e2 -5.551e-16  -7.8692484e0  -7.8692484e0 -4.441e-16 1.1175729e2 1.1175729e2 -1.221e-15
+1 2.25  2.5 5.9601236e2 5.9601236e2 -7.772e-16  -6.5623495e0  -6.5623495e0 -4.441e-16 1.0083341e2 1.0083341e2 -8.882e-16
+2  2.5 2.75 5.1561247e2 5.1561247e2 -8.882e-16  -5.2348261e0  -5.2348261e0 -8.882e-16 8.9874343e1 8.9874343e1 -1.221e-15
+3 2.75    3 4.1534629e2 4.1534629e2 -4.441e-16  -3.7590420e0  -3.7590420e0 -6.661e-16 7.3935106e1 7.3935106e1 -1.110e-15
+4    3 3.25 3.0812719e2 3.0812719e2 -5.551e-16  -2.5871885e0  -2.5871885e0 -5.551e-16 5.6414554e1 5.6414554e1  2.220e-16
+5 3.25  3.5 2.0807482e2 2.0807482e2 -5.551e-16  -1.6762487e0  -1.6762487e0 -2.220e-16 3.9468336e1 3.9468336e1 -6.661e-16
+6  3.5    4 9.6856769e1 9.6856769e1 -4.441e-16 -8.1027456e-1 -8.1027456e-1 -4.441e-16 1.9822014e1 1.9822014e1 -1.443e-15
+7    4  4.5 2.2383492e1 2.2383492e1 -6.661e-16 -2.2022770e-1 -2.2022770e-1 -5.551e-16 5.3540011e0 5.3540011e0 -6.661e-16
 ";
 
 const ROTATE_PID_BASIS_READ_CHANNELS_STR: &str = " c                 entry
@@ -455,14 +455,14 @@ fn help() {
 }
 
 #[test]
-fn cc1() {
+fn cc_0() {
     let output = NamedTempFile::new("cc1.pineappl.lz4").unwrap();
 
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
             "write",
-            "--cc1",
+            "--cc=0",
             "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             output.path().to_str().unwrap(),
         ])
@@ -483,14 +483,15 @@ fn cc1() {
 }
 
 #[test]
-fn cc2() {
+fn cc_1() {
     let output = NamedTempFile::new("cc2.pineappl.lz4").unwrap();
 
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
             "write",
-            "--cc2",
+            "--cc",
+            "1",
             "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             output.path().to_str().unwrap(),
         ])
@@ -670,16 +671,16 @@ fn optimize() {
 }
 
 #[test]
-fn remap() {
-    let output = NamedTempFile::new("remapped.pineappl.lz4").unwrap();
+fn set_bins() {
+    let output = NamedTempFile::new("set_bins.pineappl.lz4").unwrap();
 
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
             "write",
-            "--remap=0,1,2;0,2,4;1,2,3,4,5|:3|5:1,2,3,4,5,8,9|2:2",
-            "--remap-norm-ignore=1",
-            "--remap-norm=5",
+            "--set-bins=0,1,2;0,2,4;1,2,3,4,5|:3|5:1,2,3,4,5,8,9|2:2",
+            "--div-bin-norm-dims=1",
+            "--mul-bin-norm=5",
             "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             output.path().to_str().unwrap(),
         ])
@@ -697,40 +698,6 @@ fn remap() {
         .assert()
         .success()
         .stdout(REMAP_STR);
-}
-
-#[test]
-fn remap_norm_no_remapper() {
-    let output = NamedTempFile::new("remapped.pineappl.lz4").unwrap();
-
-    Command::cargo_bin("pineappl")
-        .unwrap()
-        .args([
-            "write",
-            "--remap-norm=1",
-            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
-            output.path().to_str().unwrap(),
-        ])
-        .assert()
-        .failure()
-        .stderr(REMAP_NO_REMAPPER_STR);
-}
-
-#[test]
-fn remap_norm_ignore_no_remapper() {
-    let output = NamedTempFile::new("remapped.pineappl.lz4").unwrap();
-
-    Command::cargo_bin("pineappl")
-        .unwrap()
-        .args([
-            "write",
-            "--remap-norm-ignore=0",
-            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
-            output.path().to_str().unwrap(),
-        ])
-        .assert()
-        .failure()
-        .stderr(REMAP_NO_REMAPPER_STR);
 }
 
 #[test]
@@ -769,7 +736,7 @@ fn scale_by_order() {
         .unwrap()
         .args([
             "write",
-            "--scale-by-order=2,1,0.5,0.5",
+            "--scale-by-order=2,1,0.5,0.5,1.0",
             "--scale=0.5",
             "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             output.path().to_str().unwrap(),
@@ -908,6 +875,23 @@ fn multiple_arguments() {
         .assert()
         .success()
         .stdout(MULTIPLE_ARGUMENTS_STR);
+}
+
+#[test]
+fn repair() {
+    let output = NamedTempFile::new("repaired-grid.pineappl.lz4").unwrap();
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "write",
+            "--repair",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
+            output.path().to_str().unwrap(),
+        ])
+        .assert()
+        .success()
+        .stdout("");
 }
 
 #[test]

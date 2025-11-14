@@ -22,25 +22,28 @@ int main(int argc, char* argv[]) {
     // read the grid from a file
     auto* grid = pineappl_grid_read(filename.c_str());
 
+    // How many convolutions are there?
+    auto n_conv = pineappl_grid_convolutions_len(grid);
+
     // extract all channels
-    auto* channels = pineappl_grid_lumi(grid);
+    auto* channels = pineappl_grid_channels(grid);
 
     // how many channels are there?
-    auto channel_count = pineappl_lumi_count(channels);
+    auto channel_count = pineappl_channels_count(channels);
 
     for (std::size_t channel = 0; channel != channel_count; ++channel) {
         // print channel index
         std::cout << std::setw(4) << channel << ' ';
 
         // how many partonic combinations does this channel have?
-        auto combinations = pineappl_lumi_combinations(channels, channel);
+        auto combinations = pineappl_channels_combinations(channels, channel);
 
         std::vector<double> factors(combinations);
-        std::vector<int> pids(2 * combinations);
+        std::vector<int> pids(n_conv * combinations);
 
         // read out the channel with index given by `channel`, writing the particle identifiers into
         // `pids` and the corresponding factors into `factors`
-        pineappl_lumi_entry(channels, channel, pids.data(), factors.data());
+        pineappl_channels_entry(channels, channel, pids.data(), factors.data());
 
         for (std::size_t combination = 0; combination != combinations; ++combination) {
             auto factor = factors.at(combination);
@@ -60,6 +63,6 @@ int main(int argc, char* argv[]) {
     }
 
     // release memory
-    pineappl_lumi_delete(channels);
+    pineappl_channels_delete(channels);
     pineappl_grid_delete(grid);
 }

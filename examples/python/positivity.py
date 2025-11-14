@@ -6,48 +6,83 @@ import pineappl
 
 def main(filename, Q2):
     # setup data
-    xgrid = np.geomspace(5e-5, 0.7, 10)
-    lepton_pid = 11
     pid = 4
+    xgrid = np.geomspace(5e-5, 0.7, 10)
+    bins_length = len(xgrid)
+    bin_limits = [float(i) for i in range(0, bins_length + 1)]
 
-    # init pineappl objects
-    lumi_entries = [pineappl.boc.Channel([(pid, lepton_pid, 1.0)])]
-    orders = [pineappl.grid.Order(0, 0, 0, 0)]
-    bins = len(xgrid)
-    # NOTE: `bin_limits` have to be `np.ndarray`
-    bin_limits = np.array([float(i) for i in range(0, bins + 1)])
-    # subgrid params - default is just sufficient
-    params = pineappl.subgrid.SubgridParams()
-    # inti grid
-    grid = pineappl.grid.Grid(lumi_entries, orders, bin_limits, params)
+    # Instantiate the objecs required to construct a new Grid
+    channels = [pineappl.boc.Channel([([pid], 1.0)])]
+    orders = [pineappl.boc.Order(0, 0, 0, 0, 0)]
+    convolution_types = pineappl.convolutions.ConvType(polarized=False, time_like=False)
+    convolutions = [
+        pineappl.convolutions.Conv(convolution_types=convolution_types, pid=2212)
+    ]
+    kinematics = [pineappl.boc.Kinematics.Scale(0), pineappl.boc.Kinematics.X(0)]
+    scale_funcs = pineappl.boc.Scales(
+        ren=pineappl.boc.ScaleFuncForm.Scale(0),
+        fac=pineappl.boc.ScaleFuncForm.Scale(0),
+        frg=pineappl.boc.ScaleFuncForm.NoScale(0),
+    )
+    bin_limits = pineappl.boc.BinsWithFillLimits.from_fill_limits(
+        fill_limits=bin_limits
+    )
+    interpolations = [
+        pineappl.interpolation.Interp(
+            min=1e2,
+            max=1e3,
+            nodes=50,
+            order=3,
+            reweight_meth=pineappl.interpolation.ReweightingMethod.NoReweight,
+            map=pineappl.interpolation.MappingMethod.ApplGridH0,
+            interpolation_meth=pineappl.interpolation.InterpolationMethod.Lagrange,
+        ),  # Interpolation on the Scale
+        pineappl.interpolation.Interp(
+            min=1e-5,
+            max=1,
+            nodes=40,
+            order=3,
+            reweight_meth=pineappl.interpolation.ReweightingMethod.ApplGridX,
+            map=pineappl.interpolation.MappingMethod.ApplGridF2,
+            interpolation_meth=pineappl.interpolation.InterpolationMethod.Lagrange,
+        ),  # Interpolation on momentum fraction x
+    ]
+
+    grid = pineappl.grid.Grid(
+        pid_basis=pineappl.pids.PidBasis.Evol,
+        channels=channels,
+        orders=orders,
+        bins=bin_limits,
+        convolutions=convolutions,
+        interpolations=interpolations,
+        kinematics=kinematics,
+        scale_funcs=scale_funcs,
+    )
+
     limits = []
     # add each point as a bin
     for bin_, x in enumerate(xgrid):
         # keep DIS bins
-        limits.append((Q2, Q2))
-        limits.append((x, x))
-        # delta function
-        array = np.zeros(len(xgrid))
-        array[bin_] = 1
-        # create and set
-        subgrid = pineappl.import_only_subgrid.ImportOnlySubgridV1(
-            array[np.newaxis, :, np.newaxis],
-            np.array([Q2]),  # `q2_grid` has to be `np.ndarrary`
-            np.array(xgrid),  # `x_grid` has to be `np.ndarrary`
-            np.array([1.0]),  # `x_grid` has to be `np.ndarrary`
+        limits.append([(Q2, Q2), (x, x)])
+        # Fill the subgrid with delta functions
+        array_subgrid = np.zeros((1, xgrid.size))
+        array_subgrid[0][bin_] = 1
+        # create and set the subgrid
+        subgrid = pineappl.subgrid.ImportSubgridV1(
+            array=array_subgrid,
+            node_values=[[Q2], xgrid],
         )
         grid.set_subgrid(0, bin_, 0, subgrid.into())
     # set the correct observables
-    normalizations = np.array(
-        [1.0] * bins
-    )  # `normalizations` has to be `np.ndarray`
-    remapper = pineappl.bin.BinRemapper(normalizations, limits)
-    grid.set_remapper(remapper)
+    normalizations = [1.0] * bins_length
+    bin_configs = pineappl.boc.BinsWithFillLimits.from_limits_and_normalizations(
+        limits=limits,
+        normalizations=normalizations,
+    )
+    grid.set_bwfl(bin_configs)
 
     # set the initial state PDF ids for the grid
-    grid.set_key_value("initial_state_1", "2212")
-    grid.set_key_value("initial_state_2", str(lepton_pid))
-    grid.set_key_value(
+    grid.set_metadata(
         "runcard",
         f"positivity constraint for quark {pid}",
     )
