@@ -3,6 +3,7 @@
 set -euo pipefail
 
 pkgs=(
+    automake
     build-essential
     curl
     gfortran
