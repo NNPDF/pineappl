@@ -13,8 +13,8 @@ pub fn convert_into_fastnlo(
     _output: &Path,
     _discard_non_matching_scales: bool,
 ) -> Result<(UniquePtr<fastNLOLHAPDF>, Vec<bool>)> {
-    let bin_info = grid.bin_info();
-    let dim = bin_info.dimensions();
+    let bwfl = grid.bwfl();
+    let dim = bwfl.dimensions();
 
     if dim > 3 {
         bail!(
@@ -23,16 +23,16 @@ pub fn convert_into_fastnlo(
         );
     }
 
-    let bin_limits = bin_info.limits();
-    let left_bin_limits: Vec<Vec<_>> = bin_limits
+    let bins = bwfl.bins();
+    let left_bin_limits: Vec<Vec<_>> = bins
         .iter()
-        .map(|limits| limits.iter().map(|&(left, _)| left).collect())
+        .map(|bin| bin.limits().iter().map(|&(l, _)| l).collect())
         .collect();
-    let right_bin_limits: Vec<Vec<_>> = bin_limits
+    let right_bin_limits: Vec<Vec<_>> = bins
         .iter()
-        .map(|limits| limits.iter().map(|&(_, right)| right).collect())
+        .map(|bin| bin.limits().iter().map(|&(_, r)| r).collect())
         .collect();
-    let normalizations = bin_info.normalizations();
+    let normalizations = bwfl.normalizations();
 
     let order_mask = Order::create_mask(grid.orders(), 3, 0, false);
     let orders_with_mask: Vec<_> = grid
@@ -54,11 +54,10 @@ pub fn convert_into_fastnlo(
     //    .unwrap()
     //    - lo_alphas;
 
-    let convolutions: Vec<i32> = grid
-        .convolutions()
-        .iter()
-        .filter_map(|conv| conv.pid())
-        .collect();
+    let convolutions: Vec<i32> = grid.convolutions().iter().map(|conv| conv.pid()).collect();
+
+    // TODO: lift this restriction
+    assert_eq!(grid.convolutions().len(), 2);
 
     let channels: Vec<Vec<_>> = grid
         .channels()
@@ -67,11 +66,11 @@ pub fn convert_into_fastnlo(
             channel
                 .entry()
                 .iter()
-                .map(|&(a, b, factor)| {
+                .map(|&(ref pids, factor)| {
                     assert_approx_eq!(f64, factor, 1.0, ulps = 4);
                     ffi::pair_int_int {
-                        first: a,
-                        second: b,
+                        first: pids[0],
+                        second: pids[1],
                     }
                 })
                 .collect()
@@ -101,6 +100,8 @@ pub fn convert_into_fastnlo(
         &convolutions,
         &channels,
     );
+
+    todo!()
 }
 
 pub fn convolve_fastnlo(_grid: Pin<&mut fastNLOLHAPDF>, conv_funs: &mut [Pdf]) -> Vec<f64> {
