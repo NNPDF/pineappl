@@ -9,6 +9,7 @@ pkgs=(
     gfortran
     git
     libssl-dev
+    libtool
     openssl
     pkg-config
 )
