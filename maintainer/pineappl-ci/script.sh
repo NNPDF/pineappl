@@ -3,11 +3,13 @@
 set -euo pipefail
 
 pkgs=(
+    automake
     build-essential
     curl
     gfortran
     git
     libssl-dev
+    libtool
     openssl
     pkg-config
 )
@@ -85,8 +87,12 @@ cp src/*.h "${APPL_IGRID_DIR}"
 cd ..
 
 # install fastNLO
-curl "https://fastnlo.hepforge.org/code/v25/fastnlo_toolkit-${FASTNLO_V}.tar.gz" | tar xzf -
-cd "fastnlo_toolkit-${FASTNLO_V}"
+# curl "https://fastnlo.hepforge.org/code/v25/fastnlo_toolkit-${FASTNLO_V}.tar.gz" | tar xzf -
+git clone https://gitlab.etp.kit.edu/qcd-public/fastNLO.git
+cd fastNLO
+git checkout "${FASTNLO_R}"
+cd "v${FASTNLO_V}/toolkit"
+autoreconf -fi
 ./configure --prefix=/usr/local/
 make -j V=1
 make install

@@ -12,7 +12,7 @@ Commands:
   convolve  Convolutes a PineAPPL grid with a PDF set
   diff      Compares the numerical content of two grids with each other
   evolve    Evolve a grid with an evolution kernel operator to an FK table
-  export    Converts PineAPPL grids to APPLgrid files
+  export    Converts PineAPPL grids to APPLgrid/fastNLO files
   help      Display a manpage for selected subcommands
   import    Converts APPLgrid/fastNLO/FastKernel files to PineAPPL grids
   merge     Merges one or more PineAPPL grids together

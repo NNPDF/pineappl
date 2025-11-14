@@ -8,6 +8,7 @@
 #include <fastnlotk/fastNLOCoeffAddBase.h>
 #include <fastnlotk/fastNLOCoeffAddFix.h>
 #include <fastnlotk/fastNLOCoeffAddFlex.h>
+#include <fastnlotk/fastNLOCreate.h>
 #include <fastnlotk/fastNLOLHAPDF.h>
 #include <fastnlotk/fastNLOPDFLinearCombinations.h>
 #include <fastnlotk/fastNLOReader.h>
@@ -19,6 +20,18 @@ std::unique_ptr<fastNLOLHAPDF> make_fastnlo_lhapdf_with_name_file_set(
     rust::Str name,
     rust::Str LHAPDFfile,
     int PDFSet
+);
+
+std::unique_ptr<fastNLOCreate> make_fastnlo_create(
+    int alphas_lo,
+    rust::Slice<rust::Vec<double> const> left_bin_limits,
+    rust::Slice<rust::Vec<double> const> right_bin_limits,
+    rust::Slice<double const> normalizations,
+    int lo_channels,
+    int nlo_channels,
+    int nnlo_channels,
+    rust::Slice<int const> convolutions,
+    rust::Slice<rust::Vec<pair_int_int> const> channels
 );
 
 rust::Vec<double> CalcPDFLinearCombination(
