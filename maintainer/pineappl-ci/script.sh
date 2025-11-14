@@ -88,6 +88,7 @@ cd ..
 # curl "https://fastnlo.hepforge.org/code/v25/fastnlo_toolkit-${FASTNLO_V}.tar.gz" | tar xzf -
 git clone --depth 1 --branch "${FASTNLO_T}" https://gitlab.etp.kit.edu/qcd-public/fastNLO.git
 cd "fastNLO/v${FASTNLO_V}"
+autoreconf -fi
 ./configure --prefix=/usr/local/
 make -j V=1
 make install
