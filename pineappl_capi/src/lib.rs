@@ -873,9 +873,11 @@ pub unsafe extern "C" fn pineappl_grid_merge_bins(grid: *mut Grid, from: usize, 
 ///
 /// TODO
 #[no_mangle]
-pub unsafe extern "C" fn pineappl_grid_delete_bins(grid: *mut Grid, 
-                                                   bin_indices_ptr: *const usize, 
-                                                   bin_indices_len: usize) {
+pub unsafe extern "C" fn pineappl_grid_delete_bins(
+    grid: *mut Grid,
+    bin_indices_ptr: *const usize,
+    bin_indices_len: usize,
+) {
     let grid = unsafe { &mut *grid };
     let bin_indices = unsafe { std::slice::from_raw_parts(bin_indices_ptr, bin_indices_len) };
     grid.delete_bins(bin_indices);
