@@ -16,21 +16,9 @@ mod applgrid {
     }
 
     pub fn fx2(y: f64) -> f64 {
-        let mut yp = y;
-        let mut deltap = f64::INFINITY;
-
-        for _ in 0..10 {
-            let x = (-yp).exp();
-            let delta = (1.0 - x).mul_add(-5.0, y - yp);
-            if (delta.abs() < 1e-15) && (delta >= deltap) {
-                return x;
-            }
-            let deriv = x.mul_add(-5.0, -1.0);
-            yp -= delta / deriv;
-            deltap = delta;
-        }
-
-        unreachable!();
+        let z = -5.0 * (-y).exp();
+        let w = lambert_w::lambert_w0(z);
+        return -w / 5.0;
     }
 
     pub fn fy2(x: f64) -> f64 {

@@ -32,6 +32,7 @@ rayon = "1.5.1"
 rustc-hash = "1.1.0"
 serde = { features = ["derive"], version = "1.0.130" }
 thiserror = "1.0.30"
+lambert_w = "1.2.31"
 
 [dev-dependencies]
 lhapdf = { package = "managed-lhapdf", version = "0.3.4" }
