@@ -15,7 +15,7 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     container: ghcr.io/nnpdf/pineappl-ci:latest
     steps:
       - uses: actions/checkout@v4
