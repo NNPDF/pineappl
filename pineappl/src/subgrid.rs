@@ -11,7 +11,7 @@ use std::{iter, mem};
 /// TODO
 #[must_use]
 pub fn node_value_eq(lhs: f64, rhs: f64) -> bool {
-    approx_eq!(f64, lhs, rhs, ulps = 4096)
+    approx_eq!(f64, lhs, rhs, epsilon = 1e-15)
 }
 
 /// TODO

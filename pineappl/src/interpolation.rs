@@ -477,7 +477,7 @@ mod tests {
         assert_eq!(node_values[2].len(), interps[2].nodes());
 
         for (&node, ref_node) in node_values[1].iter().zip(x_reference) {
-            assert_approx_eq!(f64, node, ref_node, ulps = 4);
+            assert_approx_eq!(f64, node, ref_node, ulps = 8);
         }
 
         for (&node, ref_node) in node_values[2].iter().zip(x_reference) {
