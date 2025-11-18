@@ -16,9 +16,9 @@ mod applgrid {
     }
 
     pub fn fx2(y: f64) -> f64 {
-        let z = -5.0 * (5.0-y).exp();
+        let z = 5.0 * (5.0-y).exp();
         let w = lambert_w::lambert_w0(z);
-        return -w / 5.0;
+        return w / 5.0;
     }
 
     pub fn fy2(x: f64) -> f64 {
