@@ -15,22 +15,16 @@ mod applgrid {
         (x.sqrt() / x.mul_add(-0.99, 1.0)).powi(3)
     }
 
+    #[inline(never)]
     pub fn fx2(y: f64) -> f64 {
-        let mut yp = y;
-        let mut deltap = f64::INFINITY;
 
-        for _ in 0..10 {
-            let x = (-yp).exp();
-            let delta = (1.0 - x).mul_add(-5.0, y - yp);
-            if (delta.abs() < 1e-15) && (delta >= deltap) {
-                return x;
-            }
-            let deriv = x.mul_add(-5.0, -1.0);
-            yp -= delta / deriv;
-            deltap = delta;
+        let x = crate::fx2_rust(y);
+
+        if x == -1.0 {
+            unreachable!();
         }
 
-        unreachable!();
+        return x;
     }
 
     pub fn fy2(x: f64) -> f64 {
@@ -348,6 +342,21 @@ mod tests {
     use super::*;
     use float_cmp::assert_approx_eq;
     use float_cmp::Ulps;
+
+    #[test]
+    fn test_convergence_of_newton_method_in_fx2() {
+        let y = 6.786550974400577;
+
+        let result = std::panic::catch_unwind(|| {
+            fx2(y)
+        });
+
+        assert!(result.is_ok(), "fx2 failed: Newton iterations did not converge!");
+
+        let x = result.unwrap();
+        println!("fx2({}) = {}", y, x);
+    }
+
 
     #[test]
     fn interpolate_two_points() {
