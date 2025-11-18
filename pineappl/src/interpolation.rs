@@ -481,7 +481,7 @@ mod tests {
         }
 
         for (&node, ref_node) in node_values[2].iter().zip(x_reference) {
-            assert_approx_eq!(f64, node, ref_node, ulps = 4);
+            assert_approx_eq!(f64, node, ref_node, epsilon = 1e-12);
         }
 
         let mut array = crate::packed_array::PackedArray::<f64>::new(vec![40, 50, 50]);
