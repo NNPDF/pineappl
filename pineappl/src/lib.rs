@@ -33,6 +33,13 @@
 //! [special keys]: https://nnpdf.github.io/pineappl/docs/metadata.html
 //! [CLI tutorial]: https://nnpdf.github.io/pineappl/docs/cli-tutorial.html
 
+extern "C" {
+    fn fx2(y: f64) -> f64;
+}
+
+pub(crate) fn fx2_rust(y: f64) -> f64 {
+    unsafe { fx2(y) }
+}
 mod convert;
 mod v0;
 
@@ -47,3 +54,4 @@ pub mod packed_array;
 pub mod pids;
 pub mod reference;
 pub mod subgrid;
+

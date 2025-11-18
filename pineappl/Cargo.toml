@@ -12,6 +12,9 @@ repository.workspace = true
 rust-version.workspace = true
 version.workspace = true
 
+[build-dependencies]
+cc = "1.0"
+
 [lints]
 workspace = true
 
