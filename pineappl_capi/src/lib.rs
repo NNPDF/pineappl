@@ -860,6 +860,29 @@ pub unsafe extern "C" fn pineappl_grid_merge_bins(grid: *mut Grid, from: usize, 
     grid.merge_bins(from..to).unwrap();
 }
 
+/// Deletes bins with the corresponding `bin_indices`. Repeated indices and indices larger or
+/// equal the bin length are ignored.
+///
+/// # Safety
+///
+///  The parameter `grid` must be valid `Grid` object created by either `pineappl_grid_new` or
+///  `pineappl_grid_read`.
+///  The parameter `bin_indices_ptr` must be an array of size `bin_indices_len`.
+///
+/// # Panics
+///
+/// TODO
+#[no_mangle]
+pub unsafe extern "C" fn pineappl_grid_delete_bins(
+    grid: *mut Grid,
+    bin_indices_ptr: *const usize,
+    bin_indices_len: usize,
+) {
+    let grid = unsafe { &mut *grid };
+    let bin_indices = unsafe { std::slice::from_raw_parts(bin_indices_ptr, bin_indices_len) };
+    grid.delete_bins(bin_indices);
+}
+
 /// Merges `other` into `grid` and subsequently deletes `other`.
 ///
 /// # Safety
