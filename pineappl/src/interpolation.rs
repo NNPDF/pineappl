@@ -742,4 +742,20 @@ mod tests {
             assert!(applgrid::fq20(applgrid::ftau0(q2)).ulps(&q2) < 4);
         }
     }
+
+    #[test]
+    fn pr_365() {
+        assert_approx_eq!(
+            f64,
+            applgrid::fx2(6.7865509745),
+            0.1010727499933246,
+            ulps = 4
+        );
+        assert_approx_eq!(
+            f64,
+            applgrid::fx2(6.786550974400577),
+            0.10107275000000002,
+            ulps = 4
+        );
+    }
 }
