@@ -22,7 +22,7 @@ mod applgrid {
         for _ in 0..10 {
             let x = (-yp).exp();
             let delta = (1.0 - x).mul_add(-5.0, y - yp);
-            if (delta.abs() < 1e-15) && (delta >= deltap) {
+            if (delta == 0.0) || ((delta.abs() < 2e-15) && (delta.abs() >= deltap.abs())) {
                 return x;
             }
             let deriv = x.mul_add(-5.0, -1.0);
