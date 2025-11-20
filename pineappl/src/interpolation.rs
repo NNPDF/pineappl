@@ -16,9 +16,21 @@ mod applgrid {
     }
 
     pub fn fx2(y: f64) -> f64 {
-        let z = 5.0 * (5.0-y).exp();
-        let w = lambert_w::lambert_w0(z);
-        return w / 5.0;
+        let mut yp = y;
+        let mut deltap = f64::INFINITY;
+
+        for _ in 0..10 {
+            let x = (-yp).exp();
+            let delta = (1.0 - x).mul_add(-5.0, y - yp);
+            if (delta.abs() < 1e-15) && (delta >= deltap) {
+                return x;
+            }
+            let deriv = x.mul_add(-5.0, -1.0);
+            yp -= delta / deriv;
+            deltap = delta;
+        }
+
+        unreachable!();
     }
 
     pub fn fy2(x: f64) -> f64 {
@@ -477,11 +489,11 @@ mod tests {
         assert_eq!(node_values[2].len(), interps[2].nodes());
 
         for (&node, ref_node) in node_values[1].iter().zip(x_reference) {
-            assert_approx_eq!(f64, node, ref_node, epsilon = 1e-12);
+            assert_approx_eq!(f64, node, ref_node, ulps = 4);
         }
 
         for (&node, ref_node) in node_values[2].iter().zip(x_reference) {
-            assert_approx_eq!(f64, node, ref_node, epsilon = 1e-12);
+            assert_approx_eq!(f64, node, ref_node, ulps = 4);
         }
 
         let mut array = crate::packed_array::PackedArray::<f64>::new(vec![40, 50, 50]);

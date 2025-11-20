@@ -363,7 +363,7 @@ fn perform_grid_tests(
     let bins = grid.convolve(&mut convolution_cache, &[], &[], &[], &[(1.0, 1.0, 1.0)]);
 
     for (result, reference) in bins.iter().zip(reference.iter()) {
-        assert_approx_eq!(f64, *result, *reference, epsilon = 1e-10);
+        assert_approx_eq!(f64, *result, *reference, ulps = 4);
     }
 
     // TEST 5b: `convolve` with `ConvolutionCache::with_two`
