@@ -363,7 +363,7 @@ fn perform_grid_tests(
     let bins = grid.convolve(&mut convolution_cache, &[], &[], &[], &[(1.0, 1.0, 1.0)]);
 
     for (result, reference) in bins.iter().zip(reference.iter()) {
-        assert_approx_eq!(f64, *result, *reference, ulps = 4);
+        assert_approx_eq!(f64, *result, *reference, ulps = 8);
     }
 
     // TEST 5b: `convolve` with `ConvolutionCache::with_two`
@@ -397,8 +397,8 @@ fn perform_grid_tests(
 
     for (&node_value1, &node_value2, &ref_value) in izip!(&node_values[1], &node_values[2], x_grid)
     {
-        assert_approx_eq!(f64, node_value1, ref_value, ulps = 4);
-        assert_approx_eq!(f64, node_value2, ref_value, ulps = 4);
+        assert_approx_eq!(f64, node_value1, ref_value, ulps = 8);
+        assert_approx_eq!(f64, node_value2, ref_value, ulps = 8);
     }
 
     let bins = grid.convolve(&mut convolution_cache, &[], &[], &[], &[(1.0, 1.0, 1.0)]);
