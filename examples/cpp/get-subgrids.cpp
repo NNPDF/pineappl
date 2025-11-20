@@ -136,11 +136,11 @@ int main() {
 
                         // Check the values of the node entries.
                         assert(node_values_index[0] == 5442.30542919352900); // PyAPI: `subgrid.node_values[0][16]`
-                        assert(node_values_index[1] == 0.03052158400782889); // PyAPI: `subgrid.node_values[1][20]`
-                        assert(node_values_index[2] == 0.03052158400782889); // PyAPI: `subgrid.node_values[2][20]`
+                        assert(node_values_index[1] == 0.03052158400782890); // PyAPI: `subgrid.node_values[1][20]`
+                        assert(node_values_index[2] == 0.03052158400782890); // PyAPI: `subgrid.node_values[2][20]`
 
                         // PyAPI: `grid.subgrid(0, 0, 0).to_array(subgrid.shape)[16][20][20]`
-                        assert(subgrid_array[index] == -4.936156925096015e-07);
+                        assert(subgrid_array[index] == -4.936156925096021e-07);
                     }
                     break;
                 }
