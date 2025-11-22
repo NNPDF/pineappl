@@ -14,9 +14,9 @@ Arguments:
 
 Options:
       --conv-fun[=<IDX>]      Calculate convolution function uncertainties
-      --scale-abs[=<SCALES>]  Show absolute numbers of the scale-varied results [possible values: 3, 7, 9, 17, 27]
-      --scale-cov[=<SCALES>]  Calculate scale uncertainties using the covariance method [possible values: 3, 7, 9, 17, 27]
-      --scale-env[=<SCALES>]  Calculate the envelope of results where renormalization, factorization and fragmentation scales are varied [possible values: 3, 7, 9, 17, 27]
+      --scale-abs[=<SCALES>]  Show absolute numbers of the scale-varied results [possible values: 3, 7, 9, 13, 17, 27]
+      --scale-cov[=<SCALES>]  Calculate scale uncertainties using the covariance method [possible values: 3, 7, 9, 13, 17, 27]
+      --scale-env[=<SCALES>]  Calculate the envelope of results where renormalization, factorization and fragmentation scales are varied [possible values: 3, 7, 9, 13, 17, 27]
       --cl <CL>               Confidence level in per cent, for convolution function uncertainties [default: 68.26894921370858]
   -i, --integrated            Show integrated numbers (without bin widths) instead of differential ones
   -o, --orders <ORDERS>       Select orders manually
@@ -121,6 +121,20 @@ const SCALE_ABS_9_STR: &str =
 5 3.25  3.5 2.4586691e2 2.4586691e2 2.4967698e2 2.4198770e2 2.4207028e2 2.5316566e2 2.5059003e2 2.3677625e2 2.3258708e2 2.5750568e2
 6  3.5    4 1.1586851e2 1.1586851e2 1.1746280e2 1.1418227e2 1.1396174e2 1.1930157e2 1.1824058e2 1.1166942e2 1.0964950e2 1.2158905e2
 7    4  4.5 2.7517266e1 2.7517266e1 2.7787333e1 2.7211003e1 2.7002241e1 2.8306905e1 2.8157972e1 2.6562471e1 2.6041156e1 2.8953268e1
+";
+
+const SCALE_ABS_13_STR: &str = "b   etal    dsig/detal     1,1,1     0.5,0.5,1   0.5,1,0.5    0.5,1,1    1,0.5,0.5    1,0.5,1     1,1,0.5      1,1,2       1,2,1       1,2,2       2,1,1       2,1,2       2,2,1   
+     []        [pb]       (r,f,a)     (r,f,a)     (r,f,a)     (r,f,a)     (r,f,a)     (r,f,a)     (r,f,a)     (r,f,a)     (r,f,a)     (r,f,a)     (r,f,a)     (r,f,a)     (r,f,a)  
+                           [pb]        [pb]        [pb]        [pb]        [pb]        [pb]        [pb]        [pb]        [pb]        [pb]        [pb]        [pb]        [pb]    
+-+----+----+-----------+-----------+-----------+-----------+-----------+-----------+-----------+-----------+-----------+-----------+-----------+-----------+-----------+-----------
+0    2 2.25 7.5459110e2 7.5459110e2 7.4296019e2 7.6796494e2 7.6796494e2 7.2595107e2 7.2595107e2 7.5459110e2 7.5459110e2 7.7529764e2 7.7529764e2 7.4384068e2 7.4384068e2 7.6745431e2
+1 2.25  2.5 6.9028342e2 6.9028342e2 6.7923774e2 7.0235002e2 7.0235002e2 6.6417441e2 6.6417441e2 6.9028342e2 6.9028342e2 7.0957480e2 7.0957480e2 6.8058382e2 6.8058382e2 7.0221920e2
+2  2.5 2.75 6.0025198e2 6.0025198e2 5.9046454e2 6.1100712e2 6.1100712e2 5.7747295e2 5.7747295e2 6.0025198e2 6.0025198e2 6.1750966e2 6.1750966e2 5.9160658e2 5.9160658e2 6.1056383e2
+3 2.75    3 4.8552235e2 4.8552235e2 4.7761552e2 4.9437007e2 4.9437007e2 4.6723687e2 4.6723687e2 4.8552235e2 4.8552235e2 4.9966237e2 4.9966237e2 4.7841022e2 4.7841022e2 4.9366919e2
+4    3 3.25 3.6195456e2 3.6195456e2 3.5611822e2 3.6870561e2 3.6870561e2 3.4843600e2 3.4843600e2 3.6195456e2 3.6195456e2 3.7261436e2 3.7261436e2 3.5652780e2 3.5652780e2 3.6783089e2
+5 3.25  3.5 2.4586691e2 2.4586691e2 2.4198770e2 2.5059003e2 2.5059003e2 2.3677625e2 2.3677625e2 2.4586691e2 2.4586691e2 2.5316566e2 2.5316566e2 2.4207028e2 2.4207028e2 2.4967698e2
+6  3.5    4 1.1586851e2 1.1586851e2 1.1418227e2 1.1824058e2 1.1824058e2 1.1166942e2 1.1166942e2 1.1586851e2 1.1586851e2 1.1930157e2 1.1930157e2 1.1396174e2 1.1396174e2 1.1746280e2
+7    4  4.5 2.7517266e1 2.7517266e1 2.7211003e1 2.8157972e1 2.8157972e1 2.6562471e1 2.6562471e1 2.7517266e1 2.7517266e1 2.8306905e1 2.8306905e1 2.7002241e1 2.7002241e1 2.7787333e1
 ";
 
 const SCALE_ABS_17_STR: &str = "b   etal    dsig/detal     1,1,1       2,2,2    0.5,0.5,0.5  0.5,0.5,1   0.5,1,0.5    0.5,1,1     0.5,1,2    1,0.5,0.5    1,0.5,1     1,1,0.5      1,1,2       1,2,1       1,2,2      2,1,0.5      2,1,1       2,1,2       2,2,1   
@@ -346,6 +360,21 @@ fn scale_abs_9() {
         .assert()
         .success()
         .stdout(SCALE_ABS_9_STR);
+}
+
+#[test]
+fn scale_abs_13() {
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "uncert",
+            "--scale-abs=13",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
+            "NNPDF31_nlo_as_0118_luxqed",
+        ])
+        .assert()
+        .success()
+        .stdout(SCALE_ABS_13_STR);
 }
 
 #[test]
