@@ -22,7 +22,7 @@ mod applgrid {
         for _ in 0..10 {
             let x = (-yp).exp();
             let delta = (1.0 - x).mul_add(-5.0, y - yp);
-            if (delta.abs() < 1e-15) && (delta >= deltap) {
+            if (delta == 0.0) || ((delta.abs() < 2e-15) && (delta.abs() >= deltap.abs())) {
                 return x;
             }
             let deriv = x.mul_add(-5.0, -1.0);
@@ -753,5 +753,21 @@ mod tests {
             // these two functions should be inverse to each other, within numerical noise
             assert!(applgrid::fq20(applgrid::ftau0(q2)).ulps(&q2) < 4);
         }
+    }
+
+    #[test]
+    fn pr_365() {
+        assert_approx_eq!(
+            f64,
+            applgrid::fx2(6.7865509745),
+            0.1010727499933246,
+            ulps = 4
+        );
+        assert_approx_eq!(
+            f64,
+            applgrid::fx2(6.786550974400577),
+            0.10107275000000002,
+            ulps = 4
+        );
     }
 }
