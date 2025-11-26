@@ -63,7 +63,7 @@ fn lagrange_weights(i: usize, n: usize, u: f64) -> f64 {
 
 /// TODO
 #[repr(C)]
-#[derive(Clone, Copy, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub enum ReweightMeth {
     /// TODO
     ApplGridX,
@@ -83,14 +83,14 @@ pub enum Map {
 
 /// TODO
 #[repr(C)]
-#[derive(Clone, Copy, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub enum InterpMeth {
     /// TODO
     Lagrange,
 }
 
 /// TODO
-#[derive(Clone, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Interp {
     min: f64,
     max: f64,
@@ -654,6 +654,32 @@ mod tests {
             assert_eq!(index, ref_index);
             assert_approx_eq!(f64, value, ref_value, ulps = 4);
         }
+    }
+
+    #[test]
+    fn compare_fields_with_nan() {
+        let interp_a = Interp::new(
+            1e-3,
+            1e4,
+            50,
+            3,
+            ReweightMeth::NoReweight,
+            Map::ApplGridH0,
+            InterpMeth::Lagrange,
+        );
+        let interp_b = Interp::new(
+            1e-3,
+            1e4,
+            50,
+            3,
+            ReweightMeth::NoReweight,
+            Map::ApplGridH0,
+            InterpMeth::Lagrange,
+        );
+
+        assert!(interp_a.min.is_nan());
+        assert!(interp_b.min.is_nan());
+        assert_eq!(interp_a, interp_b);
     }
 
     #[test]
