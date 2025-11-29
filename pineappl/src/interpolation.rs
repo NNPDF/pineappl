@@ -658,16 +658,7 @@ mod tests {
 
     #[test]
     fn compare_fields_with_nan() {
-        let interp_a = Interp::new(
-            1e-3,
-            1e4,
-            50,
-            3,
-            ReweightMeth::NoReweight,
-            Map::ApplGridH0,
-            InterpMeth::Lagrange,
-        );
-        let interp_b = Interp::new(
+        let interp = Interp::new(
             1e-3,
             1e4,
             50,
@@ -677,9 +668,8 @@ mod tests {
             InterpMeth::Lagrange,
         );
 
-        assert!(interp_a.min.is_nan());
-        assert!(interp_b.min.is_nan());
-        assert_eq!(interp_a, interp_b);
+        assert!(interp.min.is_nan());
+        assert_eq!(interp, interp);
     }
 
     #[test]
