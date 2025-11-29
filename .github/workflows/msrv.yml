@@ -5,6 +5,7 @@ on:
     branches-ignore:
       - pycli
       - bump-pyo3-version
+      - windows-cli-wheels
 
 env:
   CARGO_TERM_COLOR: always
