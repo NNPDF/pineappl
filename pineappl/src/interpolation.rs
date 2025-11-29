@@ -3,6 +3,7 @@
 use super::convert;
 use super::packed_array::PackedArray;
 use arrayvec::ArrayVec;
+use float_cmp::approx_eq;
 use serde::{Deserialize, Serialize};
 use std::mem;
 use std::ops::Range;
@@ -62,7 +63,7 @@ fn lagrange_weights(i: usize, n: usize, u: f64) -> f64 {
 
 /// TODO
 #[repr(C)]
-#[derive(Clone, Copy, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub enum ReweightMeth {
     /// TODO
     ApplGridX,
@@ -82,14 +83,14 @@ pub enum Map {
 
 /// TODO
 #[repr(C)]
-#[derive(Clone, Copy, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub enum InterpMeth {
     /// TODO
     Lagrange,
 }
 
 /// TODO
-#[derive(Clone, Deserialize, PartialEq, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Interp {
     min: f64,
     max: f64,
@@ -99,6 +100,20 @@ pub struct Interp {
     map: Map,
     interp_meth: InterpMeth,
 }
+
+impl PartialEq for Interp {
+    fn eq(&self, other: &Self) -> bool {
+        self.nodes == other.nodes
+            && self.order == other.order
+            && self.reweight == other.reweight
+            && self.map == other.map
+            && self.interp_meth == other.interp_meth
+            && approx_eq!(f64, self.min, other.min, ulps = 1)
+            && approx_eq!(f64, self.max, other.max, ulps = 1)
+    }
+}
+
+impl Eq for Interp {}
 
 impl Interp {
     /// TODO
@@ -639,6 +654,22 @@ mod tests {
             assert_eq!(index, ref_index);
             assert_approx_eq!(f64, value, ref_value, ulps = 4);
         }
+    }
+
+    #[test]
+    fn compare_fields_with_nan() {
+        let interp = Interp::new(
+            1e-3,
+            1e4,
+            50,
+            3,
+            ReweightMeth::NoReweight,
+            Map::ApplGridH0,
+            InterpMeth::Lagrange,
+        );
+
+        assert!(interp.min.is_nan());
+        assert_eq!(interp, interp);
     }
 
     #[test]
