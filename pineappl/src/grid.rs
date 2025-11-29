@@ -628,6 +628,127 @@ impl Grid {
             .for_each(|subgrid| subgrid.scale(factor));
     }
 
+    /// TODO
+    ///
+    /// # Errors
+    ///
+    /// TODO
+    pub fn reint_node_opt(&mut self) -> Result<bool> {
+        let mut modified = false;
+
+        let self_interpolations = self.interpolations().to_vec();
+        let grid_node_values: Vec<_> = self_interpolations
+            .iter()
+            .map(|interps| interps.node_values())
+            .collect();
+
+        for subgrid in &mut self.subgrids {
+            if let SubgridEnum::ImportSubgridV1(subgrid) = subgrid {
+                let node_values = subgrid.node_values();
+                let mut affected_indices = vec![None; node_values.len()];
+
+                for ((values, grid_values), affected) in node_values
+                    .iter()
+                    .zip(&grid_node_values)
+                    .zip(&mut affected_indices)
+                {
+                    if let Some(index) = values.iter().copied().position(|value| {
+                        !grid_values
+                            .iter()
+                            .find(|&&grid_value| subgrid::node_value_eq(value, grid_value))
+                            .is_some()
+                    }) {
+                        if affected.is_some() {
+                            // TODO: return an error
+                            todo!();
+                        } else {
+                            *affected = Some(index);
+                        }
+                    }
+                }
+
+                if affected_indices.iter().any(Option::is_some) {
+                    // filter out affected node values
+                    let new_node_values: Vec<_> = affected_indices
+                        .iter()
+                        .zip(&node_values)
+                        .map(|(affected, values)| {
+                            if let &Some(index) = affected {
+                                values[..index]
+                                    .iter()
+                                    .copied()
+                                    .chain(values[index + 1..].iter().copied())
+                                    .collect()
+                            } else {
+                                values.to_vec()
+                            }
+                        })
+                        .collect();
+                    let mut array = super::packed_array::PackedArray::new(
+                        new_node_values.iter().map(|values| values.len()).collect(),
+                    );
+
+                    let mut filtered = Vec::new();
+
+                    for (index, value) in subgrid.indexed_iter() {
+                        let Some(new_index): Option<Vec<_>> = index
+                            .iter()
+                            .copied()
+                            .zip(affected_indices.iter().copied())
+                            .map(|(idx, affected)| {
+                                if let Some(filter) = affected {
+                                    if idx < filter {
+                                        Some(idx)
+                                    } else if idx > filter {
+                                        Some(idx - 1)
+                                    } else {
+                                        None
+                                    }
+                                } else {
+                                    Some(idx)
+                                }
+                            })
+                            .collect()
+                        else {
+                            filtered.push(index);
+                            continue;
+                        };
+
+                        array[new_index.as_slice()] = value;
+                    }
+
+                    let ntuple: Vec<_> = affected_indices
+                        .iter()
+                        .zip(&node_values)
+                        .map(|(affected, node_value)| affected.map(|index| node_value[index]))
+                        .collect::<Option<_>>()
+                        // TODO: generalize this to include interpolated dimensions
+                        .unwrap();
+                    let weight = subgrid
+                        .indexed_iter()
+                        .filter_map(|(index, value)| {
+                            filtered
+                                .iter()
+                                .find(|&filter| *filter == index)
+                                .map(|_| value)
+                        })
+                        .sum();
+
+                    let mut subg = InterpSubgridV1::new(&self_interpolations);
+                    subg.fill(&self_interpolations, &ntuple, weight);
+
+                    let mut new_subgrid = ImportSubgridV1::new(array, new_node_values);
+                    new_subgrid.merge_impl(&subg.into(), None);
+
+                    *subgrid = new_subgrid;
+                    modified = true;
+                }
+            }
+        }
+
+        Ok(modified)
+    }
+
     /// Repair the grid if it was written by bugged versions to disk.
     ///
     /// Returns `true` if this operations did anything. Currently, this scans for these problems:
@@ -1925,5 +2046,367 @@ mod tests {
 
         assert_eq!(info.ren1.len(), 1);
         assert_approx_eq!(f64, info.ren1[0], 6456.443904000001, ulps = 64);
+    }
+
+    #[test]
+    fn reint_node_opt() {
+        let mut grid = Grid::new(
+            BinsWithFillLimits::from_fill_limits(vec![0.0, 1.0]).unwrap(),
+            vec![Order::new(0, 0, 0, 0, 0)],
+            vec![channel![1.0 * (21, 21)]],
+            PidBasis::Pdg,
+            vec![Conv::new(ConvType::UnpolPDF, 2212); 2],
+            v0::default_interps(false, 2),
+            vec![Kinematics::Scale(0), Kinematics::X(0), Kinematics::X(1)],
+            Scales {
+                ren: ScaleFuncForm::Scale(0),
+                fac: ScaleFuncForm::Scale(0),
+                frg: ScaleFuncForm::NoScale,
+            },
+        );
+
+        // STEP1: fill the grid with a single weight
+        grid.fill(0, 0.5, 0, &[1000.0, 0.53, 0.21], 1.0);
+
+        let subgrid = grid.subgrids()[[0, 0, 0]].clone();
+        assert!(matches!(subgrid, SubgridEnum::InterpSubgridV1(..)));
+
+        let subgrid_fill: Vec<_> = subgrid.indexed_iter().collect();
+        let subgrid_sum = subgrid_fill.iter().map(|(_, value)| value).sum();
+
+        assert_approx_eq!(
+            f64,
+            subgrid_sum,
+            1.0,
+            // that's the interpolation error
+            epsilon = 3e-3
+        );
+
+        let node_values: Vec<_> = subgrid_fill
+            .into_iter()
+            .map(|(indices, value)| {
+                (
+                    subgrid
+                        .node_values()
+                        .into_iter()
+                        .zip(indices)
+                        .map(|(values, index)| values[index])
+                        .collect::<Vec<_>>(),
+                    value,
+                )
+            })
+            .collect();
+
+        let reference_node_values = [
+            (
+                vec![764.6109579666331, 0.601472197967335, 0.265113704158282],
+                -8.928837528400783e-5,
+            ),
+            (
+                vec![764.6109579666331, 0.601472197967335, 0.21950412650038867],
+                0.0009357049193568849,
+            ),
+            (
+                vec![764.6109579666331, 0.601472197967335, 0.1780256604256944],
+                0.0001655356403193788,
+            ),
+            (
+                vec![764.6109579666331, 0.601472197967335, 0.14112080644438132],
+                -1.497978514799248e-5,
+            ),
+            (
+                vec![764.6109579666331, 0.5397572337880446, 0.265113704158282],
+                0.0010779397969472833,
+            ),
+            (
+                vec![764.6109579666331, 0.5397572337880446, 0.21950412650038867],
+                -0.011296359325229969,
+            ),
+            (
+                vec![764.6109579666331, 0.5397572337880446, 0.1780256604256944],
+                -0.001998439930683442,
+            ),
+            (
+                vec![764.6109579666331, 0.5397572337880446, 0.14112080644438132],
+                0.00018084444374062925,
+            ),
+            (
+                vec![764.6109579666331, 0.47989890296102555, 0.265113704158282],
+                0.0001208857550963328,
+            ),
+            (
+                vec![764.6109579666331, 0.47989890296102555, 0.21950412650038867],
+                -0.0012668322764751846,
+            ),
+            (
+                vec![764.6109579666331, 0.47989890296102555, 0.1780256604256944],
+                -0.00022411541045194887,
+            ),
+            (
+                vec![764.6109579666331, 0.47989890296102555, 0.14112080644438132],
+                2.028083312117604e-5,
+            ),
+            (
+                vec![764.6109579666331, 0.42216677535896485, 0.265113704158282],
+                -1.1125741004865682e-5,
+            ),
+            (
+                vec![764.6109579666331, 0.42216677535896485, 0.21950412650038867],
+                0.00011659312375916878,
+            ),
+            (
+                vec![764.6109579666331, 0.42216677535896485, 0.1780256604256944],
+                2.062649987089498e-5,
+            ),
+            (
+                vec![764.6109579666331, 0.42216677535896485, 0.14112080644438132],
+                -1.8665499213641543e-6,
+            ),
+            (
+                vec![989.7977073478313, 0.601472197967335, 0.265113704158282],
+                0.007105879480018925,
+            ),
+            (
+                vec![989.7977073478313, 0.601472197967335, 0.21950412650038867],
+                -0.07446665217797657,
+            ),
+            (
+                vec![989.7977073478313, 0.601472197967335, 0.1780256604256944],
+                -0.013173902045095746,
+            ),
+            (
+                vec![989.7977073478313, 0.601472197967335, 0.14112080644438132],
+                0.0011921434067943778,
+            ),
+            (
+                vec![989.7977073478313, 0.5397572337880446, 0.265113704158282],
+                -0.08578619847723194,
+            ),
+            (
+                vec![989.7977073478313, 0.5397572337880446, 0.21950412650038867],
+                0.8990035676284625,
+            ),
+            (
+                vec![989.7977073478313, 0.5397572337880446, 0.1780256604256944],
+                0.1590428009281669,
+            ),
+            (
+                vec![989.7977073478313, 0.5397572337880446, 0.14112080644438132],
+                -0.014392229870511903,
+            ),
+            (
+                vec![989.7977073478313, 0.47989890296102555, 0.265113704158282],
+                -0.009620508871768855,
+            ),
+            (
+                vec![989.7977073478313, 0.47989890296102555, 0.21950412650038867],
+                0.1008189190294628,
+            ),
+            (
+                vec![989.7977073478313, 0.47989890296102555, 0.1780256604256944],
+                0.017835883912334514,
+            ),
+            (
+                vec![989.7977073478313, 0.47989890296102555, 0.14112080644438132],
+                -0.0016140192433232081,
+            ),
+            (
+                vec![989.7977073478313, 0.42216677535896485, 0.265113704158282],
+                0.0008854251682261267,
+            ),
+            (
+                vec![989.7977073478313, 0.42216677535896485, 0.21950412650038867],
+                -0.009278886338745754,
+            ),
+            (
+                vec![989.7977073478313, 0.42216677535896485, 0.1780256604256944],
+                -0.0016415286056107377,
+            ),
+            (
+                vec![989.7977073478313, 0.42216677535896485, 0.14112080644438132],
+                0.00014854653522884808,
+            ),
+            (
+                vec![1290.4078604330668, 0.601472197967335, 0.265113704158282],
+                0.0002897068597774866,
+            ),
+            (
+                vec![1290.4078604330668, 0.601472197967335, 0.21950412650038867],
+                -0.0030360070166242778,
+            ),
+            (
+                vec![1290.4078604330668, 0.601472197967335, 0.1780256604256944],
+                -0.0005371002707311233,
+            ),
+            (
+                vec![1290.4078604330668, 0.601472197967335, 0.14112080644438132],
+                4.860371242686967e-5,
+            ),
+            (
+                vec![1290.4078604330668, 0.5397572337880446, 0.265113704158282],
+                -0.00349750516357208,
+            ),
+            (
+                vec![1290.4078604330668, 0.5397572337880446, 0.21950412650038867],
+                0.03665239485678774,
+            ),
+            (
+                vec![1290.4078604330668, 0.5397572337880446, 0.1780256604256944],
+                0.006484178426706508,
+            ),
+            (
+                vec![1290.4078604330668, 0.5397572337880446, 0.14112080644438132],
+                -0.0005867715224703816,
+            ),
+            (
+                vec![1290.4078604330668, 0.47989890296102555, 0.265113704158282],
+                -0.0003922283543562413,
+            ),
+            (
+                vec![1290.4078604330668, 0.47989890296102555, 0.21950412650038867],
+                0.004110389504960838,
+            ),
+            (
+                vec![1290.4078604330668, 0.47989890296102555, 0.1780256604256944],
+                0.0007271693720851658,
+            ),
+            (
+                vec![1290.4078604330668, 0.47989890296102555, 0.14112080644438132],
+                -6.58035993881445e-5,
+            ),
+            (
+                vec![1290.4078604330668, 0.42216677535896485, 0.265113704158282],
+                3.6098803220071075e-5,
+            ),
+            (
+                vec![1290.4078604330668, 0.42216677535896485, 0.21950412650038867],
+                -0.0003783003963111255,
+            ),
+            (
+                vec![1290.4078604330668, 0.42216677535896485, 0.1780256604256944],
+                -6.692515668238392e-5,
+            ),
+            (
+                vec![1290.4078604330668, 0.42216677535896485, 0.14112080644438132],
+                6.056245447588251e-6,
+            ),
+            (
+                vec![1694.597307328949, 0.601472197967335, 0.265113704158282],
+                -4.731986075735382e-5,
+            ),
+            (
+                vec![1694.597307328949, 0.601472197967335, 0.21950412650038867],
+                0.0004958923975612891,
+            ),
+            (
+                vec![1694.597307328949, 0.601472197967335, 0.1780256604256944],
+                8.772836805885279e-5,
+            ),
+            (
+                vec![1694.597307328949, 0.601472197967335, 0.14112080644438132],
+                -7.93878648954473e-6,
+            ),
+            (
+                vec![1694.597307328949, 0.5397572337880446, 0.265113704158282],
+                0.0005712721385523025,
+            ),
+            (
+                vec![1694.597307328949, 0.5397572337880446, 0.21950412650038867],
+                -0.005986693661236972,
+            ),
+            (
+                vec![1694.597307328949, 0.5397572337880446, 0.1780256604256944],
+                -0.0010591065068782108,
+            ),
+            (
+                vec![1694.597307328949, 0.5397572337880446, 0.14112080644438132],
+                9.584152325907983e-5,
+            ),
+            (
+                vec![1694.597307328949, 0.47989890296102555, 0.265113704158282],
+                6.406541815226186e-5,
+            ),
+            (
+                vec![1694.597307328949, 0.47989890296102555, 0.21950412650038867],
+                -0.0006713788523427652,
+            ),
+            (
+                vec![1694.597307328949, 0.47989890296102555, 0.1780256604256944],
+                -0.00011877369234719258,
+            ),
+            (
+                vec![1694.597307328949, 0.47989890296102555, 0.14112080644438132],
+                1.0748165103067637e-5,
+            ),
+            (
+                vec![1694.597307328949, 0.42216677535896485, 0.265113704158282],
+                -5.896271642283093e-6,
+            ),
+            (
+                vec![1694.597307328949, 0.42216677535896485, 0.21950412650038867],
+                6.179046672088963e-5,
+            ),
+            (
+                vec![1694.597307328949, 0.42216677535896485, 0.1780256604256944],
+                1.0931356950977506e-5,
+            ),
+            (
+                vec![1694.597307328949, 0.42216677535896485, 0.14112080644438132],
+                -9.892092010259828e-7,
+            ),
+        ];
+
+        assert_eq!(node_values, reference_node_values);
+
+        // STEP 2: optimize the grid
+        grid.optimize();
+
+        let optimized_subgrid = grid.subgrids()[[0, 0, 0]].clone();
+        assert!(matches!(
+            optimized_subgrid,
+            SubgridEnum::ImportSubgridV1(..)
+        ));
+
+        let optimized_subgrid_fill: Vec<_> = grid.subgrids()[[0, 0, 0]].indexed_iter().collect();
+        assert_eq!(optimized_subgrid_fill, [(vec![0, 0, 0], 1.0)]);
+
+        // STEP 3: reinterpolate the grid
+        assert!(matches!(grid.reint_node_opt(), Ok(true)));
+
+        let new_subgrid = grid.subgrids()[[0, 0, 0]].clone();
+        assert!(matches!(new_subgrid, SubgridEnum::ImportSubgridV1(..)));
+
+        let new_subgrid_fill: Vec<_> = new_subgrid.indexed_iter().collect();
+        let new_subgrid_sum = new_subgrid_fill.iter().map(|(_, value)| value).sum();
+
+        assert_approx_eq!(f64, subgrid_sum, new_subgrid_sum, ulps = 8);
+
+        let new_node_values: Vec<_> = new_subgrid_fill
+            .into_iter()
+            .map(|(indices, value)| {
+                (
+                    new_subgrid
+                        .node_values()
+                        .iter()
+                        .zip(indices)
+                        .map(|(values, index)| values[index])
+                        .collect::<Vec<_>>(),
+                    value,
+                )
+            })
+            .collect();
+
+        // when converting from `InterpSubgridV1` to `ImportSubgridV1` the x-sorting is changed
+        let new_reference_node_values: Vec<_> = [0..16, 16..32, 32..48, 48..64]
+            .into_iter()
+            .flat_map(|range| range.rev())
+            .map(|index| reference_node_values[index].clone())
+            .collect();
+
+        for (new, reference) in new_node_values.into_iter().zip(new_reference_node_values) {
+            assert_eq!(new.0, reference.0);
+            // allow for some small numerical differences in the reinterpolated weights
+            assert_approx_eq!(f64, new.1, reference.1, ulps = 8);
+        }
     }
 }
