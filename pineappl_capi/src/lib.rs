@@ -63,9 +63,10 @@ use pineappl::evolution::{AlphasTable, OperatorSliceInfo};
 use pineappl::fk_table::{FkAssumptions, FkTable};
 use pineappl::grid::{Grid, GridOptFlags};
 use pineappl::interpolation::{Interp as InterpMain, InterpMeth, Map, ReweightMeth};
-use pineappl::packed_array::ravel_multi_index;
+use pineappl::packed_array::PackedArray;
+use pineappl::packed_array::{ravel_multi_index, unravel_index};
 use pineappl::pids::PidBasis;
-use pineappl::subgrid::Subgrid;
+use pineappl::subgrid::{ImportSubgridV1, Subgrid};
 use std::collections::HashMap;
 use std::ffi::{CStr, CString};
 use std::fs::File;
@@ -2086,6 +2087,104 @@ pub unsafe extern "C" fn pineappl_grid_subgrid_array(
             subgrid_array[ravel_index] = value;
         }
     }
+}
+
+/// Set the subgrid of a Grid for a given bin, order, and channel.
+///
+/// # Safety
+///
+/// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
+/// this function is not safe to call.
+#[no_mangle]
+pub unsafe extern "C" fn pineappl_grid_set_subgrid(
+    grid: *mut Grid,
+    bin: usize,
+    order: usize,
+    channel: usize,
+    node_values: *mut f64,
+    subgrid_array: *mut f64,
+    subgrid_shape: *mut usize,
+) {
+    let grid = unsafe { &mut *grid };
+    let num_kins = grid.kinematics().len();
+
+    let subgrid_shape = unsafe { slice::from_raw_parts(subgrid_shape, num_kins) };
+    let subgrid_array =
+        unsafe { slice::from_raw_parts(subgrid_array, subgrid_shape.iter().product()) };
+
+    let node_values: Vec<Vec<f64>> = {
+        let mut offset = 0;
+        subgrid_shape
+            .iter()
+            .map(|&dim_size| {
+                let dim_nodes =
+                    unsafe { slice::from_raw_parts(node_values.add(offset), dim_size) }.to_vec();
+                offset += dim_size;
+                dim_nodes
+            })
+            .collect()
+    };
+
+    let mut sparse_array: PackedArray<f64> =
+        PackedArray::new(node_values.iter().map(Vec::len).collect());
+
+    for (index, value) in subgrid_array
+        .iter()
+        .enumerate()
+        .filter(|(_, value)| **value != 0.0)
+    {
+        let index_unravel = unravel_index(index, subgrid_shape);
+        sparse_array[index_unravel.as_slice()] = *value;
+    }
+
+    let subgrid = ImportSubgridV1::new(sparse_array, node_values);
+    grid.subgrids_mut()[[order, bin, channel]] = subgrid.into();
+}
+
+/// Redefine the bin representation of the Grid; generalization of `pineappl_grid_set_remapper`.
+///
+/// # Panics
+///
+/// TODO
+///
+/// # Safety
+///
+/// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
+/// this function is not safe to call.
+#[no_mangle]
+pub unsafe extern "C" fn pineappl_grid_set_bwfl(
+    grid: *mut Grid,
+    bins_lower: *mut f64,
+    bins_upper: *mut f64,
+    n_bins: usize,
+    bin_dim: usize,
+    normalizations: *mut f64,
+) {
+    let grid = unsafe { &mut *grid };
+
+    let bins_lower = unsafe { slice::from_raw_parts(bins_lower, bin_dim * n_bins) };
+    let bins_upper = unsafe { slice::from_raw_parts(bins_upper, bin_dim * n_bins) };
+    let normalizations = unsafe { slice::from_raw_parts(normalizations, n_bins) };
+
+    let limits: Vec<Vec<(f64, f64)>> = bins_lower
+        .chunks(bin_dim)
+        .zip(bins_upper.chunks(bin_dim))
+        .map(|(bl_chunk, bu_chunk)| {
+            bl_chunk
+                .iter()
+                .zip(bu_chunk.iter())
+                .map(|(&a, &b)| (a, b))
+                .collect()
+        })
+        .collect();
+
+    grid.set_bwfl(
+        BinsWithFillLimits::from_limits_and_normalizations(limits, normalizations.to_vec())
+            // UNWRAP: error handling in the CAPI is to abort
+            .unwrap(),
+    )
+    // UNWRAP: error handling in the CAPI is to abort
+    .unwrap();
 }
 
 /// Get the shape of the objects represented in the evolve info.
