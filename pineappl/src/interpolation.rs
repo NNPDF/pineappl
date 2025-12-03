@@ -668,7 +668,10 @@ mod tests {
             InterpMeth::Lagrange,
         );
 
+        // Starting from below the valid domain of the map results in a NaN for `min`.
         assert!(interp.min.is_nan());
+        // We also need to check `.min()` which minimises between `min` and `max` is NaN.
+        assert!(!interp.min().is_nan());
         assert_eq!(interp, interp);
     }
 
