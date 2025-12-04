@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- added a `pineappl_grid_delete_bins` method to the C-API
+
+### Fixed
+
+- fixed bugs in stopping condition of the Newton iteration method
+- fixed a bug in comparing `interpolation::Interp` objects when one of the
+  boundaries is `NaN`
+
 ## [1.2.0] - 22/08/2025
 
 ### Added
