@@ -6,6 +6,7 @@ use super::error::{Error, Result};
 use super::evolution::{self, AlphasTable, EvolveInfo, OperatorSliceInfo};
 use super::fk_table::FkTable;
 use super::interpolation::Interp;
+use super::packed_array::PackedArray;
 use super::pids::PidBasis;
 use super::reference::Reference;
 use super::subgrid::{
@@ -1436,6 +1437,181 @@ impl Grid {
         }
 
         self.channels = new_channels;
+    }
+
+    /// Fix one of the convolutions in the Grid and return a new Grid with lower dimension.
+    ///
+    /// # Panics
+    ///
+    /// TODO
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the Grid has only one single convolution.
+    pub fn fix_convolution(
+        &self,
+        conv_idx: usize,
+        xfx: &mut dyn FnMut(i32, f64, f64) -> f64,
+        alphas: &mut dyn FnMut(f64) -> f64,
+        xi: (f64, f64, f64),
+    ) -> Result<Self> {
+        if self.convolutions.len() <= 1 {
+            return Err(Error::General(
+                "cannot fix the last convolution".to_string(),
+            ));
+        }
+
+        if conv_idx >= self.convolutions.len() {
+            return Err(Error::General(format!(
+                "convolution index {} out of bounds (max: {})",
+                conv_idx,
+                self.convolutions.len() - 1
+            )));
+        }
+
+        let mut new_convolutions = self.convolutions.clone();
+        new_convolutions.remove(conv_idx);
+
+        let mut new_kinematics = self.kinematics.clone();
+        let mut new_interps = self.interps.clone();
+        let kin_pos = new_kinematics
+            .iter()
+            .position(|k| *k == Kinematics::X(conv_idx))
+            .unwrap();
+        new_kinematics.remove(kin_pos);
+        new_interps.remove(kin_pos);
+
+        for kin in &mut new_kinematics {
+            if let Kinematics::X(i) = kin {
+                if *i > conv_idx {
+                    *i -= 1;
+                }
+            }
+        }
+
+        let mut new_channel_map: BTreeMap<Vec<i32>, Vec<(usize, i32, f64)>> = BTreeMap::new();
+        for (ichan, chan) in self.channels().iter().enumerate() {
+            for (pids, factor) in chan.entry() {
+                let mut new_pids = pids.clone();
+                let fixed_pid = new_pids.remove(conv_idx);
+
+                new_channel_map
+                    .entry(new_pids)
+                    .or_default()
+                    .push((ichan, fixed_pid, *factor));
+            }
+        }
+
+        let new_channels: Vec<Channel> = new_channel_map
+            .keys()
+            .map(|pids| Channel::new(vec![(pids.clone(), 1.0)]))
+            .collect();
+        let new_channel_pids: Vec<_> = new_channel_map.keys().cloned().collect();
+
+        let mut new_subgrids = Array3::from_shape_simple_fn(
+            (self.orders.len(), self.bwfl.len(), new_channels.len()),
+            || EmptySubgridV1.into(),
+        );
+
+        let conv_to_fix = &self.convolutions[conv_idx];
+        let (xir, xif, xia) = xi;
+
+        for (inew_chan, new_pids) in new_channel_pids.iter().enumerate() {
+            let origins = &new_channel_map[new_pids];
+
+            for (iord, order) in self.orders().iter().enumerate() {
+                for (ibin, _) in self.bwfl().bins().iter().enumerate() {
+                    let mut intermediate_sg: Option<SubgridEnum> = None;
+
+                    for &(ichan_orig, pid_fixed, factor) in origins {
+                        let sg_orig = &self.subgrids[[iord, ibin, ichan_orig]];
+                        if sg_orig.is_empty() {
+                            continue;
+                        }
+
+                        let mut new_node_values = sg_orig.node_values();
+                        new_node_values.remove(kin_pos);
+
+                        let mut sg_new_array = PackedArray::new(
+                            new_node_values.iter().map(std::vec::Vec::len).collect(),
+                        );
+
+                        let scale_form = if conv_to_fix.conv_type().is_pdf() {
+                            &self.scales.fac
+                        } else {
+                            &self.scales.frg
+                        };
+                        let xi_factor = if conv_to_fix.conv_type().is_pdf() {
+                            xif
+                        } else {
+                            xia
+                        };
+
+                        for (mut idxs_orig, val_orig) in sg_orig.indexed_iter() {
+                            let x_val = idxs_orig.remove(kin_pos);
+
+                            let sg_orig_node_values = sg_orig.node_values();
+                            let self_kinematics = self.kinematics();
+
+                            let scale_dims: Vec<_> = sg_orig_node_values
+                                .iter()
+                                .enumerate()
+                                .filter(|(i, _)| {
+                                    matches!(self_kinematics.get(*i), Some(Kinematics::Scale(_)))
+                                })
+                                .map(|(_, v)| v.len())
+                                .collect();
+                            let mu2_nodes_calc =
+                                scale_form.calc(&sg_orig_node_values, self_kinematics);
+                            let mu2_idx = scale_form.idx(&idxs_orig, &scale_dims);
+                            let mu2_val = mu2_nodes_calc[mu2_idx] * xi_factor * xi_factor;
+
+                            let ren_mu2_nodes_calc =
+                                self.scales.ren.calc(&sg_orig_node_values, self_kinematics);
+                            let ren_mu2 = ren_mu2_nodes_calc
+                                [self.scales.ren.idx(&idxs_orig, &scale_dims)]
+                                * xir
+                                * xir;
+                            let alphas_val = alphas(ren_mu2).powi(order.alphas.into());
+
+                            let x = sg_orig_node_values[kin_pos][x_val];
+                            let pdf_val = xfx(pid_fixed, x, mu2_val) / x;
+                            let final_val = val_orig * factor * pdf_val * alphas_val;
+
+                            sg_new_array[idxs_orig.as_slice()] += final_val;
+                        }
+
+                        let sg_contrib: SubgridEnum =
+                            ImportSubgridV1::new(sg_new_array, new_node_values).into();
+
+                        if let Some(ref mut isg) = intermediate_sg {
+                            isg.merge(&sg_contrib, None);
+                        } else {
+                            intermediate_sg = Some(sg_contrib);
+                        }
+                    }
+
+                    if let Some(sg) = intermediate_sg {
+                        new_subgrids[[iord, ibin, inew_chan]] = sg;
+                    }
+                }
+            }
+        }
+
+        let mut new_grid = Self::new(
+            self.bwfl.clone(),
+            self.orders.clone(),
+            new_channels,
+            *self.pid_basis(),
+            new_convolutions,
+            new_interps,
+            new_kinematics,
+            self.scales.clone(),
+        );
+        new_grid.subgrids = new_subgrids;
+        new_grid.metadata = self.metadata.clone();
+
+        Ok(new_grid)
     }
 }
 
