@@ -390,7 +390,6 @@ fn perform_grid_tests(
     for (result, original_val) in bins_fixed_0.iter().zip(bins.iter()) {
         assert_approx_eq!(f64, *result, *original_val, ulps = 16);
     }
-    mem::drop(convolution_cache_one_0);
 
     // TEST 6b: Fix conv_idx = 1 (second hadron)
     let mut xfx_fixed_1 = |id, x, q2| pdf.xfx_q2(id, x, q2);
