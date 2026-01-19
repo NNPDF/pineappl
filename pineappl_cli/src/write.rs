@@ -605,10 +605,11 @@ impl Subcommand for Opts {
                     .unwrap();
                 }
                 OpsArg::FixConvolution((conv_idx, pdf_set)) => {
+                    // TODO: account for the variation of scale
                     let pdf = lhapdf::Pdf::with_setname_and_member(pdf_set, 0)
                         .with_context(|| format!("Unable to load PDF set '{}'", pdf_set))?;
                     let mut xfx = |id, x, q2| pdf.xfx_q2(id, x, q2);
-                    grid = grid.fix_convolution(*conv_idx, &mut xfx, (1.0, 1.0, 1.0))?;
+                    grid = grid.fix_convolution(*conv_idx, &mut xfx, 1.0)?;
                 }
                 OpsArg::MergeBins(ranges) => {
                     // TODO: sort after increasing start indices

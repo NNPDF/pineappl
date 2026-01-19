@@ -1452,7 +1452,7 @@ impl Grid {
         &self,
         conv_idx: usize,
         xfx: &mut dyn FnMut(i32, f64, f64) -> f64,
-        xi: (f64, f64, f64),
+        xi: f64,
     ) -> Result<Self> {
         if self.convolutions.len() <= 1 {
             return Err(Error::General(
@@ -1513,7 +1513,6 @@ impl Grid {
         );
 
         let conv_to_fix = &self.convolutions[conv_idx];
-        let (_, xif, xia) = xi;
 
         for (inew_chan, new_pids) in new_channel_pids.iter().enumerate() {
             let origins = &new_channel_map[new_pids];
@@ -1540,11 +1539,6 @@ impl Grid {
                         } else {
                             &self.scales.frg
                         };
-                        let xi_factor = if conv_to_fix.conv_type().is_pdf() {
-                            xif
-                        } else {
-                            xia
-                        };
 
                         for (mut idxs_orig, val_orig) in sg_orig.indexed_iter() {
                             let x_val = idxs_orig.remove(kin_pos);
@@ -1563,7 +1557,7 @@ impl Grid {
                             let mu2_nodes_calc =
                                 scale_form.calc(&sg_orig_node_values, self_kinematics);
                             let mu2_idx = scale_form.idx(&idxs_orig, &scale_dims);
-                            let mu2_val = mu2_nodes_calc[mu2_idx] * xi_factor * xi_factor;
+                            let mu2_val = mu2_nodes_calc[mu2_idx] * xi * xi;
 
                             let x = sg_orig_node_values[kin_pos][x_val];
                             let pdf_val = xfx(pid_fixed, x, mu2_val) / x;

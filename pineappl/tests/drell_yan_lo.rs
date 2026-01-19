@@ -368,7 +368,7 @@ fn perform_grid_tests(
 
     // TEST 6a: Fix conv_idx = 0 (first hadron)
     let mut xfx_fixed_0 = |id, x, q2| pdf.xfx_q2(id, x, q2);
-    let grid_fixed_0 = grid.fix_convolution(0, &mut xfx_fixed_0, (1.0, 1.0, 1.0))?;
+    let grid_fixed_0 = grid.fix_convolution(0, &mut xfx_fixed_0, 1.0)?;
 
     let mut xfx_convolve_0 = |id, x, q2| pdf.xfx_q2(id, x, q2);
     let mut alphas_convolve_0 = |_| 0.0;
@@ -391,7 +391,7 @@ fn perform_grid_tests(
 
     // TEST 6b: Fix conv_idx = 1 (second hadron)
     let mut xfx_fixed_1 = |id, x, q2| pdf.xfx_q2(id, x, q2);
-    let grid_fixed_1 = grid.fix_convolution(1, &mut xfx_fixed_1, (1.0, 1.0, 1.0))?;
+    let grid_fixed_1 = grid.fix_convolution(1, &mut xfx_fixed_1, 1.0)?;
 
     let mut xfx_convolve_1 = |id, x, q2| pdf.xfx_q2(id, x, q2);
     let mut alphas_convolve_1 = |_| 0.0;
