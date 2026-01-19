@@ -376,7 +376,10 @@ class TestGrid:
                 xfxs=[pdf.polarized_pdf],  # Requires ONE single PDF
                 alphas=pdf.alphasQ,
             )
-        assert "couldn't match Conv { conv_type: UnpolPDF, pid: 2212 } with a convolution function from cache [Conv { conv_type: PolPDF, pid: 2212 }]" == str(err_func.value)
+        assert (
+            "couldn't match Conv { conv_type: UnpolPDF, pid: 2212 } with a convolution function from cache [Conv { conv_type: PolPDF, pid: 2212 }]"
+            == str(err_func.value)
+        )
 
     @pytest.mark.parametrize("params,expected", TESTING_SPECS)
     def test_toy_convolution(self, fake_grids, params, expected):
@@ -561,6 +564,36 @@ class TestGrid:
         np.testing.assert_allclose(
             g.convolve(
                 pdg_convs=g.convolutions,
+                xfxs=[pdf.polarized_pdf, pdf.polarized_pdf, pdf.ff_set],
+                alphas=pdf.alphasQ,
+            ),
+            expected_results,
+        )
+
+    def test_fix_convolution(
+        self,
+        pdf,
+        download_objects,
+        gridname: str = "SIHP-PP-POLARIZED-STAR-NLO.pineappl.lz4",
+    ):
+        expected_results = [
+            -3.90292729e09,
+            +3.43682719e11,
+            -3.58390524e10,
+            -4.66855347e10,
+            -2.15171695e09,
+            +1.57010877e10,
+        ]  # Numbers computed using `v1.0.0a2`
+
+        grid = download_objects(f"{gridname}")
+        g = Grid.read(grid)
+
+        # Fix the convolution for Fragmentation Function part
+        fix_g_conv = g.fix_convolution(conv_idx=2, xfx=pdf.ff_set)
+
+        np.testing.assert_allclose(
+            fix_g_conv.convolve(
+                pdg_convs=fix_g_conv.convolutions,
                 xfxs=[pdf.polarized_pdf, pdf.polarized_pdf, pdf.ff_set],
                 alphas=pdf.alphasQ,
             ),
