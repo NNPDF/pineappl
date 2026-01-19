@@ -1452,7 +1452,6 @@ impl Grid {
         &self,
         conv_idx: usize,
         xfx: &mut dyn FnMut(i32, f64, f64) -> f64,
-        alphas: &mut dyn FnMut(f64) -> f64,
         xi: (f64, f64, f64),
     ) -> Result<Self> {
         if self.convolutions.len() <= 1 {
@@ -1514,12 +1513,12 @@ impl Grid {
         );
 
         let conv_to_fix = &self.convolutions[conv_idx];
-        let (xir, xif, xia) = xi;
+        let (_, xif, xia) = xi;
 
         for (inew_chan, new_pids) in new_channel_pids.iter().enumerate() {
             let origins = &new_channel_map[new_pids];
 
-            for (iord, order) in self.orders().iter().enumerate() {
+            for (iord, _) in self.orders().iter().enumerate() {
                 for (ibin, _) in self.bwfl().bins().iter().enumerate() {
                     let mut intermediate_sg: Option<SubgridEnum> = None;
 
@@ -1566,17 +1565,9 @@ impl Grid {
                             let mu2_idx = scale_form.idx(&idxs_orig, &scale_dims);
                             let mu2_val = mu2_nodes_calc[mu2_idx] * xi_factor * xi_factor;
 
-                            let ren_mu2_nodes_calc =
-                                self.scales.ren.calc(&sg_orig_node_values, self_kinematics);
-                            let ren_mu2 = ren_mu2_nodes_calc
-                                [self.scales.ren.idx(&idxs_orig, &scale_dims)]
-                                * xir
-                                * xir;
-                            let alphas_val = alphas(ren_mu2).powi(order.alphas.into());
-
                             let x = sg_orig_node_values[kin_pos][x_val];
                             let pdf_val = xfx(pid_fixed, x, mu2_val) / x;
-                            let final_val = val_orig * factor * pdf_val * alphas_val;
+                            let final_val = val_orig * factor * pdf_val;
 
                             sg_new_array[idxs_orig.as_slice()] += final_val;
                         }
