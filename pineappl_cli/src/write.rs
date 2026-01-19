@@ -1,6 +1,6 @@
 use super::helpers;
 use super::{GlobalConfiguration, Subcommand};
-use anyhow::Result;
+use anyhow::{Context, Result};
 use clap::builder::{PossibleValuesParser, TypedValueParser};
 use clap::{
     value_parser, Arg, ArgAction, ArgMatches, Args, Command, Error, FromArgMatches, Parser,
@@ -36,6 +36,7 @@ enum OpsArg {
     DeleteKey(String),
     DeleteOrders(Vec<RangeInclusive<usize>>),
     DivBinNormDims(Vec<usize>),
+    FixConvolution((usize, String)),
     MergeBins(Vec<RangeInclusive<usize>>),
     MergeChannelFactors(bool),
     MulBinNorm(f64),
@@ -62,12 +63,14 @@ struct MoreArgs {
 impl FromArgMatches for MoreArgs {
     fn from_arg_matches(matches: &ArgMatches) -> Result<Self, Error> {
         let mut matches = matches.clone();
-        let mut args = Vec::new();
+        let mut args: Vec<Option<OpsArg>> = Vec::new();
         let ids: Vec<_> = matches.ids().map(|id| id.as_str().to_owned()).collect();
 
         for id in ids {
             let indices: Vec<_> = matches.indices_of(&id).unwrap().collect();
-            args.resize(indices.iter().max().unwrap() + 1, None);
+            if args.len() <= *indices.iter().max().unwrap() {
+                args.resize(indices.iter().max().unwrap() + 1, None);
+            }
 
             match id.as_str() {
                 "cc" => {
@@ -193,7 +196,7 @@ impl FromArgMatches for MoreArgs {
                         });
                     }
                 }
-                "rewrite_channel" | "rewrite_order" => {
+                "rewrite_channel" | "rewrite_order" | "fix_convolution" => {
                     for (index, arg) in indices.into_iter().zip(
                         matches
                             .remove_occurrences(&id)
@@ -211,6 +214,28 @@ impl FromArgMatches for MoreArgs {
                                 str::parse(&arg[0]).unwrap(),
                                 str::parse(&arg[1]).unwrap(),
                             )),
+                            "fix_convolution" => {
+                                let conv_idx_str = &arg[0];
+                                let conv_idx = conv_idx_str
+                                    .strip_prefix('x')
+                                    .and_then(|s| s.parse::<usize>().ok())
+                                    .ok_or_else(|| {
+                                        Error::raw(
+                                            clap::error::ErrorKind::InvalidValue,
+                                            format!(
+                                                "Invalid convolution index '{}', expected format 'xN'",
+                                                conv_idx_str
+                                            ),
+                                        )
+                                    })?;
+                                if !(1..=3).contains(&conv_idx) {
+                                    return Err(Error::raw(
+                                        clap::error::ErrorKind::InvalidValue,
+                                        "Convolution index must be 1, 2, or 3",
+                                    ));
+                                }
+                                OpsArg::FixConvolution((conv_idx - 1, arg[1].clone()))
+                            }
                             _ => unreachable!(),
                         });
                     }
@@ -339,6 +364,14 @@ impl Args for MoreArgs {
                 .value_delimiter(',')
                 .value_name("DIM1,...")
                 .value_parser(value_parser!(usize)),
+        )
+        .arg(
+            Arg::new("fix_convolution")
+                .action(ArgAction::Append)
+                .help("Fix one of the convolutions with a PDF set")
+                .long("fix-convolution")
+                .num_args(2)
+                .value_names(["XCONV", "PDF_SET"]),
         )
         .arg(
             Arg::new("merge_bins")
@@ -570,6 +603,14 @@ impl Subcommand for Opts {
                     )
                     // UNWRAP: this cannot fail because we only modify the normalizations
                     .unwrap();
+                }
+                OpsArg::FixConvolution((conv_idx, pdf_set)) => {
+                    let pdf = lhapdf::Pdf::with_setname_and_member(pdf_set, 0)
+                        .with_context(|| format!("Unable to load PDF set '{}'", pdf_set))?;
+                    let mut xfx = |id, x, q2| pdf.xfx_q2(id, x, q2);
+                    let mut alphas = |q2| pdf.alphas_q2(q2);
+                    grid =
+                        grid.fix_convolution(*conv_idx, &mut xfx, &mut alphas, (1.0, 1.0, 1.0))?;
                 }
                 OpsArg::MergeBins(ranges) => {
                     // TODO: sort after increasing start indices
