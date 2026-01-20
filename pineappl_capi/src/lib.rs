@@ -1962,6 +1962,32 @@ pub unsafe extern "C" fn pineappl_grid_convolve(
     ));
 }
 
+/// Fix one of the convolutions in the Grid and return a new Grid with lower dimension.
+///
+/// # Safety
+///
+/// TODO
+///
+/// # Panics
+///
+/// TODO
+#[no_mangle]
+pub unsafe extern "C" fn pineappl_grid_fix_convolution(
+    grid: *const Grid,
+    conv_idx: usize,
+    xfx: extern "C" fn(pdg_id: i32, x: f64, q2: f64, state: *mut c_void) -> f64,
+    state: *mut c_void,
+    xi: f64,
+) -> Box<Grid> {
+    let grid = unsafe { &*grid };
+    let mut xfx_closure = |id, x, q2| xfx(id, x, q2, state);
+
+    Box::new(
+        grid.fix_convolution(conv_idx, &mut xfx_closure, xi)
+            .unwrap(),
+    )
+}
+
 /// Get the type of convolutions for this Grid.
 ///
 /// # Safety
