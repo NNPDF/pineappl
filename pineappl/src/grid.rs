@@ -1439,7 +1439,7 @@ impl Grid {
         self.channels = new_channels;
     }
 
-    /// Fix one of the convolutions in the Grid and return a new Grid with lower dimension.
+    /// Fix one of the convolutions in the Grid and return a new Grid with lower convolution dimension.
     ///
     /// # Panics
     ///
