@@ -54,7 +54,19 @@ int main() {
     std::vector<LHAPDF::PDF*> pdfs_orig_vec = { pol_pdf.get(), pol_pdf.get(), ff.get() };
     void** pdfs_orig = reinterpret_cast<void**>(pdfs_orig_vec.data());
     std::vector<double> mu_scales = { 1.0, 1.0, 1.0 };
-    pineappl_grid_convolve(grid, xfx, alphas, pdfs_orig, pol_pdf.get(), nullptr, nullptr, nullptr, 1, mu_scales.data(), results_orig.data());
+    pineappl_grid_convolve(
+        grid,
+        xfx,
+        alphas,
+        pdfs_orig,
+        pol_pdf.get(),
+        nullptr,
+        nullptr,
+        nullptr,
+        1,
+        mu_scales.data(),
+        results_orig.data()
+    );
 
     // Fix the third convolution (fragmentation function)
     pineappl_grid* grid_fixed = pineappl_grid_fix_convolution(grid, 2, xfx, ff.get(), 1.0);
@@ -64,7 +76,19 @@ int main() {
     std::vector<double> results_fixed(bins);
     std::vector<LHAPDF::PDF*> pdfs_fixed_vec = { pol_pdf.get(), pol_pdf.get() };
     void** pdfs_fixed = reinterpret_cast<void**>(pdfs_fixed_vec.data());
-    pineappl_grid_convolve(grid_fixed, xfx, alphas, pdfs_fixed, pol_pdf.get(), nullptr, nullptr, nullptr, 1, mu_scales.data(), results_fixed.data());
+    pineappl_grid_convolve(
+        grid_fixed,
+        xfx,
+        alphas,
+        pdfs_fixed,
+        pol_pdf.get(),
+        nullptr,
+        nullptr,
+        nullptr,
+        1,
+        mu_scales.data(),
+        results_fixed.data()
+    );
 
     print_results(results_orig, results_fixed);
 
