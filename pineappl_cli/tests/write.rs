@@ -12,58 +12,32 @@ Arguments:
   <OUTPUT>  Path of the modified PineAPPL file
 
 Options:
-      --cc <IDX>
-          Charge conjugate the convolution with the specified index
-      --dedup-channels[=<ULPS>]
-          Deduplicate channels assuming numbers differing by ULPS are the same
-      --delete-bins <BIN1-BIN2,...>
-          Delete bins with the specified indices
-      --delete-channels <CH1-CH2,...>
-          Delete channels with the specified indices
-      --delete-orders <O1-O2,...>
-          Delete orders with the specified indices
-      --delete-key <KEY>
-          Delete an internal key-value pair
-      --div-bin-norm-dims <DIM1,...>
-          Divide each bin normalizations by the bin lengths for the given dimensions
-      --fix-convolution <XCONV> <PDF_SET>
-          Fix one of the convolutions with a PDF set
-      --merge-bins <BIN1-BIN2,...>
-          Merge specific bins together
-      --merge-channel-factors[=<ON>]
-          Merge channel factors into the grid [possible values: true, false]
-      --mul-bin-norm <NORM>
-          Multiply all bin normalizations with the given factor
-      --optimize[=<ENABLE>]
-          Optimize internal data structure to minimize memory and disk usage [possible values: true, false]
-      --optimize-fk-table <OPTIMI>
-          Optimize internal data structure of an FkTable to minimize memory and disk usage [possible values: Nf6Ind, Nf6Sym, Nf5Ind, Nf5Sym, Nf4Ind, Nf4Sym, Nf3Ind, Nf3Sym]
-      --repair[=<ENABLE>]
-          Repair bugs saved in the grid [possible values: true, false]
-      --rewrite-channel <IDX> <CHAN>
-          Rewrite the definition of the channel with index IDX
-      --rewrite-order <IDX> <ORDER>
-          Rewrite the definition of the order with index IDX
-      --rotate-pid-basis <BASIS>
-          Rotate the PID basis for this grid [possible values: PDG, EVOL]
-  -s, --scale <SCALE>
-          Scales all grids with the given factor
-      --scale-by-bin <BIN1,BIN2,...>
-          Scale each bin with a different factor
-      --scale-by-order <FAC1,FAC2,...>
-          Scale subgrids with order-dependent factors
-      --set-bins <LIMITS>
-          Set the bin limits
-      --set-key-value <KEY> <VALUE>
-          Set an internal key-value pair
-      --set-key-file <KEY> <FILE>
-          Set an internal key-value pair, with value being read from a file
-      --split-channels[=<ENABLE>]
-          Split the grid such that each channel contains only a single PID combination [possible values: true, false]
-      --upgrade[=<ENABLE>]
-          Convert the file format to the most recent version [possible values: true, false]
-  -h, --help
-          Print help
+      --cc <IDX>                        Charge conjugate the convolution with the specified index
+      --dedup-channels[=<ULPS>]         Deduplicate channels assuming numbers differing by ULPS are the same
+      --delete-bins <BIN1-BIN2,...>     Delete bins with the specified indices
+      --delete-channels <CH1-CH2,...>   Delete channels with the specified indices
+      --delete-orders <O1-O2,...>       Delete orders with the specified indices
+      --delete-key <KEY>                Delete an internal key-value pair
+      --div-bin-norm-dims <DIM1,...>    Divide each bin normalizations by the bin lengths for the given dimensions
+      --fix-convolution <IDX:CONV_FUN>  Fix one of the convolutions with a PDF set
+      --merge-bins <BIN1-BIN2,...>      Merge specific bins together
+      --merge-channel-factors[=<ON>]    Merge channel factors into the grid [possible values: true, false]
+      --mul-bin-norm <NORM>             Multiply all bin normalizations with the given factor
+      --optimize[=<ENABLE>]             Optimize internal data structure to minimize memory and disk usage [possible values: true, false]
+      --optimize-fk-table <OPTIMI>      Optimize internal data structure of an FkTable to minimize memory and disk usage [possible values: Nf6Ind, Nf6Sym, Nf5Ind, Nf5Sym, Nf4Ind, Nf4Sym, Nf3Ind, Nf3Sym]
+      --repair[=<ENABLE>]               Repair bugs saved in the grid [possible values: true, false]
+      --rewrite-channel <IDX> <CHAN>    Rewrite the definition of the channel with index IDX
+      --rewrite-order <IDX> <ORDER>     Rewrite the definition of the order with index IDX
+      --rotate-pid-basis <BASIS>        Rotate the PID basis for this grid [possible values: PDG, EVOL]
+  -s, --scale <SCALE>                   Scales all grids with the given factor
+      --scale-by-bin <BIN1,BIN2,...>    Scale each bin with a different factor
+      --scale-by-order <FAC1,FAC2,...>  Scale subgrids with order-dependent factors
+      --set-bins <LIMITS>               Set the bin limits
+      --set-key-value <KEY> <VALUE>     Set an internal key-value pair
+      --set-key-file <KEY> <FILE>       Set an internal key-value pair, with value being read from a file
+      --split-channels[=<ENABLE>]       Split the grid such that each channel contains only a single PID combination [possible values: true, false]
+      --upgrade[=<ENABLE>]              Convert the file format to the most recent version [possible values: true, false]
+  -h, --help                            Print help
 ";
 
 const CHANNEL_STR: &str = "c    entry        entry
@@ -1185,9 +1159,7 @@ fn fix_convolution() {
         .unwrap()
         .args([
             "write",
-            "--fix-convolution",
-            "x3", // convolve the final-state hadron (FF)
-            "MAPFF10NLOPIsum",
+            "--fix-convolution=2:MAPFF10NLOPIsum",
             "../test-data/SIHP-PP-POLARIZED-STAR-NLO.pineappl.lz4",
             output.path().to_str().unwrap(),
         ])

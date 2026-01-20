@@ -196,7 +196,7 @@ impl FromArgMatches for MoreArgs {
                         });
                     }
                 }
-                "rewrite_channel" | "rewrite_order" | "fix_convolution" => {
+                "rewrite_channel" | "rewrite_order" => {
                     for (index, arg) in indices.into_iter().zip(
                         matches
                             .remove_occurrences(&id)
@@ -214,30 +214,22 @@ impl FromArgMatches for MoreArgs {
                                 str::parse(&arg[0]).unwrap(),
                                 str::parse(&arg[1]).unwrap(),
                             )),
-                            "fix_convolution" => {
-                                let conv_idx_str = &arg[0];
-                                let conv_idx = conv_idx_str
-                                    .strip_prefix('x')
-                                    .and_then(|s| s.parse::<usize>().ok())
-                                    .ok_or_else(|| {
-                                        Error::raw(
-                                            clap::error::ErrorKind::InvalidValue,
-                                            format!(
-                                                "Invalid convolution index '{}', expected format 'xN'",
-                                                conv_idx_str
-                                            ),
-                                        )
-                                    })?;
-                                if !(1..=3).contains(&conv_idx) {
-                                    return Err(Error::raw(
-                                        clap::error::ErrorKind::InvalidValue,
-                                        "Convolution index must be 1, 2, or 3",
-                                    ));
-                                }
-                                OpsArg::FixConvolution((conv_idx - 1, arg[1].clone()))
-                            }
                             _ => unreachable!(),
                         });
+                    }
+                }
+                "fix_convolution" => {
+                    for (index, arg) in indices.into_iter().zip(
+                        matches
+                            .remove_occurrences(&id)
+                            .unwrap()
+                            .map(Iterator::collect::<Vec<String>>),
+                    ) {
+                        assert_eq!(arg.len(), 1);
+                        let s = &arg[0];
+                        let (conv_idx_str, pdf) = s.split_once(':').unwrap();
+                        let conv_idx = conv_idx_str.parse::<usize>().unwrap();
+                        args[index] = Some(OpsArg::FixConvolution((conv_idx, pdf.to_string())))
                     }
                 }
                 "rotate_pid_basis" => {
@@ -370,8 +362,8 @@ impl Args for MoreArgs {
                 .action(ArgAction::Append)
                 .help("Fix one of the convolutions with a PDF set")
                 .long("fix-convolution")
-                .num_args(2)
-                .value_names(["XCONV", "PDF_SET"]),
+                .num_args(1)
+                .value_name("IDX:CONV_FUN"),
         )
         .arg(
             Arg::new("merge_bins")
