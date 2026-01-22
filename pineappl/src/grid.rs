@@ -1642,7 +1642,7 @@ impl Grid {
         new_grid.metadata = self.metadata.clone();
 
         new_grid.optimize_using(GridOptFlags::STRIP_EMPTY_ORDERS);
-        new_grid.optimize_using(GridOptFlags::STRIP_EMPTY_ORDERS);
+        new_grid.optimize_using(GridOptFlags::STRIP_EMPTY_CHANNELS);
         new_grid.optimize_using(GridOptFlags::MERGE_SAME_CHANNELS);
 
         Ok(new_grid)
