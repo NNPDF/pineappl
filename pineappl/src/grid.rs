@@ -1641,8 +1641,10 @@ impl Grid {
         new_grid.subgrids = new_subgrids;
         new_grid.metadata = self.metadata.clone();
 
-        // Optimize the Grid to remove empty orders, duplicate/symmetrical channels, etc.
-        new_grid.optimize();
+        new_grid.optimize_using(GridOptFlags::STRIP_EMPTY_ORDERS);
+        new_grid.optimize_using(GridOptFlags::STRIP_EMPTY_ORDERS);
+        new_grid.optimize_using(GridOptFlags::MERGE_SAME_CHANNELS);
+
         Ok(new_grid)
     }
 }
