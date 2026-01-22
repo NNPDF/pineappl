@@ -1517,8 +1517,8 @@ impl Grid {
         for (inew_chan, new_pids) in new_channel_pids.iter().enumerate() {
             let origins = &new_channel_map[new_pids];
 
-            for (iord, _) in self.orders().iter().enumerate() {
-                for (ibin, _) in self.bwfl().bins().iter().enumerate() {
+            for iord in 0..self.orders().len() {
+                for ibin in 0..self.bwfl().bins().len() {
                     let mut intermediate_sg: Option<SubgridEnum> = None;
 
                     for &(ichan_orig, pid_fixed, factor) in origins {
@@ -1530,9 +1530,8 @@ impl Grid {
                         let mut new_node_values = sg_orig.node_values();
                         new_node_values.remove(kin_pos);
 
-                        let mut sg_new_array = PackedArray::new(
-                            new_node_values.iter().map(std::vec::Vec::len).collect(),
-                        );
+                        let mut sg_new_array =
+                            PackedArray::new(new_node_values.iter().map(Vec::len).collect());
 
                         let scale_form = if conv_to_fix.conv_type().is_pdf() {
                             &self.scales.fac
@@ -1596,6 +1595,8 @@ impl Grid {
         new_grid.subgrids = new_subgrids;
         new_grid.metadata = self.metadata.clone();
 
+        // Optimize the Grid to remove empty orders, duplicate/symmetrical channels, etc.
+        new_grid.optimize();
         Ok(new_grid)
     }
 }
