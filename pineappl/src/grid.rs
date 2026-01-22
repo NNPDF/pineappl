@@ -1441,13 +1441,34 @@ impl Grid {
 
     /// Fix one of the convolutions in the Grid and return a new Grid with lower convolution dimension.
     ///
+    /// This function integrates out one of the convolution dimensions of the grid by convolving it
+    /// with the provided function `xfx`.
+    ///
+    /// The `conv_idx` parameter specifies which convolution to fix. The `xfx` function provides
+    /// the values of the parton distribution function or fragmentation function for a given parton
+    /// ID, `x` value, and scale `mu2`. The `xi` parameter is a scale factor for the factorization
+    /// or fragmentation scale.
+    ///
+    /// # Special handling of fragmentation functions
+    ///
+    /// If the convolution being fixed is a fragmentation function, the dependency on the
+    /// fragmentation scale is removed from the grid. This has a direct impact on the perturbative
+    /// orders (`Order`). Specifically, the `logxia` of each `Order` is set to zero.
+    ///
+    /// As a result, multiple original orders might collapse into a single new order. When this
+    /// happens, the corresponding subgrids are merged together, ensuring that the total
+    /// contribution is preserved. The final grid is then optimized to remove any empty or
+    /// duplicate structures.
+    ///
     /// # Panics
     ///
-    /// TODO
+    /// This function panics if internal invariants are violated, which typically indicates a bug in
+    /// the library.
     ///
     /// # Errors
     ///
-    /// Returns an error if the Grid has only one single convolution.
+    /// Returns an error if `conv_idx` is out of bounds or if the grid has only one convolution,
+    /// as the last convolution cannot be fixed.
     pub fn fix_convolution(
         &self,
         conv_idx: usize,
@@ -1507,17 +1528,41 @@ impl Grid {
             .collect();
         let new_channel_pids: Vec<_> = new_channel_map.keys().cloned().collect();
 
-        let mut new_subgrids = Array3::from_shape_simple_fn(
-            (self.orders.len(), self.bwfl.len(), new_channels.len()),
+        let conv_to_fix = &self.convolutions[conv_idx];
+        let (new_orders, order_map) = if conv_to_fix.conv_type().is_pdf() {
+            (self.orders.clone(), (0..self.orders.len()).collect())
+        } else {
+            let mut unique_orders = Vec::new();
+            let map: Vec<usize> = self
+                .orders
+                .iter()
+                .map(|o| {
+                    let mut new_o = o.clone();
+                    new_o.logxia = 0;
+                    unique_orders
+                        .iter()
+                        .position(|uo| uo == &new_o)
+                        .map_or_else(
+                            || {
+                                unique_orders.push(new_o);
+                                unique_orders.len() - 1
+                            },
+                            |pos| pos,
+                        )
+                })
+                .collect();
+            (unique_orders, map)
+        };
+
+        let mut new_subgrids: Array3<SubgridEnum> = Array3::from_shape_simple_fn(
+            (new_orders.len(), self.bwfl.len(), new_channels.len()),
             || EmptySubgridV1.into(),
         );
-
-        let conv_to_fix = &self.convolutions[conv_idx];
 
         for (inew_chan, new_pids) in new_channel_pids.iter().enumerate() {
             let origins = &new_channel_map[new_pids];
 
-            for iord in 0..self.orders().len() {
+            (0..self.orders().len()).for_each(|iord| {
                 for ibin in 0..self.bwfl().bins().len() {
                     let mut intermediate_sg: Option<SubgridEnum> = None;
 
@@ -1576,15 +1621,16 @@ impl Grid {
                     }
 
                     if let Some(sg) = intermediate_sg {
-                        new_subgrids[[iord, ibin, inew_chan]] = sg;
+                        let new_iord = order_map[iord];
+                        new_subgrids[[new_iord, ibin, inew_chan]].merge(&sg, None);
                     }
                 }
-            }
+            });
         }
 
         let mut new_grid = Self::new(
             self.bwfl.clone(),
-            self.orders.clone(),
+            new_orders,
             new_channels,
             *self.pid_basis(),
             new_convolutions,
