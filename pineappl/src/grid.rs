@@ -1529,16 +1529,24 @@ impl Grid {
         let new_channel_pids: Vec<_> = new_channel_map.keys().cloned().collect();
 
         let conv_to_fix = &self.convolutions[conv_idx];
-        let (new_orders, order_map) = if conv_to_fix.conv_type().is_pdf() {
-            (self.orders.clone(), (0..self.orders.len()).collect())
-        } else {
+        let (new_orders, order_map) = {
             let mut unique_orders = Vec::new();
+            let other_conv_idx = 1 - conv_idx;
+
             let map: Vec<usize> = self
                 .orders
                 .iter()
                 .map(|o| {
                     let mut new_o = o.clone();
-                    new_o.logxia = 0;
+
+                    if conv_to_fix.conv_type().is_ff() {
+                        new_o.logxia = 0;
+                    } else if self.convolutions.len() == 2
+                        && self.convolutions[other_conv_idx].conv_type().is_ff()
+                    {
+                        new_o.logxif = 0;
+                    }
+
                     unique_orders
                         .iter()
                         .position(|uo| uo == &new_o)
