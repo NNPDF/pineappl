@@ -1531,7 +1531,12 @@ impl Grid {
         let conv_to_fix = &self.convolutions[conv_idx];
         let (new_orders, order_map) = {
             let mut unique_orders = Vec::new();
-            let other_conv_idx = 1 - conv_idx;
+
+            let other_conv_idx_opt = if self.convolutions.len() == 2 {
+                Some(1 - conv_idx)
+            } else {
+                None
+            };
 
             let map: Vec<usize> = self
                 .orders
@@ -1541,22 +1546,21 @@ impl Grid {
 
                     if conv_to_fix.conv_type().is_ff() {
                         new_o.logxia = 0;
-                    } else if self.convolutions.len() == 2
-                        && self.convolutions[other_conv_idx].conv_type().is_ff()
-                    {
-                        new_o.logxif = 0;
+                    } else if let Some(other_conv_idx) = other_conv_idx_opt {
+                        if conv_to_fix.conv_type().is_pdf()
+                            && self.convolutions[other_conv_idx].conv_type().is_ff()
+                        {
+                            new_o.logxif = 0;
+                        }
                     }
 
                     unique_orders
                         .iter()
                         .position(|uo| uo == &new_o)
-                        .map_or_else(
-                            || {
-                                unique_orders.push(new_o);
-                                unique_orders.len() - 1
-                            },
-                            |pos| pos,
-                        )
+                        .unwrap_or_else(|| {
+                            unique_orders.push(new_o);
+                            unique_orders.len() - 1
+                        })
                 })
                 .collect();
             (unique_orders, map)
