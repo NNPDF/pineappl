@@ -1653,9 +1653,11 @@ impl Grid {
         new_grid.subgrids = new_subgrids;
         new_grid.metadata = self.metadata.clone();
 
-        new_grid.optimize_using(GridOptFlags::STRIP_EMPTY_ORDERS);
-        new_grid.optimize_using(GridOptFlags::STRIP_EMPTY_CHANNELS);
-        new_grid.optimize_using(GridOptFlags::MERGE_SAME_CHANNELS);
+        new_grid.optimize_using(
+            GridOptFlags::STRIP_EMPTY_ORDERS
+                | GridOptFlags::STRIP_EMPTY_CHANNELS
+                | GridOptFlags::MERGE_SAME_CHANNELS,
+        );
 
         Ok(new_grid)
     }
