@@ -319,6 +319,12 @@ impl ConvType {
     pub const fn is_pdf(&self) -> bool {
         matches!(self, Self::UnpolPDF | Self::PolPDF)
     }
+
+    /// TODO
+    #[must_use]
+    pub const fn is_ff(&self) -> bool {
+        matches!(self, Self::UnpolFF | Self::PolFF)
+    }
 }
 
 /// Data type that indentifies different types of convolutions.

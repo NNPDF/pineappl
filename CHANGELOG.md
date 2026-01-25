@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- added a `fix_convolution` method to integrate out one of the convolution
+  dimensions in a grid by convolving it with a non-perturbative function
+
 ## [1.3.0] - 06/12/2025
 
 ### Added
