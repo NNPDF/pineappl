@@ -633,7 +633,12 @@ class TestGrid:
         binning = [1e-2, 1e-1, 0.5, 1]
 
         channels = [Channel([([i, -i, i], 0.1)]) for i in range(-5, 5)]
-        orders = [Order(2, 0, 0, 0, 0), Order(2, 0, 0, 0, 1)]
+        orders = [
+            Order(1, 0, 0, 0, 0),
+            Order(2, 0, 0, 0, 0),  # should be combined with the next order
+            Order(2, 0, 0, 0, 1),
+            Order(2, 0, 1, 1, 1),  # creates a new order with `logxia` removed
+        ]
 
         convbools = [(False, False), (False, False), (False, True)]
         hpids = [2212, 2212, 211]
@@ -656,7 +661,7 @@ class TestGrid:
         comb_nodes = [_q2grid] + [_xgrid for _ in convolutions]
         ntuples = [np.array(list(kins)) for kins in itertools.product(*comb_nodes)]
         obs = [rndgen.uniform(binning[0], binning[-1]) for _ in ntuples]
-        for pto in range(len(ORDERS)):
+        for pto in range(len(orders)):
             for channel_id in range(len(channels)):
                 g.fill_array(
                     order=pto,
@@ -671,8 +676,10 @@ class TestGrid:
         orders_fix = g_fix.orders()
 
         # Check that the orders have been merged
-        assert len(orders_fix) == 1
-        assert orders_fix[0].as_tuple() == (2, 0, 0, 0, 0)
+        assert len(orders_fix) == 3
+        assert orders_fix[0].as_tuple() == (1, 0, 0, 0, 0)
+        assert orders_fix[1].as_tuple() == (2, 0, 0, 0, 0)
+        assert orders_fix[2].as_tuple() == (2, 0, 1, 1, 0)
 
     def test_many_convolutions(self, fake_grids, pdf, nb_convolutions: int = 3):
         """Test for fun many convolutions."""
