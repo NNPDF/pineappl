@@ -135,7 +135,7 @@ pub fn create_conv_funs_for_set(
 
 /// Creates convolution functions for a PDF set using the specified backend.
 ///
-/// Returns a tuple of (PdfSetBackend, Vec<Vec<Box<dyn PdfBackend>>>).
+/// Returns a tuple of (`PdfSetBackend`, Vec<Vec<Box<dyn PdfBackend>>>).
 pub fn create_conv_funs_for_set_with_backend(
     funs: &ConvFuns,
     index_of_set: usize,
@@ -364,8 +364,6 @@ pub fn convolve_scales(
     match mode {
         ConvoluteMode::Asymmetry => {
             let bin_count = grid.bwfl().len();
-
-            // calculating the asymmetry for a subset of bins doesn't work
             assert!((bins.is_empty() || (bins.len() == bin_count)) && (bin_count % 2 == 0));
 
             results
@@ -438,13 +436,11 @@ pub fn convolve_scales_with_backend(
         cfg.use_alphas_from
     );
 
-    // Get x_min/x_max before creating closures (requires mut)
     let x_min_max: Vec<_> = conv_funs
         .iter_mut()
         .map(|fun| (fun.x_min(), fun.x_max()))
         .collect();
 
-    // Create closures for xfx evaluation
     let mut funs: Vec<_> = conv_funs
         .iter()
         .zip(&x_min_max)
@@ -464,7 +460,6 @@ pub fn convolve_scales_with_backend(
         .map(|fun| fun as &mut dyn FnMut(i32, f64, f64) -> f64)
         .collect();
 
-    // Create alphas closures
     let mut alphas_funs: Vec<_> = conv_funs
         .iter()
         .map(|fun| {
@@ -473,7 +468,6 @@ pub fn convolve_scales_with_backend(
         })
         .collect();
 
-    // Get particle IDs from the PDFs using the backend interface
     let convolutions: Vec<_> = conv_funs
         .iter()
         .zip(conv_types)
@@ -489,8 +483,6 @@ pub fn convolve_scales_with_backend(
     match mode {
         ConvoluteMode::Asymmetry => {
             let bin_count = grid.bwfl().len();
-
-            // calculating the asymmetry for a subset of bins doesn't work
             assert!((bins.is_empty() || (bins.len() == bin_count)) && (bin_count % 2 == 0));
 
             results

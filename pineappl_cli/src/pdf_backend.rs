@@ -1,14 +1,14 @@
 //! PDF backend abstraction layer.
 //!
 //! This module provides a unified interface for different PDF interpolation backends,
-//! currently supporting LHAPDF and NeoPDF. It allows runtime selection of the backend
+//! currently supporting `LHAPDF` and `NeoPDF`. It allows runtime selection of the backend
 //! and provides type-safe access to PDF metadata.
 
 use anyhow::{anyhow, Context, Result};
 use std::fmt;
 use std::str::FromStr;
 
-/// Constant for 1-sigma confidence level (for compatibility with lhapdf::CL_1_SIGMA).
+/// Constant for 1-sigma confidence level (for compatibility with `lhapdf::CL_1_SIGMA`).
 pub const CL_1_SIGMA: f64 = 68.268_949_213_708_58;
 
 /// The type of PDF set (space-like for PDFs, time-like for FFs).
@@ -43,10 +43,10 @@ pub enum ForcePositive {
 /// Available PDF backends.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub enum Backend {
-    /// LHAPDF backend (C++ library with Rust bindings).
+    /// `LHAPDF` backend (C++ library with Rust bindings).
     #[default]
     Lhapdf,
-    /// NeoPDF backend (pure Rust implementation).
+    /// `NeoPDF` backend (pure Rust implementation).
     Neopdf,
 }
 
@@ -90,10 +90,10 @@ pub trait PdfBackend: Send {
     /// The PDF value xf(x, Q^2).
     ///
     /// # TODO
-    /// Extend to support NeoPDF multi-parameters interpolation.
+    /// Extend to support `NeoPDF` multi-parameters interpolation.
     fn xfx_q2(&self, id: i32, x: f64, q2: f64) -> f64;
 
-    /// Evaluates the strong coupling constant alpha_s(Q^2).
+    /// Evaluates the strong coupling constant `alpha_s(Q^2)`.
     fn alphas_q2(&self, q2: f64) -> f64;
 
     /// Returns the minimum valid x value.
@@ -275,7 +275,7 @@ impl PdfSetBackend for LhapdfSet {
 // NeoPDF Backend Implementation
 // ============================================================================
 
-/// NeoPDF backend wrapper.
+/// `NeoPDF` backend wrapper.
 pub struct NeopdfPdf {
     pdf: neopdf::pdf::PDF,
 }
@@ -339,7 +339,7 @@ impl PdfBackend for NeopdfPdf {
     }
 }
 
-/// NeoPDF set wrapper.
+/// `NeoPDF` set wrapper.
 pub struct NeopdfSet {
     pdf_name: String,
     num_members: usize,
@@ -436,6 +436,7 @@ pub fn create_pdf(name: &str, member: usize, backend: Backend) -> Result<Box<dyn
                 )?))
             }
         }
+        // NOTE: `NeoPDF` doesn't support reading LHAID yet.
         Backend::Neopdf => Ok(Box::new(NeopdfPdf::load(name, member))),
     }
 }
