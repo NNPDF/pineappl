@@ -475,3 +475,18 @@ fn no_channels_grid() {
         .success()
         .stdout(NO_CHANNELS_GRID_STR);
 }
+
+#[test]
+fn neopdf_backend() {
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "--pdf-backend=neopdf",
+            "convolve",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
+            "NNPDF31_nlo_as_0118_luxqed",
+        ])
+        .assert()
+        .success()
+        .stdout(str::contains(DEFAULT_STR));
+}
