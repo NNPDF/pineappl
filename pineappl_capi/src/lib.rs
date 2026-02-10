@@ -861,6 +861,29 @@ pub unsafe extern "C" fn pineappl_grid_merge_bins(grid: *mut Grid, from: usize, 
     grid.merge_bins(from..to).unwrap();
 }
 
+/// Deletes bins with the corresponding `bin_indices`. Repeated indices and indices larger or
+/// equal the bin length are ignored.
+///
+/// # Safety
+///
+///  The parameter `grid` must be valid `Grid` object created by either `pineappl_grid_new` or
+///  `pineappl_grid_read`.
+///  The parameter `bin_indices_ptr` must be an array of size `bin_indices_len`.
+///
+/// # Panics
+///
+/// TODO
+#[no_mangle]
+pub unsafe extern "C" fn pineappl_grid_delete_bins(
+    grid: *mut Grid,
+    bin_indices_ptr: *const usize,
+    bin_indices_len: usize,
+) {
+    let grid = unsafe { &mut *grid };
+    let bin_indices = unsafe { std::slice::from_raw_parts(bin_indices_ptr, bin_indices_len) };
+    grid.delete_bins(bin_indices);
+}
+
 /// Merges `other` into `grid` and subsequently deletes `other`.
 ///
 /// # Safety
@@ -1515,7 +1538,7 @@ pub extern "C" fn pineappl_channels_new(convolutions: usize) -> Box<Channels> {
 /// # Safety
 ///
 /// The parameter `channels` must point to a valid `Channels` object created by `pineappl_channels_new`.
-/// `pdg_id_combinations` must be an array with length `nb_combinations * combinations`, and
+/// `pdg_id_combinations` must be an array with length `nb_convolutions * combinations`, and
 /// `factors` with length of `combinations`. The `nb_convolutions` describe the number of
 /// parton distributions involved, while `combinations` represent the number of different
 /// channel combinations.
@@ -1938,6 +1961,32 @@ pub unsafe extern "C" fn pineappl_grid_convolve(
         channel_mask,
         mu_scales,
     ));
+}
+
+/// Fix one of the convolutions in the Grid and return a new Grid with lower dimension.
+///
+/// # Safety
+///
+/// TODO
+///
+/// # Panics
+///
+/// TODO
+#[no_mangle]
+pub unsafe extern "C" fn pineappl_grid_fix_convolution(
+    grid: *const Grid,
+    conv_idx: usize,
+    xfx: extern "C" fn(pdg_id: i32, x: f64, q2: f64, state: *mut c_void) -> f64,
+    state: *mut c_void,
+    xi: f64,
+) -> Box<Grid> {
+    let grid = unsafe { &*grid };
+    let mut xfx_closure = |id, x, q2| xfx(id, x, q2, state);
+
+    Box::new(
+        grid.fix_convolution(conv_idx, &mut xfx_closure, xi)
+            .unwrap(),
+    )
 }
 
 /// Get the type of convolutions for this Grid.

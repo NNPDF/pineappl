@@ -392,8 +392,8 @@ impl PyGrid {
     pub fn convolve<'py>(
         &self,
         pdg_convs: Vec<PyRef<PyConv>>,
-        xfxs: Vec<PyObject>,
-        alphas: PyObject,
+        xfxs: Vec<Py<PyAny>>,
+        alphas: Py<PyAny>,
         order_mask: Option<Vec<bool>>,
         bin_indices: Option<Vec<usize>>,
         channel_mask: Option<Vec<bool>>,
@@ -432,6 +432,37 @@ impl PyGrid {
                 &xi.unwrap_or_else(|| vec![(1.0, 1.0, 1.0)]),
             )
             .into_pyarray(py)
+    }
+
+    /// Fix one of the convolutions in the Grid and return a new Grid with lower dimension.
+    ///
+    /// # Panics
+    ///
+    /// TODO
+    ///
+    /// Parameters
+    /// ----------
+    /// ``conv_idx``: usize
+    ///     index of the convolution (zero-based)
+    /// ``xfxs`` : callable
+    ///     lhapdf-like callable with arguments `pid, x, Q2` returning x*pdf
+    /// ``xi``: float
+    #[must_use]
+    #[pyo3(signature = (conv_idx, xfx, xi = 1.0))]
+    pub fn fix_convolution(
+        &self,
+        conv_idx: usize,
+        xfx: Py<PyAny>,
+        xi: f64,
+        py: Python<'_>,
+    ) -> Self {
+        let mut xfx = move |id: i32, x: f64, q2: f64| {
+            xfx.call1(py, (id, x, q2)).unwrap().extract(py).unwrap()
+        };
+
+        Self {
+            grid: self.grid.fix_convolution(conv_idx, &mut xfx, xi).unwrap(),
+        }
     }
 
     /// Collect information for convolution with an evolution operator.
@@ -810,6 +841,11 @@ impl PyGrid {
     /// Splits the grid such that each channel contains only a single tuple of PIDs.
     pub fn split_channels(&mut self) {
         self.grid.split_channels();
+    }
+
+    /// Repair the grid if it was written by bugged versions to disk.
+    pub fn repair(&mut self) -> bool {
+        self.grid.repair()
     }
 }
 

@@ -23,7 +23,8 @@ PROGRAMS = \
 	display-orders \
 	display-orders-deprecated \
 	merge-grids \
-	modify-grid
+	modify-grid \
+	fix-convolution
 
 all: $(PROGRAMS)
 
@@ -46,6 +47,9 @@ convolve-grid-deprecated: convolve-grid-deprecated.cpp
 	$(CXX) $(CXXFLAGS) $< $(LHAPDF_DEPS) $(PINEAPPL_DEPS) -o $@
 
 convolve-grid: convolve-grid.cpp
+	$(CXX) $(CXXFLAGS) $< $(LHAPDF_DEPS) $(PINEAPPL_DEPS) -o $@
+
+fix-convolution: fix-convolution.cpp
 	$(CXX) $(CXXFLAGS) $< $(LHAPDF_DEPS) $(PINEAPPL_DEPS) -o $@
 
 deprecated: deprecated.cpp

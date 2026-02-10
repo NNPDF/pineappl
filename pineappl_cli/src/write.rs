@@ -1,6 +1,6 @@
 use super::helpers;
 use super::{GlobalConfiguration, Subcommand};
-use anyhow::Result;
+use anyhow::{Context, Result};
 use clap::builder::{PossibleValuesParser, TypedValueParser};
 use clap::{
     value_parser, Arg, ArgAction, ArgMatches, Args, Command, Error, FromArgMatches, Parser,
@@ -36,11 +36,13 @@ enum OpsArg {
     DeleteKey(String),
     DeleteOrders(Vec<RangeInclusive<usize>>),
     DivBinNormDims(Vec<usize>),
+    FixConvolution((usize, String)),
     MergeBins(Vec<RangeInclusive<usize>>),
     MergeChannelFactors(bool),
     MulBinNorm(f64),
     Optimize(bool),
     OptimizeFkTable(FkAssumptions),
+    Repair(bool),
     RewriteChannel((usize, Channel)),
     RewriteOrder((usize, Order)),
     RotatePidBasis(PidBasis),
@@ -61,12 +63,14 @@ struct MoreArgs {
 impl FromArgMatches for MoreArgs {
     fn from_arg_matches(matches: &ArgMatches) -> Result<Self, Error> {
         let mut matches = matches.clone();
-        let mut args = Vec::new();
+        let mut args: Vec<Option<OpsArg>> = Vec::new();
         let ids: Vec<_> = matches.ids().map(|id| id.as_str().to_owned()).collect();
 
         for id in ids {
             let indices: Vec<_> = matches.indices_of(&id).unwrap().collect();
-            args.resize(indices.iter().max().unwrap() + 1, None);
+            if args.len() <= *indices.iter().max().unwrap() {
+                args.resize(indices.iter().max().unwrap() + 1, None);
+            }
 
             match id.as_str() {
                 "cc" => {
@@ -85,7 +89,7 @@ impl FromArgMatches for MoreArgs {
                         });
                     }
                 }
-                "merge_channel_factors" | "optimize" | "split_channels" | "upgrade" => {
+                "merge_channel_factors" | "optimize" | "repair" | "split_channels" | "upgrade" => {
                     let arguments: Vec<Vec<_>> = matches
                         .remove_occurrences(&id)
                         .unwrap()
@@ -98,6 +102,7 @@ impl FromArgMatches for MoreArgs {
                         args[index] = Some(match id.as_str() {
                             "merge_channel_factors" => OpsArg::MergeChannelFactors(arg[0]),
                             "optimize" => OpsArg::Optimize(arg[0]),
+                            "repair" => OpsArg::Repair(arg[0]),
                             "split_channels" => OpsArg::SplitChannels(arg[0]),
                             "upgrade" => OpsArg::Upgrade(arg[0]),
                             _ => unreachable!(),
@@ -211,6 +216,20 @@ impl FromArgMatches for MoreArgs {
                             )),
                             _ => unreachable!(),
                         });
+                    }
+                }
+                "fix_convolution" => {
+                    for (index, arg) in indices.into_iter().zip(
+                        matches
+                            .remove_occurrences(&id)
+                            .unwrap()
+                            .map(Iterator::collect::<Vec<String>>),
+                    ) {
+                        assert_eq!(arg.len(), 1);
+                        let s = &arg[0];
+                        let (conv_idx_str, pdf) = s.split_once(':').unwrap();
+                        let conv_idx = conv_idx_str.parse::<usize>().unwrap();
+                        args[index] = Some(OpsArg::FixConvolution((conv_idx, pdf.to_string())))
                     }
                 }
                 "rotate_pid_basis" => {
@@ -339,6 +358,14 @@ impl Args for MoreArgs {
                 .value_parser(value_parser!(usize)),
         )
         .arg(
+            Arg::new("fix_convolution")
+                .action(ArgAction::Append)
+                .help("Fix one of the convolutions with a PDF set")
+                .long("fix-convolution")
+                .num_args(1)
+                .value_name("IDX:CONV_FUN"),
+        )
+        .arg(
             Arg::new("merge_bins")
                 .action(ArgAction::Append)
                 .help("Merge specific bins together")
@@ -393,6 +420,17 @@ impl Args for MoreArgs {
                     ])
                     .try_map(|s| s.parse::<FkAssumptions>()),
                 ),
+        )
+        .arg(
+            Arg::new("repair")
+                .action(ArgAction::Append)
+                .default_missing_value("true")
+                .help("Repair bugs saved in the grid")
+                .long("repair")
+                .num_args(0..=1)
+                .require_equals(true)
+                .value_name("ENABLE")
+                .value_parser(clap::value_parser!(bool)),
         )
         .arg(
             Arg::new("rewrite_channel")
@@ -558,6 +596,13 @@ impl Subcommand for Opts {
                     // UNWRAP: this cannot fail because we only modify the normalizations
                     .unwrap();
                 }
+                OpsArg::FixConvolution((conv_idx, pdf_set)) => {
+                    // TODO: account for the variation of scale
+                    let pdf = lhapdf::Pdf::with_setname_and_member(pdf_set, 0)
+                        .with_context(|| format!("Unable to load PDF set '{}'", pdf_set))?;
+                    let mut xfx = |id, x, q2| pdf.xfx_q2(id, x, q2);
+                    grid = grid.fix_convolution(*conv_idx, &mut xfx, 1.0)?;
+                }
                 OpsArg::MergeBins(ranges) => {
                     // TODO: sort after increasing start indices
                     for range in ranges.iter().rev().cloned() {
@@ -582,6 +627,9 @@ impl Subcommand for Opts {
                     )
                     // UNWRAP: this cannot fail because we only modify the normalizations
                     .unwrap();
+                }
+                OpsArg::Repair(true) => {
+                    grid.repair();
                 }
                 OpsArg::RewriteChannel((index, new_channel)) => {
                     // TODO: check that `index` is valid
@@ -618,6 +666,7 @@ impl Subcommand for Opts {
                 OpsArg::SplitChannels(true) => grid.split_channels(),
                 OpsArg::Upgrade(true) => grid.upgrade(),
                 OpsArg::MergeChannelFactors(false)
+                | OpsArg::Repair(false)
                 | OpsArg::Optimize(false)
                 | OpsArg::SplitChannels(false)
                 | OpsArg::Upgrade(false) => {}

@@ -133,7 +133,15 @@ impl<'a> ConvolutionCache<'a> {
                         }
                     })
                     // TODO: convert `unwrap` to `Err`
-                    .unwrap()
+                    .unwrap_or_else(|| {
+                        panic!(
+                        "couldn't match {grid_conv:?} with a convolution function from cache {:?}",
+                        self.caches
+                            .iter()
+                            .map(|cache| cache.conv.clone())
+                            .collect::<Vec<_>>()
+                    )
+                    })
             })
             .collect();
 
@@ -310,6 +318,12 @@ impl ConvType {
     #[must_use]
     pub const fn is_pdf(&self) -> bool {
         matches!(self, Self::UnpolPDF | Self::PolPDF)
+    }
+
+    /// TODO
+    #[must_use]
+    pub const fn is_ff(&self) -> bool {
+        matches!(self, Self::UnpolFF | Self::PolFF)
     }
 }
 

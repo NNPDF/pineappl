@@ -317,7 +317,7 @@ impl PyFkTable {
     pub fn convolve<'py>(
         &self,
         pdg_convs: Vec<PyRef<PyConv>>,
-        xfxs: Vec<PyObject>,
+        xfxs: Vec<Py<PyAny>>,
         bin_indices: Option<Vec<usize>>,
         channel_mask: Option<Vec<bool>>,
         py: Python<'py>,

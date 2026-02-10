@@ -7,6 +7,52 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- added a `fix_convolution` method to integrate out one of the convolution
+  dimensions in a grid by convolving it with a non-perturbative function
+
+## [1.3.0] - 06/12/2025
+
+### Added
+
+- added a `pineappl_grid_delete_bins` method to the C-API
+
+### Fixed
+
+- fixed bugs in stopping condition of the Newton iteration method
+- fixed a bug in comparing `interpolation::Interp` objects when one of the
+  boundaries is `NaN`
+
+## [1.2.0] - 22/08/2025
+
+### Added
+
+- added `Grid::repair` to repair bugs that survived by writing bugged grids to
+  disk, for example <https://github.com/NNPDF/pineappl/issues/338>. The CLI
+  offers this functionality via `pineappl write --repair` and it can also be
+  accessed via Python
+
+### Fixed
+
+- added a missing implementation for a branch in `Grid::merge` that was
+  triggered when exporting some PineAPPL grids generated from the 'pinejet'
+  group
+- fixed wrong coupling orders when exporting to APPLgrid. This happened when
+  the PineAPPL grid had orders that had any other ordering than 'LO', 'NLO',
+  'NNLO'
+- fixed a bug that caused exported grids to compare unsuccessfully when the
+  convolution functions were proton-anti-proton; APPLgrid doesn't store the
+  types of convolution functions, so we simply convert the grid to use only
+  proton PDFs
+
+### Changed
+
+- the function `Grid::evolve` now makes use of parallelization to take advantage
+  of the number of CPU cores available using the Rayon crate; the number of CPU
+  cores to be used can be controlled via the `RAYON_NUM_THREADS` environment
+  variable
+
 ## [1.1.0] - 08/07/2025
 
 ### Added
@@ -782,7 +828,9 @@ the old file format can still be read with this new version.
 
 - first release
 
-[Unreleased]: https://github.com/NNPDF/pineappl/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/NNPDF/pineappl/compare/v1.3.0...HEAD
+[1.3.0]: https://github.com/NNPDF/pineappl/compare/v1.2.0...v1.3.0
+[1.2.0]: https://github.com/NNPDF/pineappl/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/NNPDF/pineappl/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/NNPDF/pineappl/compare/v0.8.2...v1.0.0
 [0.8.7]: https://github.com/NNPDF/pineappl/compare/v0.8.6...v0.8.7

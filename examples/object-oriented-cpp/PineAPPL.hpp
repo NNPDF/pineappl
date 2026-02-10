@@ -13,6 +13,7 @@
 #include <cstdio>
 #include <string>
 #include <vector>
+#include <memory>
 
 /** @brief Object oriented interface to PineAPPL.*/
 namespace PineAPPL {
@@ -123,8 +124,7 @@ struct Grid {
   /** @brief Underlying raw object. */
   pineappl_grid *raw;
 
-  /** @brief Constructor (protected to avoid direct instantiation). */
- protected:
+  /** @brief Constructor. */
   Grid(pineappl_grid *grid) : raw(grid) {}
 
   /** @brief Deleted copy/move semantics. */
@@ -319,6 +319,31 @@ struct Grid {
                            raw_bin_indices.get(), mu_scales.size(),
                            raw_mu_scales.data(), results.data());
     return results;
+  }
+
+  /**
+   * @brief Fix one of the convolutions in the Grid and return a new Grid with
+   * lower dimension.
+   *
+   * @param conv_idx index of the convolution to fix
+   * @param pdf the PDF set to use for the convolution
+   * @param xi the scale factor (xif or xia)
+   * @return a new grid with one less convolution
+   */
+  std::unique_ptr<Grid> fix_convolution(std::size_t conv_idx, LHAPDF::PDF *pdf,
+                                        double xi) const {
+    auto xfx = [](std::int32_t id, double x, double q2, void *pdf_ptr) {
+      return static_cast<LHAPDF::PDF *>(pdf_ptr)->xfxQ2(id, x, q2);
+    };
+
+    pineappl_grid *new_raw_grid =
+        pineappl_grid_fix_convolution(this->raw, conv_idx, xfx, pdf, xi);
+
+    if (new_raw_grid == nullptr) {
+      return nullptr;
+    }
+
+    return std::unique_ptr<Grid>(new Grid(new_raw_grid));
   }
 };
 
