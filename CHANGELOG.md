@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- added `pineappl_grid_set_subgrid` and `pineappl_grid_set_bwfl` methods to
+  the C-API to allow dumping coefficient functions directly as subgrids.
 - added a `fix_convolution` method to integrate out one of the convolution
   dimensions in a grid by convolving it with a non-perturbative function
 
