@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.1] - 21/02/2026
+
 ### Added
 
 - added `pineappl_grid_set_subgrid` and `pineappl_grid_set_bwfl` methods to
@@ -830,7 +832,8 @@ the old file format can still be read with this new version.
 
 - first release
 
-[Unreleased]: https://github.com/NNPDF/pineappl/compare/v1.3.0...HEAD
+[Unreleased]: https://github.com/NNPDF/pineappl/compare/v1.3.1...HEAD
+[1.3.1]: https://github.com/NNPDF/pineappl/compare/v1.3.0...v1.3.1
 [1.3.0]: https://github.com/NNPDF/pineappl/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/NNPDF/pineappl/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/NNPDF/pineappl/compare/v1.0.0...v1.1.0
