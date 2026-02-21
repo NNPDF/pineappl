@@ -231,7 +231,7 @@ jobs:
             ldconfig
             cd ..
             # install zlib; we need to link against it statically
-            curl "https://www.zlib.net/zlib-${ZLIB_V}.tar.gz" | tar xzf -
+            curl -fsSL "https://www.zlib.net/fossils/zlib-${ZLIB_V}.tar.gz" | tar xzf -
             cd zlib-${ZLIB_V}
             CFLAGS=-fPIC ./configure --static --prefix=/usr/local
             make -j
@@ -239,7 +239,7 @@ jobs:
             ldconfig
             cd ..
             # install APPLgrid
-            curl -L "https://applgrid.hepforge.org/downloads?f=applgrid-${APPLGRID_V}.tgz" | tar xzf -
+            curl -fsSL "https://applgrid.hepforge.org/downloads/applgrid-${APPLGRID_V}.tgz" | tar xzf -
             cd applgrid-${APPLGRID_V}
             patch -l -p0 <<EOF
             --- src/combine.cxx	2024-04-23 16:35:27.000000000 +0200
