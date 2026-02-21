@@ -47,9 +47,9 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: macos-13
+          - os: macos-15-intel
             target: x86_64-apple-darwin
-          - os: macos-14
+          - os: macos-15
             # we cannot cross-compile, because we need also all dependencies for the specified target
             target: aarch64-apple-darwin
     runs-on: ${{ matrix.os }}
@@ -96,9 +96,9 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: macos-13
+          - os: macos-15-intel
             target: x86_64
-          - os: macos-14
+          - os: macos-15
             # we cannot cross-compile, because we need also all dependencies for the specified target
             target: aarch64
     runs-on: ${{ matrix.os }}
@@ -359,10 +359,13 @@ jobs:
           path: dist
 
   wheels-macos:
-    runs-on: macos-13
     strategy:
       matrix:
-        target: [aarch64, x86_64]
+        include:
+          - os: macos-15-intel
+            target: x86_64
+          - os: macos-15
+            target: aarch64
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
