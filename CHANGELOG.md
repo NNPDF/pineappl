@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## Removed
+
+- removed support for Python 3.7 for macOS (ARM64) due to removed runner on
+  Github
+
 ## [1.3.2] - 21/02/2026
 
 ## [1.3.1] - 21/02/2026
