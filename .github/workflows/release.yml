@@ -359,6 +359,7 @@ jobs:
           path: dist
 
   wheels-macos:
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         include:
