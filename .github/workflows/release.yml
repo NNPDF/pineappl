@@ -367,7 +367,7 @@ jobs:
         include:
           - os: macos-15-intel
             target: x86_64
-          - os: macos-14
+          - os: macos-15
             target: aarch64
     steps:
       - uses: actions/checkout@v4
@@ -380,7 +380,6 @@ jobs:
             pypy3.8
             pypy3.9
             pypy3.10
-            3.7
             3.8
             3.9
             3.11
