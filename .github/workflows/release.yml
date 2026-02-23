@@ -49,7 +49,7 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: macos-14-large
+          - os: macos-15-intel
             target: x86_64-apple-darwin
           - os: macos-14
             # we cannot cross-compile, because we need also all dependencies for the specified target
@@ -98,7 +98,7 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: macos-14-large
+          - os: macos-15-intel
             target: x86_64
           - os: macos-14
             # we cannot cross-compile, because we need also all dependencies for the specified target
@@ -365,7 +365,7 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: macos-14-large
+          - os: macos-15-intel
             target: x86_64
           - os: macos-14
             target: aarch64
