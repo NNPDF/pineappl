@@ -1,5 +1,7 @@
 name: Release
 
+# for available runner images see: https://github.com/actions/runner-images
+
 on:
   push:
     tags:
