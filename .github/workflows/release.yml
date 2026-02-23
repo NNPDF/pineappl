@@ -51,7 +51,7 @@ jobs:
         include:
           - os: macos-15-intel
             target: x86_64-apple-darwin
-          - os: macos-14
+          - os: macos-15
             # we cannot cross-compile, because we need also all dependencies for the specified target
             target: aarch64-apple-darwin
     runs-on: ${{ matrix.os }}
@@ -100,7 +100,7 @@ jobs:
         include:
           - os: macos-15-intel
             target: x86_64
-          - os: macos-14
+          - os: macos-15
             # we cannot cross-compile, because we need also all dependencies for the specified target
             target: aarch64
     runs-on: ${{ matrix.os }}
@@ -367,7 +367,7 @@ jobs:
         include:
           - os: macos-15-intel
             target: x86_64
-          - os: macos-14
+          - os: macos-15
             target: aarch64
     steps:
       - uses: actions/checkout@v4
