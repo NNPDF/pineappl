@@ -4,12 +4,14 @@ name: Release
 
 on:
   push:
+    branches-ignore:
+      - update-wheels-actions
     tags:
       - 'v[0-9]+*'
   workflow_dispatch:
 
 env:
-  # this is make the `gh` binary work
+  # make the `gh` binary work
   GH_TOKEN: ${{ github.token }}
 
 jobs:
@@ -338,117 +340,6 @@ jobs:
           cd ../pineappl_cli
           cargo publish
 
-  wheels-linux:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        target: [x86_64]
-    steps:
-      - uses: actions/checkout@v4
-      # for Linux the wheels are built in a container, so we don't need the `setup-python` action
-      - name: Build wheels
-        uses: PyO3/maturin-action@v1
-        with:
-          target: ${{ matrix.target }}
-          # `--find-interpreter` is needed to generate wheels for *all* Python versions
-          args: --release --out dist --find-interpreter --manifest-path pineappl_py/Cargo.toml
-          sccache: 'true'
-          manylinux: auto
-      - name: Upload wheels
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ github.job }}-${{ matrix.target }}
-          path: dist
-
-  wheels-macos:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        include:
-          - os: macos-15-intel
-            target: x86_64
-          - os: macos-15
-            target: aarch64
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          # WARNING: be careful with the ordering - the last version is the default one. Apparently
-          # maturin doesn't find all Python versions when one chooses a PyPy version instead of
-          # CPython as default
-          python-version: |
-            pypy3.8
-            pypy3.9
-            pypy3.10
-            3.8
-            3.9
-            3.11
-            3.12
-            3.13
-            3.10
-      - name: Build wheels
-        uses: PyO3/maturin-action@v1
-        with:
-          target: ${{ matrix.target }}
-          args: --release --out dist --find-interpreter --manifest-path pineappl_py/Cargo.toml
-          sccache: 'true'
-      - name: Upload wheels
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ github.job }}-${{ matrix.target }}
-          path: dist
-
-  wheels-sdist:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Build sdist
-        uses: PyO3/maturin-action@v1
-        with:
-          command: sdist
-          args: --out dist --manifest-path pineappl_py/Cargo.toml
-      - name: Upload sdist
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ github.job }}
-          path: dist
-
-  wheels-windows:
-    runs-on: windows-latest
-    strategy:
-      matrix:
-        target: [x64]
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          # WARNING: be careful with the ordering - the last version is the default one. Apparently
-          # maturin doesn't find all Python versions when one chooses a PyPy version instead of
-          # CPython as default
-          python-version: |
-            pypy3.8
-            pypy3.9
-            pypy3.10
-            3.7
-            3.8
-            3.9
-            3.11
-            3.12
-            3.13
-            3.10
-          architecture: ${{ matrix.target }}
-      - name: Build wheels
-        uses: PyO3/maturin-action@v1
-        with:
-          target: ${{ matrix.target }}
-          args: --release --out dist --find-interpreter --manifest-path pineappl_py/Cargo.toml
-          sccache: 'true'
-      - name: Upload wheels
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ github.job }}-${{ matrix.target }}
-          path: dist
-
   release-cli-wheels:
     runs-on: ubuntu-latest
     if: "startsWith(github.ref, 'refs/tags/')"
@@ -464,27 +355,6 @@ jobs:
         uses: PyO3/maturin-action@v1
         env:
           MATURIN_PYPI_TOKEN: ${{ secrets.PYPI_TOKEN_CLI }}
-        with:
-          command: upload
-          args: --skip-existing *
-
-  release-wheels:
-    runs-on: ubuntu-latest
-    if: "startsWith(github.ref, 'refs/tags/')"
-    needs:
-      - wheels-linux
-      - wheels-macos
-      - wheels-sdist
-      - wheels-windows
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          pattern: "wheels-*"
-          merge-multiple: true
-      - name: Publish to PyPI
-        uses: PyO3/maturin-action@v1
-        env:
-          MATURIN_PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
         with:
           command: upload
           args: --skip-existing *
