@@ -419,7 +419,7 @@ jobs:
     strategy:
       matrix:
         platform:
-          - runner: windows-latest
+          - runner: windows-2025
             target: x64
             python_arch: x64
           # - runner: windows-latest
