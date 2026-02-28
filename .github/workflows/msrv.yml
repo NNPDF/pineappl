@@ -6,6 +6,7 @@ on:
       - pycli
       - bump-pyo3-version
       - update-wheels-actions
+      - update-wheels-actions-2
 
 env:
   CARGO_TERM_COLOR: always
