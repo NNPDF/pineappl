@@ -18,7 +18,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.3.2] - 21/02/2026
 
+Note: due to bugs in the workflow file this release does not have have Python
+wheels uploaded to PyPI.
+
 ## [1.3.1] - 21/02/2026
+
+Note: due to bugs in the workflow file this release does not have have Python
+wheels uploaded to PyPI.
 
 ### Added
 
