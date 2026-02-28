@@ -339,114 +339,111 @@ jobs:
           cargo publish
 
   wheels-linux:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.platform.runner }}
     strategy:
       matrix:
-        target: [x86_64]
+        platform:
+          - runner: ubuntu-22.04
+            target: x86_64
+          #- runner: ubuntu-22.04
+          #  target: x86
+          #- runner: ubuntu-22.04
+          #  target: aarch64
+          #- runner: ubuntu-22.04
+          #  target: armv7
+          #- runner: ubuntu-22.04
+          #  target: s390x
+          #- runner: ubuntu-22.04
+          #  target: ppc64le
     steps:
-      - uses: actions/checkout@v4
-      # for Linux the wheels are built in a container, so we don't need the `setup-python` action
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: 3.x
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
-          target: ${{ matrix.target }}
-          # `--find-interpreter` is needed to generate wheels for *all* Python versions
+          target: ${{ matrix.platform.target }}
           args: --release --out dist --find-interpreter --manifest-path pineappl_py/Cargo.toml
-          sccache: 'true'
+          sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
           manylinux: auto
       - name: Upload wheels
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
-          name: ${{ github.job }}-${{ matrix.target }}
+          name: ${{ github.job }}-${{ matrix.platform.target }}
           path: dist
 
   wheels-macos:
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ matrix.platform.runner }}
     strategy:
       matrix:
-        include:
-          - os: macos-15-intel
+        platform:
+          - runner: macos-15-intel
             target: x86_64
-          - os: macos-15
+          - runner: macos-latest
             target: aarch64
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         with:
-          # WARNING: be careful with the ordering - the last version is the default one. Apparently
-          # maturin doesn't find all Python versions when one chooses a PyPy version instead of
-          # CPython as default
-          python-version: |
-            pypy3.8
-            pypy3.9
-            pypy3.10
-            3.8
-            3.9
-            3.11
-            3.12
-            3.13
-            3.10
+          python-version: 3.x
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
-          target: ${{ matrix.target }}
+          target: ${{ matrix.platform.target }}
           args: --release --out dist --find-interpreter --manifest-path pineappl_py/Cargo.toml
-          sccache: 'true'
+          sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
       - name: Upload wheels
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
-          name: ${{ github.job }}-${{ matrix.target }}
+          name: ${{ github.job }}-${{ matrix.platform.target }}
           path: dist
 
   wheels-sdist:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Build sdist
         uses: PyO3/maturin-action@v1
         with:
           command: sdist
           args: --out dist --manifest-path pineappl_py/Cargo.toml
       - name: Upload sdist
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: ${{ github.job }}
           path: dist
 
   wheels-windows:
-    runs-on: windows-latest
+    runs-on: ${{ matrix.platform.runner }}
     strategy:
       matrix:
-        target: [x64]
+        platform:
+          - runner: windows-latest
+            target: x64
+            python_arch: x64
+          # - runner: windows-latest
+          #   target: x86
+          #   python_arch: x86
+          # - runner: windows-11-arm
+          #   target: aarch64
+          #   python_arch: arm64
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         with:
-          # WARNING: be careful with the ordering - the last version is the default one. Apparently
-          # maturin doesn't find all Python versions when one chooses a PyPy version instead of
-          # CPython as default
-          python-version: |
-            pypy3.8
-            pypy3.9
-            pypy3.10
-            3.7
-            3.8
-            3.9
-            3.11
-            3.12
-            3.13
-            3.10
-          architecture: ${{ matrix.target }}
+          python-version: 3.13
+          architecture: ${{ matrix.platform.python_arch }}
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
-          target: ${{ matrix.target }}
+          target: ${{ matrix.platform.target }}
           args: --release --out dist --find-interpreter --manifest-path pineappl_py/Cargo.toml
-          sccache: 'true'
+          sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
       - name: Upload wheels
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
-          name: ${{ github.job }}-${{ matrix.target }}
+          name: ${{ github.job }}-${{ matrix.platform.target }}
           path: dist
 
   release-cli-wheels:
