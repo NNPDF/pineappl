@@ -9,14 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Added
 
-- added support for the following Python versions:
-  - macOS (ARM64/x86): Python 3.14
+- added support for the Python 3.14 on macOS (ARM64/x86)
 
 ## Removed
 
-- removed support for the following Python versions due to missing support in
-  GitHub runner images:
-  - Windows (x86): Python 3.7, 3.8, 3.9
+- removed support for the following Python versions due to unresolved issue in
+  maturin action on Windows (x86): Python 3.7, 3.8, 3.9
 
 ## [1.3.2] - 21/02/2026
 
