@@ -5,6 +5,7 @@ on:
     branches-ignore:
       - pycli
       - update-wheels-actions
+      - update-wheels-actions-2
 
 jobs:
   test:
