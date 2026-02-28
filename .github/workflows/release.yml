@@ -364,7 +364,7 @@ jobs:
         uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.platform.target }}
-          args: --release --out dist --interpreter python3.8 python3.9 python3.10 python3.11 python3.12 python3.13 python3.14 pypy3.7 pypy3.8 pypy3.9 pypy3.10 pypy3.11 --manifest-path pineappl_py/Cargo.toml
+          args: --release --out dist --interpreter python3.8 python3.9 python3.10 python3.11 python3.12 python3.13 python3.14 pypy3.9 pypy3.10 pypy3.11 --manifest-path pineappl_py/Cargo.toml
           sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
           manylinux: auto
       - name: Upload wheels
