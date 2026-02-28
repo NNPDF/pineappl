@@ -16,7 +16,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - removed support for the following Python versions due to missing support in
   GitHub runner images:
-  - Linux (x86): Python
   - macOS (ARM64): Python 3.7, 3.8, 3.9, 3.10 and PyPy 3.9, 3.10
   - macOS (x86): Python 3.7, 3.8, 3.9, 3.10 and PyPy 3.9, 3.10
   - Windows (x86): Python 3.7, 3.8, 3.9

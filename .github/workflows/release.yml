@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
 
 env:
-  # this is make the `gh` binary work
+  # make the `gh` binary work
   GH_TOKEN: ${{ github.token }}
 
 jobs:
