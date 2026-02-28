@@ -10,6 +10,7 @@ on:
       - 'v[0-9]+*'
   workflow_dispatch:
 
+jobs:
   linux:
     runs-on: ubuntu-latest
     strategy:
