@@ -4,9 +4,6 @@ name: Release
 
 on:
   push:
-    branches-ignore:
-      - update-wheels-actions
-      - update-wheels-actions-2
     tags:
       - 'v[0-9]+*'
   workflow_dispatch:
