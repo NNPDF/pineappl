@@ -4,7 +4,9 @@ APPLGRID_V=1.6.36
 FASTNLO_V=2.5.0-2826
 LHAPDF_V=6.5.4
 ZLIB_V=1.3.1
-APPL_IGRID_DIR="/usr/local/src/applgrid-${APPLGRID_V}/src"
+
+# this variable is needed outside of this script
+export APPL_IGRID_DIR="/usr/local/src/applgrid-${APPLGRID_V}/src"
 
 # downloading files is fragile, so fail early
 urls=(
