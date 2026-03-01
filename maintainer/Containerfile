@@ -1,0 +1,18 @@
+# with debian:10 Rust has linking problems, see this description:
+# https://github.com/rust-lang/rust/issues/79946#issuecomment-1693289299
+FROM debian:11-slim
+
+ARG CARGOC_V=0.10.3
+
+# the last version is the default Rust version used in the container
+# as long as we're using `persist-doctests` in the `Rust` workflow we need nightly as default
+ARG RUST_V="1.70.0 1.80.1 nightly-2024-09-04"
+
+ENV CARGO_HOME="/usr/local/cargo"
+ENV PATH="/usr/local/cargo/bin:${PATH}"
+ENV RUSTUP_HOME="/usr/local/rustup"
+
+COPY install-cli-dependencies.sh /tmp/
+COPY build-container.sh /tmp/
+
+RUN mkdir /build && cd build && /tmp/build-container.sh && rm /tmp/install-cli-dependencies.sh && rm /tmp/build-container.sh && cd / && rm -r /build
