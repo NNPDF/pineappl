@@ -58,6 +58,7 @@ declare -a pdf_set_urls
 for pdf in "${pdf_sets[@]}"; do
     pdf_set_urls+=( "https://lhapdfsets.web.cern.ch/current/${pdf}.tar.gz" )
 done
+pdf_set_urls+=( "${add_pdf_set_urls[@]}" )
 
 # install PDF sets
 for url in "${pdf_set_urls[@]}"; do
