@@ -52,9 +52,7 @@ jobs:
           manylinux: ${{ matrix.platform.manylinux }}
           before-script-linux: |
             # install statically-linked dependencies required to build the CLI
-            export static=yes
-            . maintainer/install-cli-dependencies.sh
-            echo "APPL_IGRID_DIR=${APPL_IGRID_DIR}" >> ${GITHUB_ENV}
+            static=yes ./maintainer/install-cli-dependencies.sh
       - name: Upload wheels
         uses: actions/upload-artifact@v5
         with:
