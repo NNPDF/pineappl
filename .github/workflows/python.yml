@@ -35,7 +35,8 @@ jobs:
           cd pineappl_py
           python -m venv env
           . env/bin/activate
-          pip install maturin
+          # maturin-1.12.5 fails with: `--include-debuginfo cannot be used with --strip`
+          pip install maturin==1.12.4
           maturin develop --extras test
           pytest
           find . -name '*.profraw' -exec $(rustc --print target-libdir)/../bin/llvm-profdata merge -sparse -o pineappl.profdata {} +
