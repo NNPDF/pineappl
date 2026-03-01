@@ -25,6 +25,11 @@ pdf_sets=(
     MAPFF10NLOPIsum
 )
 
+add_pdf_set_urls=(
+    # Tanjona's polarized PDF set
+    "https://data.nnpdf.science/pineappl/pdfs/240608-tr-pol-nlo-100.tar.gz"
+)
+
 apt update
 apt install -y "${pkgs[@]}"
 
@@ -48,14 +53,17 @@ rm -r /usr/local/cargo/registry
 # create this directory manually since we install LHAPDF later
 mkdir -p /usr/local/share/LHAPDF
 
-# install PDF sets
+# create array with all PDF URLs
+declare -a pdf_set_urls
 for pdf in "${pdf_sets[@]}"; do
-    # see the following link why `--no-same-owner` may be necessary:
-    # https://github.com/habitat-sh/builder/issues/365#issuecomment-382862233
-    curl -fsSL "https://lhapdfsets.web.cern.ch/current/${pdf}.tar.gz" | tar xzf - --no-same-owner -C /usr/local/share/LHAPDF
+    pdf_set_urls+=( "https://lhapdfsets.web.cern.ch/current/${pdf}.tar.gz" )
 done
 
-# install Tanjona's polarized PDF set
-curl -fsSL "https://data.nnpdf.science/pineappl/pdfs/240608-tr-pol-nlo-100.tar.gz" | tar xzf - --no-same-owner -C /usr/local/share/LHAPDF
+# install PDF sets
+for url in "${pdf_set_urls[@]}"; do
+    # see the following link why `--no-same-owner` may be necessary:
+    # https://github.com/habitat-sh/builder/issues/365#issuecomment-382862233
+    curl -fsSL "${url}" | tar xzf - --no-same-owner -C /usr/local/share/LHAPDF
+done
 
 static=no /tmp/install-cli-dependencies.sh
