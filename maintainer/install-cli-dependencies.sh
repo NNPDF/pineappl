@@ -5,8 +5,10 @@ FASTNLO_V=2.5.0-2826
 LHAPDF_V=6.5.4
 ZLIB_V=1.3.1
 
-# this variable is needed outside of this script
-export APPL_IGRID_DIR="/usr/local/src/applgrid-${APPLGRID_V}/src"
+# if we're in a container, this variable is already set by the container
+if [[ ! -v APPL_IGRID_DIR ]]; then
+    export APPL_IGRID_DIR=/usr/local/src/applgrid/src
+fi
 
 # downloading files is fragile, so fail early
 urls=(
@@ -74,6 +76,8 @@ fi
 make -j
 make install
 ldconfig
+
+# PineAPPL's APPLgrid interface needs some information not in the public headers
 mkdir -p "${APPL_IGRID_DIR}"
 cp src/*.h "${APPL_IGRID_DIR}"
 cd ..
