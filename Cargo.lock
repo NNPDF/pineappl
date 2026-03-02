@@ -1349,9 +1349,9 @@ dependencies = [
 
 [[package]]
 name = "neopdf"
-version = "0.3.0-alpha2"
+version = "0.3.0-alpha4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0c94df70e35a6e075fb87f8838d1c0810f8a55e6a4e76f72dab8feebd062350b"
+checksum = "23eaee18bece0f288a5eea2c1f47ef1c995a5d1efb446da1c697e56ebaa16bdc"
 dependencies = [
  "bincode",
  "flate2",
@@ -1607,8 +1607,9 @@ dependencies = [
  "itertools 0.10.5",
  "lz4_flex 0.9.5",
  "managed-lhapdf",
+ "ndarray 0.16.1",
  "ndarray-npy",
- "neopdf 0.3.0-alpha2",
+ "neopdf 0.3.0-alpha4",
  "pineappl 1.3.3",
  "pineappl_applgrid",
  "pineappl_fastnlo",
