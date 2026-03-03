@@ -14,7 +14,7 @@ you'd like to refresh your memory read the short
 
 To follow the tutorial, you'll first need PineAPPL's CLI; if you haven't
 installed it yet follow its [installation
-instructions](installation.html#cli-pineappl-for-your-shell). Next, you'll need
+instructions](installation.md#cli-pineappl-for-your-shell). Next, you'll need
 a fresh directory. For instance, run
 
     cd $(mktemp -d)
