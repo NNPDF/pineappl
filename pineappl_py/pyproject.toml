@@ -21,7 +21,7 @@ classifiers = [
   "Topic :: Scientific/Engineering :: Physics",
 ]
 dependencies = ["numpy>=1.16.0"]
-dynamic = ["version"]
+dynamic = ["version", "description", "readme", "authors", "license", "keywords"]
 
 [project.optional-dependencies]
 cli = ["pineappl-cli"]
