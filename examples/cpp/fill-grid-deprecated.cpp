@@ -250,7 +250,7 @@ int main() {
     std::cout << "Generated " << filename << " containing a a -> l+ l-.\n\n"
         "Try running (PDF sets must contain non-zero photon PDF):\n"
         "  - pineappl convolve " << filename << " NNPDF31_nnlo_as_0118_luxqed\n"
-        "  - pineappl --silence-lhapdf plot " << filename
+        "  - pineappl plot " << filename
         << " NNPDF31_nnlo_as_0118_luxqed MSHT20qed_nnlo > plot_script.py\n"
         "  - pineappl --help\n";
 }
