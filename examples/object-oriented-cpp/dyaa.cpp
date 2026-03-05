@@ -8,8 +8,8 @@
 #include <random>
 #include <vector>
 
-#include "PineAPPL.hpp"
-#include "pineappl_capi.h"
+#include <PineAPPL.hpp>
+#include <pineappl_capi.h>
 
 double int_photo(double s, double t, double u) {
   double alpha0 = 1.0 / 137.03599911;
