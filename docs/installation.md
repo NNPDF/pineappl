@@ -75,6 +75,7 @@ If you want to build the CAPI from its sources instead, you first need to
 3. Now install `pineappl_capi`, PineAPPL's C API:
 
        cd pineappl_capi
+       export PINEAPPL_C_INSTALL_PREFIX=${prefix} # To copy the OOP C++ header
        cargo cinstall --release --prefix=${prefix} --libdir=${prefix}/lib
        cd ..
 

@@ -26,6 +26,7 @@ jobs:
           RUSTFLAGS: '-Cinstrument-coverage -Clink-dead-code'
         run: |
           cd pineappl_capi
+          export PINEAPPL_C_INSTALL_PREFIX=/usr/local
           cargo cinstall --verbose --prefix=/usr/local/ --libdir=/usr/local/lib
           ldconfig
 
