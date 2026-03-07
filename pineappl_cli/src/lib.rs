@@ -14,6 +14,7 @@ mod helpers;
 mod import;
 mod merge;
 mod orders;
+pub mod pdf_backend;
 mod plot;
 mod pull;
 mod read;
@@ -41,6 +42,9 @@ pub struct GlobalConfiguration {
     /// Choose the PDF/FF set for the strong coupling.
     #[arg(default_value = "0", long, value_name = "IDX")]
     pub use_alphas_from: usize,
+    /// Select the PDF interpolation backend: 'lhapdf' or 'neopdf'.
+    #[arg(default_value = "lhapdf", long, value_name = "BACKEND")]
+    pub pdf_backend: pdf_backend::Backend,
 }
 
 #[enum_dispatch]
