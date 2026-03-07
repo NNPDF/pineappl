@@ -171,6 +171,32 @@ const SCALES_VECTOR_REN_FRG: [(f64, f64, f64); 9] = [
     (0.5, 1.0, 2.0),
 ];
 
+const SCALES_VECTOR_FAC_FRG: [(f64, f64, f64); 7] = [
+    (1.0, 1.0, 1.0),
+    (1.0, 2.0, 2.0),
+    (2.0, 2.0, 2.0),
+    (2.0, 1.0, 1.0),
+    (1.0, 0.5, 0.5),
+    (0.5, 0.5, 0.5),
+    (0.5, 1.0, 1.0),
+];
+
+const SCALES_VECTOR_13: [(f64, f64, f64); 13] = [
+    (1.0, 1.0, 1.0),
+    (0.5, 0.5, 1.0),
+    (0.5, 1.0, 0.5),
+    (0.5, 1.0, 1.0),
+    (1.0, 0.5, 0.5),
+    (1.0, 0.5, 1.0),
+    (1.0, 1.0, 0.5),
+    (1.0, 1.0, 2.0),
+    (1.0, 2.0, 1.0),
+    (1.0, 2.0, 2.0),
+    (2.0, 1.0, 1.0),
+    (2.0, 1.0, 2.0),
+    (2.0, 2.0, 1.0),
+];
+
 const SCALES_VECTOR_27: [(f64, f64, f64); 27] = [
     (1.0, 1.0, 1.0),
     (2.0, 2.0, 2.0),
@@ -367,6 +393,8 @@ pub fn scales_vector(grid: &Grid, scales: usize) -> &[(f64, f64, f64)] {
         (_, ScaleFuncForm::NoScale, 9) => &SCALES_VECTOR_REN_FAC[..],
         (ScaleFuncForm::NoScale, _, 7) => &SCALES_VECTOR_REN_FRG[0..7],
         (ScaleFuncForm::NoScale, _, 9) => &SCALES_VECTOR_REN_FRG[..],
+        (_, _, 7) => &SCALES_VECTOR_FAC_FRG[..],
+        (_, _, 13) => &SCALES_VECTOR_13[..],
         (_, _, 17) => &SCALES_VECTOR_27[0..17],
         (_, _, 27) => &SCALES_VECTOR_27[..],
         _ => unreachable!(),
