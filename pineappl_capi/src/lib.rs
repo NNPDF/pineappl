@@ -1860,6 +1860,54 @@ pub unsafe extern "C" fn pineappl_channels_entry(
         .for_each(|(from, to)| *to = *from);
 }
 
+/// Return the value for `key` stored in `grid`. If `key` isn't found, `NULL` will be returned.
+/// After usage the string must be deallocated using [`pineappl_string_delete`].
+///
+/// # Safety
+///
+/// If `grid` does not point to a valid `Grid` object, for example when `grid` is the `NULL`
+/// pointer, this function is not safe to call. The parameter `key` must be non-`NULL` and a valid
+/// C string.
+#[no_mangle]
+#[must_use]
+pub unsafe extern "C" fn pineappl_grid_metadata(
+    grid: *const Grid,
+    key: *const c_char,
+) -> *mut c_char {
+    let grid = unsafe { &*grid };
+    let key = unsafe { CStr::from_ptr(key) }.to_string_lossy();
+
+    if let Some(value) = grid.metadata().get(key.as_ref()) {
+        CString::new(value.as_str()).unwrap().into_raw()
+    } else {
+        std::ptr::null_mut()
+    }
+}
+
+/// Sets an internal key-value pair for the grid.
+///
+/// # Safety
+///
+/// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
+/// this function is not safe to call. The parameters `key` and `value` must be non-`NULL` and
+/// valid C strings.
+#[no_mangle]
+pub unsafe extern "C" fn pineappl_grid_set_metadata(
+    grid: *mut Grid,
+    key: *const c_char,
+    value: *const c_char,
+) {
+    let grid = unsafe { &mut *grid };
+    let key = unsafe { CStr::from_ptr(key) }
+        .to_string_lossy()
+        .into_owned();
+    let value = unsafe { CStr::from_ptr(value) }
+        .to_string_lossy()
+        .into_owned();
+
+    grid.metadata_mut().insert(key, value);
+}
+
 /// An extension of `pineappl_grid_order_params` that accounts for the order of the fragmentation
 /// logs.
 ///
