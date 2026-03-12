@@ -271,6 +271,13 @@ module pineappl
             type (c_ptr)        :: grid_key_value
         end function
 
+        function grid_metadata(grid, key) bind(c, name = 'pineappl_grid_metadata')
+            use iso_c_binding
+            type (c_ptr), value :: grid
+            character (c_char)  :: key(*)
+            type (c_ptr)        :: grid_metadata
+        end function
+
         function grid_channels(grid) bind(c, name = 'pineappl_grid_channels')
             use iso_c_binding
             type (c_ptr), value :: grid
@@ -353,6 +360,12 @@ module pineappl
         end subroutine
 
         subroutine grid_set_key_value(grid, key, valju) bind(c, name = 'pineappl_grid_set_key_value')
+            use iso_c_binding
+            type (c_ptr), value :: grid
+            character (c_char)  :: key(*), valju(*)
+        end subroutine
+
+        subroutine grid_set_metadata(grid, key, valju) bind(c, name = 'pineappl_grid_set_metadata')
             use iso_c_binding
             type (c_ptr), value :: grid
             character (c_char)  :: key(*), valju(*)
@@ -605,6 +618,18 @@ contains
         res = c_f_string(grid_key_value(grid%ptr, key // c_null_char))
     end function
 
+    function pineappl_grid_metadata(grid, key) result(res)
+        use iso_c_binding
+
+        implicit none
+
+        type (pineappl_grid), intent(in) :: grid
+        character (*), intent(in)        :: key
+        character (:), allocatable       :: res
+
+        res = c_f_string(grid_metadata(grid%ptr, key // c_null_char))
+    end function
+
     type (pineappl_channels) function pineappl_grid_channels(grid)
         implicit none
 
@@ -750,6 +775,17 @@ contains
         character (*), intent(in)        :: key, valju
 
         call grid_set_key_value(grid%ptr, key // c_null_char, valju // c_null_char)
+    end subroutine
+
+    subroutine pineappl_grid_set_metadata(grid, key, valju)
+        use iso_c_binding
+
+        implicit none
+
+        type (pineappl_grid), intent(in) :: grid
+        character (*), intent(in)        :: key, valju
+
+        call grid_set_metadata(grid%ptr, key // c_null_char, valju // c_null_char)
     end subroutine
 
     subroutine pineappl_grid_set_remapper(grid, dimensions, normalizations, limits)
