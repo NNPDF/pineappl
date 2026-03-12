@@ -109,7 +109,7 @@ program dyaa
         !   above in 'channels')
         ! - for PDF parameters 'x1, x2, q2',
         ! - with the given 'weight'
-        call pineappl_grid_fill2(grid, order_idx, abs(yll), channel_idx, [ x1, x2, q2 ], weight)
+        call pineappl_grid_fill2(grid, order_idx, abs(yll), channel_idx, [ q2, x1, x2 ], weight)
     end do
 
     ! set metadata - this isn't strictly needed, but usually useful (plot script, ...)

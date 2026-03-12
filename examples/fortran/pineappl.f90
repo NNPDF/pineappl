@@ -173,7 +173,7 @@ module pineappl
 
         type (c_ptr) function channels_new(convolutions) bind(c, name = 'pineappl_channels_new')
             use iso_c_binding
-            integer (c_int32_t), value :: convolutions
+            integer (c_size_t), value :: convolutions
         end function
 
         integer (c_size_t) function grid_bin_count(grid) bind(c, name = 'pineappl_grid_bin_count')
@@ -434,9 +434,9 @@ contains
     type (pineappl_channels) function pineappl_channels_new(convolutions)
         implicit none
 
-        integer (c_int32_t), value :: convolutions
+        integer, intent(in) :: convolutions
 
-        pineappl_channels_new = pineappl_channels(channels_new(convolutions))
+        pineappl_channels_new = pineappl_channels(channels_new(int(convolutions, c_size_t)))
     end function
 
     integer function pineappl_grid_bin_count(grid)
@@ -538,7 +538,7 @@ contains
             alphas_state, &
             [(logical(order_mask(i), c_bool), i = 1, size(order_mask))], &
             [(logical(channel_mask(i), c_bool), i = 1, size(channel_mask))], &
-            [(int(bin_indices, c_size_t), i = 1, size(bin_indices))], &
+            [(int(bin_indices(i), c_size_t), i = 1, size(bin_indices))], &
             int(nb_scales, c_size_t), &
             mu_scales, &
             res &
@@ -788,10 +788,10 @@ contains
 
         implicit none
 
-        type (pineappl_channels), intent(in)             :: channels
-        integer, intent(in)                              :: combinations
-        integer, dimension(2 * combinations), intent(in) :: pdg_id_combinations
-        real (dp), dimension(combinations), intent(in)   :: factors
+        type (pineappl_channels), intent(in)           :: channels
+        integer, intent(in)                            :: combinations
+        integer, dimension(*), intent(in)              :: pdg_id_combinations
+        real (dp), dimension(combinations), intent(in) :: factors
 
         call channels_add(channels%ptr, int(combinations, c_size_t), pdg_id_combinations, factors)
     end subroutine
