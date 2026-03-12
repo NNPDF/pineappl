@@ -208,6 +208,16 @@ int main() {
     pineappl_grid_optimize(grid);
 
     // ---
+    // Metadata testing
+    pineappl_grid_set_metadata(grid, "comment", "This is a toy SIDIS grid");
+    pineappl_grid_set_metadata(grid, "experiment", "ToyExp");
+
+    char* comment = pineappl_grid_metadata(grid, "comment");
+    char* experiment = pineappl_grid_metadata(grid, "experiment");
+    pineappl_string_delete(comment);
+    pineappl_string_delete(experiment);
+
+    // ---
     // Write the grid to disk - the filename can be anything ...
     std::string filename = "sidis-toygrid.pineappl.lz4";
     pineappl_grid_write(grid, filename.c_str());
