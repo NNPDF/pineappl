@@ -35,7 +35,7 @@ docs = [
 test = ["pytest", "pytest-cov"]
 
 [project.urls]
-homepage = "https://nnpdf.github.io/pineappl/"
+homepage = "https://nnpdf.github.io/pineappl/docs/"
 documentation = "https://pineappl.readthedocs.io/"
 changelog = "https://nnpdf.github.io/pineappl/CHANGELOG.html"
 

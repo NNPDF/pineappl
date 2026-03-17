@@ -20,8 +20,8 @@ classifiers = [
 dynamic = ["version", "description", "readme", "authors", "license", "keywords"]
 
 [project.urls]
-homepage = "https://nnpdf.github.io/pineappl/"
-documentation = "https://pineappl.readthedocs.io/"
+homepage = "https://nnpdf.github.io/pineappl/docs/"
+documentation = "https://nnpdf.github.io/pineappl/docs/cli-tutorial.html"
 changelog = "https://nnpdf.github.io/pineappl/CHANGELOG.html"
 
 [tool.maturin]
