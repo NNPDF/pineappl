@@ -683,6 +683,23 @@ fn optimize() {
 }
 
 #[test]
+fn optimize_newton_convergence() {
+    let output = NamedTempFile::new("optimized.pineappl.lz4").unwrap();
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "write",
+            "--optimize",
+            "../test-data/test_newton_convergence.pineappl.lz4",
+            output.path().to_str().unwrap(),
+        ])
+        .assert()
+        .success()
+        .stdout("");
+}
+
+#[test]
 fn set_bins() {
     let output = NamedTempFile::new("set_bins.pineappl.lz4").unwrap();
 
