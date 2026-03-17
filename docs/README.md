@@ -12,8 +12,6 @@ Here is an alphabetically ordered list of all documentation:
 - [CLI reference](cli-reference.md): a reference for all parameters of the CLI.
 - [Changelog](../CHANGELOG.md): a list of additions and changes for all
   released and unreleased versions of PineAPPL.
-- [Grid repository](https://github.com/NNPDF/pineapplgrids/): pre-computed grids
-  for specific experimental setups.
 - [Installation](installation.md): installation instructions.
 - [Madgraph5_aMC@NLO](mg5_aMC.md): how to create PineAPPL grids with
   [Madgraph5_aMC@NLO](https://launchpad.net/mg5amcnlo/).
@@ -31,8 +29,13 @@ Here is an alphabetically ordered list of all documentation:
 
 ### Code examples
 
-Another way to learn using the APIs is to have a look/modify the
-[examples](../examples/).
+Another way to learn using the APIs is to have a look/modify the examples:
+
+- [C and C++](../examples/cpp/)
+- [Object-oriented C++](../examples/object-oriented-cpp/)
+- [Fortran](../examples/fortran/)
+- [Python](../examples/python/)
+- [Madgraph5_aMC@NLO](../examples/mg5amcnlo/)
 
 ## Developer documentation
 
