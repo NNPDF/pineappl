@@ -804,4 +804,14 @@ mod tests {
             ulps = 4
         );
     }
+
+    #[test]
+    fn issue_372() {
+        assert_approx_eq!(
+            f64,
+            applgrid::fx2(3.751520963950722),
+            0.4221667753589648,
+            ulps = 4
+        );
+    }
 }
