@@ -20,7 +20,7 @@ mod applgrid {
         let mut yp = y;
         let mut deltap = f64::INFINITY;
 
-        for _ in 0..10 {
+        for _ in 0..15 {
             let x = (-yp).exp();
             let delta = (1.0 - x).mul_add(-5.0, y - yp);
             if (delta == 0.0) || ((delta.abs() < 2e-15) && (delta.abs() >= deltap.abs())) {
