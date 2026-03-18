@@ -214,7 +214,7 @@ int main() {
       "Generated %s containing a a -> l+ l-.\n\n"
       "Try running (PDF sets must contain non-zero photon PDF):\n"
       "  - pineappl convolve %s NNPDF31_nnlo_as_0118_luxqed\n"
-      "  - pineappl --silence-lhapdf plot %s NNPDF31_nnlo_as_0118_luxqed "
+      "  - pineappl plot %s NNPDF31_nnlo_as_0118_luxqed "
       "MSHT20qed_nnlo > plot_script.py\n"
       "  - pineappl --help\n",
       filename.c_str(), filename.c_str(), filename.c_str());
