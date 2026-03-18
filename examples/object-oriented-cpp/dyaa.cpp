@@ -199,10 +199,10 @@ int main() {
   }
 
   // store some metadata in the grid
-  grid.set_key_value("events", "10000000");
+  grid.set_metadata("events", "10000000");
 
   // read out the stored value and print it on stdout
-  const auto value = grid.get_key_value("events");
+  const auto value = grid.get_metadata("events");
   std::printf("Finished running %s events.\n", value.c_str());
 
   // write the grid to disk - with `.lz4` suffix the grid is automatically LZ4

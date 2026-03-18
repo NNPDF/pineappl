@@ -229,8 +229,8 @@ struct Grid {
    * @param key key
    * @param value value
    */
-  void set_key_value(const std::string &key, const std::string &value) const {
-    pineappl_grid_set_key_value(this->raw, key.c_str(), value.c_str());
+  void set_metadata(const std::string &key, const std::string &value) const {
+    pineappl_grid_set_metadata(this->raw, key.c_str(), value.c_str());
   }
 
   /**
@@ -238,9 +238,9 @@ struct Grid {
    * @param key key
    * @return value
    */
-  std::string get_key_value(const std::string &key) const {
-    auto *value = pineappl_grid_key_value(this->raw, key.c_str());
-    std::string res(value);
+  std::string get_metadata(const std::string &key) const {
+    auto *value = pineappl_grid_metadata(this->raw, key.c_str());
+    std::string res(value != nullptr ? value : "");
     // delete the allocated object
     pineappl_string_delete(value);
     return res;

@@ -109,18 +109,18 @@ program dyaa
         !   above in 'channels')
         ! - for PDF parameters 'x1, x2, q2',
         ! - with the given 'weight'
-        call pineappl_grid_fill2(grid, order_idx, abs(yll), channel_idx, [ x1, x2, q2 ], weight)
+        call pineappl_grid_fill2(grid, order_idx, abs(yll), channel_idx, [ q2, x1, x2 ], weight)
     end do
 
     ! set metadata - this isn't strictly needed, but usually useful (plot script, ...)
-    call pineappl_grid_set_key_value(grid, 'arxiv', '1310.7291')
-    call pineappl_grid_set_key_value(grid, 'description', 'CMS double-differential Drell—Yan cross section at 7 TeV')
-    call pineappl_grid_set_key_value(grid, 'hepdata', '10.17182/hepdata.62207.v1/t8')
-    call pineappl_grid_set_key_value(grid, 'x1_label', 'yll')
-    call pineappl_grid_set_key_value(grid, 'x1_label_tex', '$y_{\ell\bar{\ell}}$')
+    call pineappl_grid_set_metadata(grid, 'arxiv', '1310.7291')
+    call pineappl_grid_set_metadata(grid, 'description', 'CMS double-differential Drell—Yan cross section at 7 TeV')
+    call pineappl_grid_set_metadata(grid, 'hepdata', '10.17182/hepdata.62207.v1/t8')
+    call pineappl_grid_set_metadata(grid, 'x1_label', 'yll')
+    call pineappl_grid_set_metadata(grid, 'x1_label_tex', '$y_{\ell\bar{\ell}}$')
     ! rapidity doesn't have a unit (other observables could be GeV, TeV, ...)
-    call pineappl_grid_set_key_value(grid, 'x1_unit', '')
-    call pineappl_grid_set_key_value(grid, 'y_unit', 'pb')
+    call pineappl_grid_set_metadata(grid, 'x1_unit', '')
+    call pineappl_grid_set_metadata(grid, 'y_unit', 'pb')
 
     ! optimize the grid representation (makes the file smaller)
     call pineappl_grid_optimize(grid)
