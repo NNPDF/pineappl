@@ -32,7 +32,6 @@ increasing the MSRV make sure to set it everywhere to the same value:
    - in all Github workflows (`.github/workflows/`)
    - in `.readthedocs.yml` update the value of the `rust` field and make sure
      [RTD supports it](https://docs.readthedocs.io/en/stable/config-file/v2.html#build-tools-rust)
-   - in `make_release.sh` update the `cargo msrv` call
 4. commit the previous changes and push them *after* the container created by
    step 2 is ready
 

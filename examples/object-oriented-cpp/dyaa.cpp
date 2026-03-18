@@ -199,10 +199,10 @@ int main() {
   }
 
   // store some metadata in the grid
-  grid.set_key_value("events", "10000000");
+  grid.set_metadata("events", "10000000");
 
   // read out the stored value and print it on stdout
-  const auto value = grid.get_key_value("events");
+  const auto value = grid.get_metadata("events");
   std::printf("Finished running %s events.\n", value.c_str());
 
   // write the grid to disk - with `.lz4` suffix the grid is automatically LZ4
@@ -214,7 +214,7 @@ int main() {
       "Generated %s containing a a -> l+ l-.\n\n"
       "Try running (PDF sets must contain non-zero photon PDF):\n"
       "  - pineappl convolve %s NNPDF31_nnlo_as_0118_luxqed\n"
-      "  - pineappl --silence-lhapdf plot %s NNPDF31_nnlo_as_0118_luxqed "
+      "  - pineappl plot %s NNPDF31_nnlo_as_0118_luxqed "
       "MSHT20qed_nnlo > plot_script.py\n"
       "  - pineappl --help\n",
       filename.c_str(), filename.c_str(), filename.c_str());

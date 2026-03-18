@@ -9,7 +9,7 @@ ENV APPL_IGRID_DIR="/usr/local/src/applgrid/src"
 
 # the last version is the default Rust version used in the container
 # as long as we're using `persist-doctests` in the `Rust` workflow we need nightly as default
-ARG RUST_V="1.70.0 1.80.1 nightly-2024-09-04"
+ARG RUST_V="1.80.1 1.94.0 nightly-2026-03-10"
 
 ENV CARGO_HOME="/usr/local/cargo"
 ENV PATH="/usr/local/cargo/bin:${PATH}"

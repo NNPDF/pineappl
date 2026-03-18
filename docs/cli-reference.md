@@ -29,9 +29,9 @@ where `N` must be the exponent of the strong coupling (denoted with `as`) and
 example, in Drell–Yan lepton-pair production `a2,a2as1` selects the leading
 order (`a2`) and the next-to-leading order QCD (`a2as1`).
 
-## `PDFSET`: Specifying PDF members or entire PDF sets
+## `CONV_FUNS`: Specifying PDF members or entire PDF sets
 
-The parameter `PDFSET` that appears for all convolutional-type subcommands
+The parameter `CONV_FUNS` that appears for all convolutional-type subcommands
 (`channels`, `convolve`, etc.) must be one of the following strings:
 
 - `setname/member`: In this case `setname` must be a valid [LHAPDF] set name
@@ -50,10 +50,10 @@ The parameter `PDFSET` that appears for all convolutional-type subcommands
   `CT18NNLO` and `14001` corresponds to `CT18NNLO/1`.
 
 If an entire PDF set must be given for the calculation of PDF uncertainties,
-that means for for `pdfunc`, `plot` or `pull`, the member selection using `/0`,
+that means for `uncert`, `plot` or `pull`, the member selection using `/0`,
 `/1` can be used to show specific members instead of the central prediction.
-For instance `pineappl pdfunc ... NNPDF40_nnlo_as_01180` calculates the central
-value using the average over all replicas, whereas `pineappl pdfunc ...
+For instance `pineappl uncert ... NNPDF40_nnlo_as_01180` calculates the central
+value using the average over all replicas, whereas `pineappl uncert ...
 NNPDF40_nnlo_as_01180/0` uses the zeroth member. This is especially useful to
 show different replicas in plots.
 
@@ -63,9 +63,9 @@ multiple PDF sets. For example, `NNPDF31_nnlo_as_0118_luxqed=NNPDF31luxQED`
 instructs to use the the PDF set `NNPDF31_nnlo_as_0118_luxqed`, but it would be
 called `NNPDF31luxQED`.
 
-## `REMAPPING`: Remapping parameter specification
+## `LIMITS`: Remapping parameter specification
 
-This section specifies the `REMAPPING` parameter of `pineappl remap`.
+This section specifies the `LIMITS` parameter of `pineappl write --set-bins`.
 
 ### Motivation
 
@@ -77,7 +77,7 @@ For performance/simplicity reasons most Monte Carlo generators neither support
 *during generation*. To work around this problem a grid with a one-dimensional
 distribution with equally-sized bins can be generated instead, and afterwards
 the bins can be 'remapped' to an N-dimensional distribution using the limits
-specified with the `REMAPPING` string.
+specified with the `LIMITS` string.
 
 ### Reference
 
@@ -114,8 +114,8 @@ The remapping string uses the following special characters to achieve this
 
 Finally note that the differential cross sections are calculated using the bin
 sizes (the product of bin widths of each dimension) given by the remapping
-string. The option `--ignore-obs-norm` can be used to remove certain dimensions
-from the bin size determination, for example `'0,10,20;0,2,4' --ignore-obs-norm
+string. The option `--div-bin-norm-dims` can be used to remove certain dimensions
+from the bin size determination, for example `'0,10,20;0,2,4' --div-bin-norm-dims
 1` will normalize the bins with a size of `2` because the first dimension (with
 index `1`) will be ignored
 
