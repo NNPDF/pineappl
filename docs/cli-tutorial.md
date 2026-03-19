@@ -14,7 +14,7 @@ you'd like to refresh your memory read the short
 
 To follow the tutorial, you'll first need PineAPPL's CLI; if you haven't
 installed it yet follow its [installation
-instructions](installation.html#cli-pineappl-for-your-shell). Next, you'll need
+instructions](installation.md#cli-pineappl-for-your-shell). Next, you'll need
 a fresh directory. For instance, run
 
     cd $(mktemp -d)
@@ -34,7 +34,7 @@ Now that you've got a grid, you can perform a convolution with a PDF set:
 We chose to use the default CT18 PDF set for this tutorial, because it's the
 shortest to type. If you get an error that reads
 
-    error: Invalid value for '<PDFSETS>...': The PDF set `CT18NNLO` was not found
+    error: Invalid value for '<CONV_FUNS>...': The PDF set `CT18NNLO` was not found
 
 install the PDF set with LHAPDF, or use a different PDF set—the numbers won't
 matter for the sake of the tutorial. If the command was successful, you should
@@ -122,22 +122,25 @@ following:
 
     Convolutes a PineAPPL grid with a PDF set
 
-    Usage: pineappl convolve [OPTIONS] <INPUT> <PDFSETS>...
+    Usage: pineappl convolve [OPTIONS] <INPUT> <CONV_FUNS>...
 
     Arguments:
-      <INPUT>       Path of the input grid
-      <PDFSETS>...  LHAPDF id(s) or name of the PDF set(s)
+      <INPUT>         Path of the input grid
+      <CONV_FUNS>...  LHAPDF id(s) or name of the PDF set(s)
 
     Options:
       -b, --bins <BINS>       Selects a subset of bins
       -i, --integrated        Show integrated numbers (without bin widths) instead of differential ones
       -o, --orders <ORDERS>   Select orders manually
+          --xir <XIR>         Set the variation of the renormalization scale [default: 1.0]
+          --xif <XIF>         Set the variation of the factorization scale [default: 1.0]
+          --xia <XIA>         Set the variation of the fragmentation scale [default: 1.0]
           --digits-abs <ABS>  Set the number of fractional digits shown for absolute numbers [default: 7]
           --digits-rel <REL>  Set the number of fractional digits shown for relative numbers [default: 2]
       -h, --help              Print help
 
 This explains that `pineappl convolve` needs at least two arguments, the first
-being the grid file, denoted as `<INPUT>` and a second argument `<PDFSETS>`,
+being the grid file, denoted as `<INPUT>` and a second argument `<CONV_FUNS>`,
 which determines the PDF set. Note that this argument has three dots, `...`,
 meaning that you're allowed to pass multiple PDF sets, in which case `pineappl`
 will perform the convolution with each PDF set, such that you can compare them
@@ -379,32 +382,33 @@ install the set first) as the PDF set:
 
 Let's calculate the scale and PDF uncertainties for our grid:
 
-    pineappl uncert --pdf --scale-env=7 LHCB_WP_7TEV.pineappl.lz4 NNPDF31_nnlo_as_0118_luxqed
+    pineappl uncert --conv-fun --scale-env=7 LHCB_WP_7TEV.pineappl.lz4 NNPDF31_nnlo_as_0118_luxqed
 
 This will show a table very similar to `pineappl convolve`:
 
-    b   etal    dsig/detal  PDF central    PDF     7pt-svar (env)
-         []        [pb]                    [%]           [%]
-    -+----+----+-----------+-----------+-----+----+-------+-------
-    0    2 2.25 7.7651327e2 7.7650499e2 -1.01 1.01   -3.69    2.64
-    1 2.25  2.5 7.1011428e2 7.1008027e2 -1.01 1.01   -3.67    2.69
-    2  2.5 2.75 6.1683947e2 6.1679433e2 -1.01 1.01   -3.67    2.76
-    3 2.75    3 4.9791036e2 4.9786461e2 -1.03 1.03   -3.64    2.78
-    4    3 3.25 3.7016249e2 3.7012355e2 -1.07 1.07   -3.60    2.80
-    5 3.25  3.5 2.5055318e2 2.5052366e2 -1.13 1.13   -3.55    2.81
-    6  3.5    4 1.1746882e2 1.1745148e2 -1.33 1.33   -3.48    2.80
-    7    4  4.5 2.8023753e1 2.8018010e1 -4.05 4.05   -3.40    2.74
+    b   etal    dsig/detal      NNPDF31_nnlo_as_0118_luxqed      7pt-svar (env)
+         []        [pb]       [pb]          [%]     [%]           [%]
+    -+----+----+-----------+-----------+--------+--------+-------+-------
+    0    2 2.25 7.7651327e2 7.7650499e2    -1.01     1.01   -3.69    2.64
+    1 2.25  2.5 7.1011428e2 7.1008027e2    -1.01     1.01   -3.67    2.69
+    2  2.5 2.75 6.1683947e2 6.1679433e2    -1.01     1.01   -3.67    2.76
+    3 2.75    3 4.9791036e2 4.9786461e2    -1.03     1.03   -3.64    2.78
+    4    3 3.25 3.7016249e2 3.7012355e2    -1.07     1.07   -3.60    2.80
+    5 3.25  3.5 2.5055318e2 2.5052366e2    -1.13     1.13   -3.55    2.81
+    6  3.5    4 1.1746882e2 1.1745148e2    -1.33     1.33   -3.48    2.80
+    7    4  4.5 2.8023753e1 2.8018010e1    -4.05     4.05   -3.40    2.74
 
 The first three columns are exactly the one that `pineappl convolve` shows. The
-next columns are the PDF central predictions, and negative and positive PDF
-uncertainties. These uncertainties are calculated using LHAPDF, so `pineappl`
-always uses the correct algorithm no matter what type of PDF sets you use:
-Hessian, Monte Carlo, etc. Note that we've chosen a PDF set with Monte Carlo
-replicas which means that the results shown in `dsig/detal` and `PDF central`
-aren't exactly the same. The first number is calculated from the zeroth replica
-of the set and the second number is the average of all replicas (except the
-zeroth). You'll notice that the PDF uncertainties are symmetric, which will not
-necessarily be the case with Hessian PDF sets, for instance.
+next columns are the convolution function's central predictions, and negative
+and positive uncertainties. These uncertainties are calculated using LHAPDF, so
+`pineappl` always uses the correct algorithm no matter what type of convolution
+functions you use: Hessian, Monte Carlo, etc. Note that we've chosen a PDF set
+with Monte Carlo replicas which means that the results shown in `dsig/detal` and
+the central prediction aren't exactly the same. The first number is calculated
+from the zeroth replica of the set and the second number is the average of all
+replicas (except the zeroth). You'll notice that the PDF uncertainties are
+symmetric, which will not necessarily be the case with Hessian PDF sets, for
+instance.
 
 The two remaining columns show the scale-variation uncertainty which is
 estimated from taking the envelope of a 7-point scale variation. By changing

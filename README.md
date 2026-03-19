@@ -1,8 +1,8 @@
-[![Rust](https://github.com/NNPDF/pineappl/workflows/Rust/badge.svg)](https://github.com/NNPDF/pineappl/actions?query=workflow%3ARust)
+[![Rust](https://github.com/NNPDF/pineappl/actions/workflows/rust.yml/badge.svg?branch=master)](https://github.com/NNPDF/pineappl/actions/workflows/rust.yml)
 [![codecov](https://codecov.io/gh/NNPDF/pineappl/branch/master/graph/badge.svg)](https://codecov.io/gh/NNPDF/pineappl)
 [![Documentation](https://docs.rs/pineappl/badge.svg)](https://docs.rs/pineappl)
 [![crates.io](https://img.shields.io/crates/v/pineappl.svg)](https://crates.io/crates/pineappl)
-[![MSRV](https://img.shields.io/badge/Rust-1.80+-lightgray.svg)](docs/installation.md)
+[![MSRV](https://img.shields.io/badge/Rust-1.94+-lightgray.svg)](docs/installation.md)
 
 # What is PineAPPL?
 

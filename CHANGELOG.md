@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- added an actual implementation of `pineappl_grid_metadata` and
+  `pineappl_grid_set_metadata` in the APIs
+
+### Fixed
+
+- fixed a bug in the Newton's convergence method by raising the maximum number
+  of iteration
+- fixed a bug in the implementation of `pineappl_channels_add` of the Fortran
+  API
+
+### Changed
+
+- raised MSRV to 1.94.0
+
 ## [1.3.3] - 01/03/2026
 
 ## Added

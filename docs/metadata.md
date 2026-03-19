@@ -6,12 +6,19 @@ be read indiviually with `pineappl read --get <KEY> <GRID>`, and `pineappl read
 
 ## Known keys
 
-- `arxiv`
-- `description`
-- `hepdata`
-- `inspire`
-- `results`
-- `results_pdf`
+- `arxiv`: the arXiv identifier of the experimental measurement.
+- `description`: a short description of the process.
+- `hepdata`: the Digital Object Identifier (DOI) of the experimental data.
+- `initial_state_1`, `initial_state_2`: PDG Monte Carlo IDs of the initial-state hadrons.
+- `inspire`: the INSPIRE-HEP identifier of the experimental measurement.
+- `lumi_id_types`: the type of partonic luminosity identifiers used.
+- `mg5amc_repo`, `mg5amc_revno`: MadGraph5_aMC@NLO repository URL and revision number.
+- `nnpdf_id`: the NNPDF identifier of the dataset.
+- `pineappl_gitversion`: the version of PineAPPL used to generate the grid.
+- `results`: a table comparing PineAPPL results with the original Monte Carlo.
+- `results_pdf`: the PDF set used for the comparison in `results`.
+- `runcard`: the runcard used to generate the grid.
+- `runcard_gitversion`: the version of the runcard used.
 
 ## CLI-recognized keys
 
@@ -53,5 +60,7 @@ Ratios are denoted using `/`, and powers are denoted using `^2`
 These should contain the equivalent of `x1_label` with (La)TeX commands. If
 symbols from math mode are used, they must be enclosed with `$`.
 
-- `x1_label_tex`
+- `x1_label_tex` (and `x2_label_tex`, etc.)
 - `y_label_tex`
+- `y_unit`: used to append the unit to the y-axis label using the `siunitx` package syntax.
+- `x1_unit` (and `x2_unit`, etc.): used to append the unit to the x-axis label.

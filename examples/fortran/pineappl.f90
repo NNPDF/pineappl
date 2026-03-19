@@ -173,7 +173,7 @@ module pineappl
 
         type (c_ptr) function channels_new(convolutions) bind(c, name = 'pineappl_channels_new')
             use iso_c_binding
-            integer (c_int32_t), value :: convolutions
+            integer (c_size_t), value :: convolutions
         end function
 
         integer (c_size_t) function grid_bin_count(grid) bind(c, name = 'pineappl_grid_bin_count')
@@ -271,6 +271,13 @@ module pineappl
             type (c_ptr)        :: grid_key_value
         end function
 
+        function grid_metadata(grid, key) bind(c, name = 'pineappl_grid_metadata')
+            use iso_c_binding
+            type (c_ptr), value :: grid
+            character (c_char)  :: key(*)
+            type (c_ptr)        :: grid_metadata
+        end function
+
         function grid_channels(grid) bind(c, name = 'pineappl_grid_channels')
             use iso_c_binding
             type (c_ptr), value :: grid
@@ -358,6 +365,12 @@ module pineappl
             character (c_char)  :: key(*), valju(*)
         end subroutine
 
+        subroutine grid_set_metadata(grid, key, valju) bind(c, name = 'pineappl_grid_set_metadata')
+            use iso_c_binding
+            type (c_ptr), value :: grid
+            character (c_char)  :: key(*), valju(*)
+        end subroutine
+
         subroutine grid_set_remapper(grid, dimensions, normalizations, limits) bind(c, name = 'pineappl_grid_set_remapper')
             use iso_c_binding
             type (c_ptr), value       :: grid
@@ -434,9 +447,9 @@ contains
     type (pineappl_channels) function pineappl_channels_new(convolutions)
         implicit none
 
-        integer (c_int32_t), value :: convolutions
+        integer, intent(in) :: convolutions
 
-        pineappl_channels_new = pineappl_channels(channels_new(convolutions))
+        pineappl_channels_new = pineappl_channels(channels_new(int(convolutions, c_size_t)))
     end function
 
     integer function pineappl_grid_bin_count(grid)
@@ -538,7 +551,7 @@ contains
             alphas_state, &
             [(logical(order_mask(i), c_bool), i = 1, size(order_mask))], &
             [(logical(channel_mask(i), c_bool), i = 1, size(channel_mask))], &
-            [(int(bin_indices, c_size_t), i = 1, size(bin_indices))], &
+            [(int(bin_indices(i), c_size_t), i = 1, size(bin_indices))], &
             int(nb_scales, c_size_t), &
             mu_scales, &
             res &
@@ -603,6 +616,18 @@ contains
         character (:), allocatable       :: res
 
         res = c_f_string(grid_key_value(grid%ptr, key // c_null_char))
+    end function
+
+    function pineappl_grid_metadata(grid, key) result(res)
+        use iso_c_binding
+
+        implicit none
+
+        type (pineappl_grid), intent(in) :: grid
+        character (*), intent(in)        :: key
+        character (:), allocatable       :: res
+
+        res = c_f_string(grid_metadata(grid%ptr, key // c_null_char))
     end function
 
     type (pineappl_channels) function pineappl_grid_channels(grid)
@@ -752,6 +777,17 @@ contains
         call grid_set_key_value(grid%ptr, key // c_null_char, valju // c_null_char)
     end subroutine
 
+    subroutine pineappl_grid_set_metadata(grid, key, valju)
+        use iso_c_binding
+
+        implicit none
+
+        type (pineappl_grid), intent(in) :: grid
+        character (*), intent(in)        :: key, valju
+
+        call grid_set_metadata(grid%ptr, key // c_null_char, valju // c_null_char)
+    end subroutine
+
     subroutine pineappl_grid_set_remapper(grid, dimensions, normalizations, limits)
         use iso_c_binding
 
@@ -788,10 +824,10 @@ contains
 
         implicit none
 
-        type (pineappl_channels), intent(in)             :: channels
-        integer, intent(in)                              :: combinations
-        integer, dimension(2 * combinations), intent(in) :: pdg_id_combinations
-        real (dp), dimension(combinations), intent(in)   :: factors
+        type (pineappl_channels), intent(in)           :: channels
+        integer, intent(in)                            :: combinations
+        integer, dimension(*), intent(in)              :: pdg_id_combinations
+        real (dp), dimension(combinations), intent(in) :: factors
 
         call channels_add(channels%ptr, int(combinations, c_size_t), pdg_id_combinations, factors)
     end subroutine
