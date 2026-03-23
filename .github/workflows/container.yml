@@ -36,8 +36,8 @@ jobs:
         uses: redhat-actions/buildah-build@v2
         with:
           image: pineappl-ci
-          containerfiles: maintainer/pineappl-ci/Containerfile
-          context: maintainer/pineappl-ci/
+          containerfiles: maintainer/Containerfile
+          context: maintainer/
           oci: true
       - name: Publish image
         uses: redhat-actions/push-to-registry@v2

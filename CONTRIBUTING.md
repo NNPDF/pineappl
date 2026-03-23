@@ -32,7 +32,6 @@ increasing the MSRV make sure to set it everywhere to the same value:
    - in all Github workflows (`.github/workflows/`)
    - in `.readthedocs.yml` update the value of the `rust` field and make sure
      [RTD supports it](https://docs.readthedocs.io/en/stable/config-file/v2.html#build-tools-rust)
-   - in `make_release.sh` update the `cargo msrv` call
 4. commit the previous changes and push them *after* the container created by
    step 2 is ready
 
@@ -70,7 +69,18 @@ increasing the MSRV make sure to set it everywhere to the same value:
 
 ## Making a new release
 
-In the `maintainers` directory run
+First make sure the release workflow works; since we've hard-coded runner image
+and action versions, it's possible that the workflow must be updated if these
+images don't exist anymore. To check whether that's the case, manually trigger
+the following workflows:
+
+- <https://github.com/NNPDF/pineappl/actions/workflows/release-wheels.yaml>
+- <https://github.com/NNPDF/pineappl/actions/workflows/release-cli-wheels.yaml>
+
+This will not upload anything. Wait for the actions to finish, and fix problems
+in a separate branch.
+
+Next, go to the `maintainers` directory, run
 
     ./make_release 0.5.4
 

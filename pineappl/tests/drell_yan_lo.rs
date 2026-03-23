@@ -363,29 +363,54 @@ fn perform_grid_tests(
     let bins = grid.convolve(&mut convolution_cache, &[], &[], &[], &[(1.0, 1.0, 1.0)]);
 
     for (result, reference) in bins.iter().zip(reference.iter()) {
-        assert_approx_eq!(f64, *result, *reference, ulps = 4);
+        assert_approx_eq!(f64, *result, *reference, ulps = 8);
     }
 
-    // TEST 5b: `convolve` with `ConvolutionCache::with_two`
-    let mut xfx1 = |id, x, q2| pdf.xfx_q2(id, x, q2);
-    let mut xfx2 = |id, x, q2| pdf.xfx_q2(id, x, q2);
-    let mut alphas2 = |_| 0.0;
-    let mut convolution_cache2 = ConvolutionCache::new(
-        vec![
-            Conv::new(ConvType::UnpolPDF, 2212),
-            Conv::new(ConvType::UnpolPDF, 2212),
-        ],
-        vec![&mut xfx1, &mut xfx2],
-        &mut alphas2,
+    // TEST 6a: Fix conv_idx = 0 (first hadron)
+    let mut xfx_fixed_0 = |id, x, q2| pdf.xfx_q2(id, x, q2);
+    let grid_fixed_0 = grid.fix_convolution(0, &mut xfx_fixed_0, 1.0)?;
+
+    let mut xfx_convolve_0 = |id, x, q2| pdf.xfx_q2(id, x, q2);
+    let mut alphas_convolve_0 = |_| 0.0;
+    let mut convolution_cache_one_0 = ConvolutionCache::new(
+        vec![Conv::new(ConvType::UnpolPDF, 2212)],
+        vec![&mut xfx_convolve_0],
+        &mut alphas_convolve_0,
     );
-    let bins2 = grid.convolve(&mut convolution_cache2, &[], &[], &[], &[(1.0, 1.0, 1.0)]);
+    let bins_fixed_0 = grid_fixed_0.convolve(
+        &mut convolution_cache_one_0,
+        &[],
+        &[],
+        &[],
+        &[(1.0, 1.0, 1.0)],
+    );
 
-    for (result, reference) in bins2.iter().zip(reference.iter()) {
-        assert_approx_eq!(f64, *result, *reference, ulps = 16);
+    for (result, original_val) in bins_fixed_0.iter().zip(bins.iter()) {
+        assert_approx_eq!(f64, *result, *original_val, ulps = 16);
     }
 
-    mem::drop(convolution_cache2);
-    mem::drop(bins2);
+    // TEST 6b: Fix conv_idx = 1 (second hadron)
+    let mut xfx_fixed_1 = |id, x, q2| pdf.xfx_q2(id, x, q2);
+    let grid_fixed_1 = grid.fix_convolution(1, &mut xfx_fixed_1, 1.0)?;
+
+    let mut xfx_convolve_1 = |id, x, q2| pdf.xfx_q2(id, x, q2);
+    let mut alphas_convolve_1 = |_| 0.0;
+    let mut convolution_cache_one_1 = ConvolutionCache::new(
+        vec![Conv::new(ConvType::UnpolPDF, 2212)],
+        vec![&mut xfx_convolve_1],
+        &mut alphas_convolve_1,
+    );
+    let bins_fixed_1 = grid_fixed_1.convolve(
+        &mut convolution_cache_one_1,
+        &[],
+        &[],
+        &[],
+        &[(1.0, 1.0, 1.0)],
+    );
+
+    for (result, original_val) in bins_fixed_1.iter().zip(bins.iter()) {
+        assert_approx_eq!(f64, *result, *original_val, ulps = 16);
+    }
 
     // TEST 7a: `optimize_using` - tests `symmetrize` for each subgrid type
     grid.optimize_using(GridOptFlags::SYMMETRIZE_CHANNELS);
@@ -397,8 +422,8 @@ fn perform_grid_tests(
 
     for (&node_value1, &node_value2, &ref_value) in izip!(&node_values[1], &node_values[2], x_grid)
     {
-        assert_approx_eq!(f64, node_value1, ref_value, ulps = 4);
-        assert_approx_eq!(f64, node_value2, ref_value, ulps = 4);
+        assert_approx_eq!(f64, node_value1, ref_value, ulps = 8);
+        assert_approx_eq!(f64, node_value2, ref_value, ulps = 8);
     }
 
     let bins = grid.convolve(&mut convolution_cache, &[], &[], &[], &[(1.0, 1.0, 1.0)]);

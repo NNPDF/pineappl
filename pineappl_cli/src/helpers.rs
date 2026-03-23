@@ -346,7 +346,7 @@ pub fn convolve_scales(
                         .normalizations()
                         .into_iter()
                         .enumerate()
-                        .filter(|(index, _)| (bins.is_empty() || bins.contains(index)))
+                        .filter(|(index, _)| bins.is_empty() || bins.contains(index))
                         .flat_map(|(_, norm)| iter::repeat(norm).take(scales.len())),
                 )
                 .for_each(|(value, norm)| *value *= norm);

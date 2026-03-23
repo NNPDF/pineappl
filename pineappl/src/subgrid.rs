@@ -52,7 +52,7 @@ impl Subgrid for EmptySubgridV1 {
 
     fn symmetrize(&mut self, _: usize, _: usize) {}
 
-    fn indexed_iter(&self) -> SubgridIndexedIter {
+    fn indexed_iter(&self) -> SubgridIndexedIter<'_> {
         Box::new(iter::empty())
     }
 
@@ -162,7 +162,7 @@ impl Subgrid for ImportSubgridV1 {
         self.array = new_array;
     }
 
-    fn indexed_iter(&self) -> SubgridIndexedIter {
+    fn indexed_iter(&self) -> SubgridIndexedIter<'_> {
         Box::new(self.array.indexed_iter())
     }
 
@@ -313,7 +313,7 @@ impl Subgrid for InterpSubgridV1 {
         self.array = new_array;
     }
 
-    fn indexed_iter(&self) -> SubgridIndexedIter {
+    fn indexed_iter(&self) -> SubgridIndexedIter<'_> {
         let nodes: Vec<_> = self.interps.iter().map(Interp::node_values).collect();
 
         Box::new(self.array.indexed_iter().map(move |(indices, weight)| {
@@ -418,15 +418,21 @@ impl SubgridEnum {
         if other.is_empty() {
             return;
         }
+
         if let Self::EmptySubgridV1(_) = self {
-            if transpose.is_none() {
-                *self = other.clone();
+            // change the type of `self` to the type of `other`
+            *self = other.clone();
+
+            if transpose.is_some() {
+                // TODO: emptying `self` could be done more efficiently, we're probably storing a
+                // lot of zeros here
+                self.scale(0.0);
             } else {
-                todo!();
+                return;
             }
-        } else {
-            self.merge_impl(other, transpose);
         }
+
+        self.merge_impl(other, transpose);
     }
 }
 
@@ -478,7 +484,7 @@ pub trait Subgrid {
     fn symmetrize(&mut self, a: usize, b: usize);
 
     /// Return an iterator over all non-zero elements of the subgrid.
-    fn indexed_iter(&self) -> SubgridIndexedIter;
+    fn indexed_iter(&self) -> SubgridIndexedIter<'_>;
 
     /// Return statistics for this subgrid.
     fn stats(&self) -> Stats;

@@ -370,7 +370,7 @@ mg5_aMC launch.txt
 # try to find pineappl
 if which pineappl 2> /dev/null; then
     # step 6: change the bin limits from 0,1,2,3,... to the actual values
-    pineappl write --remap '40,45,50,55,60,64,68,72,76,81,86,91,96,101,106,110,115,120,126,133,141,150,160,171,185,200,220,243,273,320,380,440,510,600,700,830,1000,1500,3000' ${dataset}/Events/run_01/amcblast_obs_0.pineappl "${grid}".tmp
+    pineappl write --set-bins '40,45,50,55,60,64,68,72,76,81,86,91,96,101,106,110,115,120,126,133,141,150,160,171,185,200,220,243,273,320,380,440,510,600,700,830,1000,1500,3000' ${dataset}/Events/run_01/amcblast_obs_0.pineappl "${grid}".tmp
 
     # step 7: add some metadata (used mainly by the plot script)
     pineappl write "${grid}".tmp "${grid}" \
@@ -389,8 +389,8 @@ if which pineappl 2> /dev/null; then
 Generated ${grid}.
 
 Try using:
-  - pineappl convolute ${grid} LHAPDF_SET_NAME
-  - pineappl --silence-lhapdf plot ${grid} LHAPDF_SET_NAME1 LHAPDF_SET_NAME2 ... > plot_script.py
+  - pineappl convolve ${grid} LHAPDF_SET_NAME
+  - pineappl plot ${grid} LHAPDF_SET_NAME1 LHAPDF_SET_NAME2 ... > plot_script.py
   - pineappl --help
 EOF
 else

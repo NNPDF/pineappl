@@ -3,6 +3,7 @@
 use super::convert;
 use super::packed_array::PackedArray;
 use arrayvec::ArrayVec;
+use float_cmp::approx_eq;
 use serde::{Deserialize, Serialize};
 use std::mem;
 use std::ops::Range;
@@ -19,10 +20,10 @@ mod applgrid {
         let mut yp = y;
         let mut deltap = f64::INFINITY;
 
-        for _ in 0..10 {
+        for _ in 0..15 {
             let x = (-yp).exp();
             let delta = (1.0 - x).mul_add(-5.0, y - yp);
-            if (delta.abs() < 1e-15) && (delta >= deltap) {
+            if (delta == 0.0) || ((delta.abs() < 2e-15) && (delta.abs() >= deltap.abs())) {
                 return x;
             }
             let deriv = x.mul_add(-5.0, -1.0);
@@ -62,7 +63,7 @@ fn lagrange_weights(i: usize, n: usize, u: f64) -> f64 {
 
 /// TODO
 #[repr(C)]
-#[derive(Clone, Copy, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub enum ReweightMeth {
     /// TODO
     ApplGridX,
@@ -82,14 +83,14 @@ pub enum Map {
 
 /// TODO
 #[repr(C)]
-#[derive(Clone, Copy, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub enum InterpMeth {
     /// TODO
     Lagrange,
 }
 
 /// TODO
-#[derive(Clone, Deserialize, PartialEq, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Interp {
     min: f64,
     max: f64,
@@ -99,6 +100,20 @@ pub struct Interp {
     map: Map,
     interp_meth: InterpMeth,
 }
+
+impl PartialEq for Interp {
+    fn eq(&self, other: &Self) -> bool {
+        self.nodes == other.nodes
+            && self.order == other.order
+            && self.reweight == other.reweight
+            && self.map == other.map
+            && self.interp_meth == other.interp_meth
+            && approx_eq!(f64, self.min, other.min, ulps = 1)
+            && approx_eq!(f64, self.max, other.max, ulps = 1)
+    }
+}
+
+impl Eq for Interp {}
 
 impl Interp {
     /// TODO
@@ -642,6 +657,25 @@ mod tests {
     }
 
     #[test]
+    fn compare_fields_with_nan() {
+        let interp = Interp::new(
+            1e-3,
+            1e4,
+            50,
+            3,
+            ReweightMeth::NoReweight,
+            Map::ApplGridH0,
+            InterpMeth::Lagrange,
+        );
+
+        // Starting from below the valid domain of the map results in a NaN for `min`.
+        assert!(interp.min.is_nan());
+        // We also need to check `.min()` which minimises between `min` and `max` is NaN.
+        assert!(!interp.min().is_nan());
+        assert_eq!(interp, interp);
+    }
+
+    #[test]
     fn interpolate_zero_and_outside() {
         let interps = vec![
             Interp::new(
@@ -753,5 +787,31 @@ mod tests {
             // these two functions should be inverse to each other, within numerical noise
             assert!(applgrid::fq20(applgrid::ftau0(q2)).ulps(&q2) < 4);
         }
+    }
+
+    #[test]
+    fn pr_365() {
+        assert_approx_eq!(
+            f64,
+            applgrid::fx2(6.7865509745),
+            0.1010727499933246,
+            ulps = 4
+        );
+        assert_approx_eq!(
+            f64,
+            applgrid::fx2(6.786550974400577),
+            0.10107275000000002,
+            ulps = 4
+        );
+    }
+
+    #[test]
+    fn issue_372() {
+        assert_approx_eq!(
+            f64,
+            applgrid::fx2(3.751520963950722),
+            0.4221667753589648,
+            ulps = 4
+        );
     }
 }

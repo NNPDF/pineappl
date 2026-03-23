@@ -5,6 +5,12 @@ on:
     branches-ignore:
       - pycli
       - bump-pyo3-version
+      - update-wheels-actions
+      - update-wheels-actions-2
+
+defaults:
+  run:
+    shell: bash
 
 jobs:
   capi:
@@ -23,13 +29,16 @@ jobs:
           cargo cinstall --verbose --prefix=/usr/local/ --libdir=/usr/local/lib
           ldconfig
 
+      - name: Get test data
+        uses: ./.github/actions/cache-test-data
+
       - name: Test C++ examples
         run: |
           cd examples/cpp
           # if `make` is too old, it doesn't support the `!=` operator
           sed -i "s/\([a-zA-Z_]\+\) != \(.*\)$/echo \1 = \$(\2)/e" Makefile
           # run tests with sanitizer
-          make CXXFLAGS="-O0 -ggdb -Wall -Wextra -fsanitize=address,undefined" test-examples
+          make CXXFLAGS="-O0 -ggdb -Wall -Wextra -Werror -fsanitize=address,undefined" test-examples
 
       - name: Test Fortran examples
         run: |
@@ -41,7 +50,7 @@ jobs:
         run: |
           cd examples/object-oriented-cpp
           sed -i "s/\([a-zA-Z_]\+\) != \(.*\)$/echo \1 = \$(\2)/e" Makefile
-          make CXXFLAGS="-O0 -ggdb -Wall -Wextra -fsanitize=address,undefined" test-examples
+          make CXXFLAGS="-O0 -ggdb -Wall -Wextra -Werror -fsanitize=address,undefined" test-examples
 
       - name: Generate code coverage
         run: |

@@ -1,6 +1,80 @@
+module callbacks
+contains
+    function xfx_test(pdg_id, x, q2, state) bind(c)
+        use iso_c_binding
+
+        implicit none
+
+        integer(c_int32_t), value, intent(in) :: pdg_id
+        real(c_double), value, intent(in)     :: x, q2
+        type(c_ptr), value, intent(in)        :: state
+        real(c_double)                        :: xfx_test
+        integer, pointer                      :: state_array(:)
+
+        ! ignore unused arguments
+        associate(pdg_id => pdg_id); end associate
+        associate(q2 => q2); end associate
+
+        call c_f_pointer(state, state_array, [2])
+        xfx_test = merge(x, -x, state_array(1).eq.0)
+    end function
+
+    function xfx1_test(pdg_id, x, q2, state) bind(c)
+        use iso_c_binding
+
+        implicit none
+
+        integer(c_int32_t), value, intent(in) :: pdg_id
+        real(c_double), value, intent(in)     :: x, q2
+        type(c_ptr), value, intent(in)        :: state
+        real(c_double)                        :: xfx1_test
+
+        ! ignore unused arguments
+        associate(pdg_id => pdg_id); end associate
+        associate(q2 => q2); end associate
+        associate(state => state); end associate
+
+        xfx1_test = x
+    end function
+
+    function xfx2_test(pdg_id, x, q2, state) bind(c)
+        use iso_c_binding
+
+        implicit none
+
+        integer(c_int32_t), value, intent(in) :: pdg_id
+        real(c_double), value, intent(in)     :: x, q2
+        type(c_ptr), value, intent(in)        :: state
+        real(c_double)                        :: xfx2_test
+
+        ! ignore unused arguments
+        associate(pdg_id => pdg_id); end associate
+        associate(q2 => q2); end associate
+        associate(state => state); end associate
+
+        xfx2_test = -x
+    end function
+
+    function alphas_test(q2, state) bind(c)
+        use iso_c_binding
+
+        implicit none
+
+        real(c_double), value, intent(in) :: q2
+        type(c_ptr), value, intent(in)    :: state
+        real(c_double)                    :: alphas_test
+
+        ! ignore unused argument
+        associate(state => state); end associate
+
+        alphas_test = q2
+    end function
+end module
+
 program test_pineappl
     use pineappl
     use iso_c_binding
+    use callbacks
 
     implicit none
 
@@ -21,7 +95,7 @@ program test_pineappl
     integer(kind(pineappl_map)) :: x_mapping
     integer(kind(pineappl_interp_meth)) :: interpolation_meth
 
-    type (pineappl_xfx)    :: xfx1, xfx2, xfx
+    type (pineappl_xfx)    :: xfx
     type (pineappl_alphas) :: alphas
 
     type(c_ptr), target    :: pdfs_state(2)
@@ -41,16 +115,16 @@ program test_pineappl
     end if
 
     kinematics = [ &
-        pineappl_kinematics(pineappl_scale, 0), &
-        pineappl_kinematics(pineappl_x, 0), &
-        pineappl_kinematics(pineappl_x, 1) &
+        pineappl_kinematics(pineappl_kinematics_tag_scale, 0), &
+        pineappl_kinematics(pineappl_kinematics_tag_x, 0), &
+        pineappl_kinematics(pineappl_kinematics_tag_x, 1) &
     ]
 
-    q2_reweight = pineappl_no_reweight
-    x_reweight = pineappl_applgrid_x
-    q2_mapping = pineappl_applgrid_h0
-    x_mapping = pineappl_applgrid_f2
-    interpolation_meth = pineappl_lagrange
+    q2_reweight = pineappl_reweight_meth_no_reweight
+    x_reweight = pineappl_reweight_meth_applgrid_x
+    q2_mapping = pineappl_map_applgrid_h0
+    x_mapping = pineappl_map_applgrid_f2
+    interpolation_meth = pineappl_interp_meth_lagrange
     interp_info = [ &
         pineappl_interp(1e2_dp, 1e8_dp, 40, 3, q2_reweight, q2_mapping, interpolation_meth), &
         pineappl_interp(2e-7_dp, 1.0_dp, 50, 3, x_reweight, x_mapping, interpolation_meth), &
@@ -59,17 +133,17 @@ program test_pineappl
 
     ! The `pineappl_scale_func_form_body` objects have to defined with two fields - if not required, the value(s) will be ignored
     mu_scales_form = [ &
-        pineappl_scale_func_form(PINEAPPL_SCALE_FUNC_FORM_SCALE, pineappl_scale_func_form_body(0, 0)), &
-        pineappl_scale_func_form(PINEAPPL_SCALE_FUNC_FORM_SCALE, pineappl_scale_func_form_body(0, 0)), &
-        pineappl_scale_func_form(PINEAPPL_SCALE_FUNC_FORM_NO_SCALE, pineappl_scale_func_form_body(0, 0)) &
+        pineappl_scale_func_form(pineappl_scale_func_form_tag_scale, pineappl_scale_func_form_body(0, 0)), &
+        pineappl_scale_func_form(pineappl_scale_func_form_tag_scale, pineappl_scale_func_form_body(0, 0)), &
+        pineappl_scale_func_form(pineappl_scale_func_form_tag_no_scale, pineappl_scale_func_form_body(0, 0)) &
     ]
 
     convolutions = [ &
-        pineappl_conv(pineappl_unpol_pdf, 2212), &
-        pineappl_conv(pineappl_unpol_pdf, 2212) &
+        pineappl_conv(pineappl_conv_type_unpol_pdf, 2212), &
+        pineappl_conv(pineappl_conv_type_unpol_pdf, 2212) &
     ]
 
-    grid = pineappl_grid_new2(2, [0.0_dp, 1.0_dp, 2.0_dp], 1, [2_1, 0_1, 0_1, 0_1, 0_1], channels, pineappl_pdg, &
+    grid = pineappl_grid_new2(2, [0.0_dp, 1.0_dp, 2.0_dp], 1, [2_1, 0_1, 0_1, 0_1, 0_1], channels, pineappl_pid_basis_pdg, &
         convolutions, 3, interp_info, kinematics, mu_scales_form)
 
     if (pineappl_grid_order_count(grid) /= 1) then
@@ -136,7 +210,7 @@ program test_pineappl
         error stop "error: pineappl_channels_combinations"
     end if
 
-    grid2 = pineappl_grid_new2(1, [2.0_dp, 3.0_dp], 1, [2_1, 0_1, 0_1, 0_1, 0_1], channels, pineappl_pdg, &
+    grid2 = pineappl_grid_new2(1, [2.0_dp, 3.0_dp], 1, [2_1, 0_1, 0_1, 0_1, 0_1], channels, pineappl_pid_basis_pdg, &
         convolutions, 3, interp_info, kinematics, mu_scales_form)
 
     call pineappl_grid_merge_and_delete(grid, grid2)
@@ -173,6 +247,13 @@ program test_pineappl
 
     call pineappl_grid_set_key_value(grid, "set_key_value", "set_key_value: success")
 
+    call pineappl_grid_set_metadata(grid, "set_metadata", "set_metadata: success")
+
+    if (pineappl_grid_metadata(grid, "set_metadata") /= "set_metadata: success") then
+        write(*, *) "pineappl_grid_metadata(): '", pineappl_grid_metadata(grid, "set_metadata"), "'"
+        error stop "error: pineappl_grid_metadata"
+    end if
+
     ! NOTE: At this point we have the bins: [0, 1, 2, 3]
     call pineappl_grid_set_remapper(grid, 2, [1.0_dp, 1.0_dp, 1.0_dp], &
         [0.0_dp, 1.0_dp, 10.0_dp, 11.0_dp, 1.0_dp, 3.0_dp, 11.0_dp, 13.0_dp, 15.0_dp, 20.0_dp])
@@ -180,24 +261,7 @@ program test_pineappl
     call pineappl_grid_split_channels(grid)
 
     ! Construct the callable to the function `xfx` and `alphasQ2`
-    xfx1 = pineappl_xfx(xfx1_test)
-    xfx2 = pineappl_xfx(xfx2_test)
     alphas = pineappl_alphas(alphas_test)
-
-    result = pineappl_grid_convolve_with_one(grid, 2212, xfx1, alphas, &
-        [.true.], [.true.], 1.0_dp, 1.0_dp)
-    if (any(result > 0 .neqv. [.true., .true., .false.])) then
-        write(*, *) "pineappl_grid_convolve_with_one(): ", result
-        error stop "error: pineappl_grid_convolve_with_one"
-    end if
-
-    result = pineappl_grid_convolve_with_two(grid, 2212, xfx1, 2212, xfx2, alphas, &
-        [.true.], [.true.], 1.0_dp, 1.0_dp)
-    if (any(result < 0 .neqv. [.true., .true., .false.])) then
-        write(*, *) "pineappl_grid_convolve_with_two(): ", result
-        error stop "error: pineappl_grid_convolve_with_two"
-    end if
-
     xfx = pineappl_xfx(xfx_test)
     pdfs_array = reshape([0, 0, 1, 0], [2,2])
     pdfs_state(1) = c_loc(pdfs_array(1,1))
@@ -215,60 +279,4 @@ program test_pineappl
     call pineappl_channels_delete(channels)
 
     call pineappl_grid_delete(grid)
-
-contains
-
-    function xfx_test(pdg_id, x, q2, state) bind(c)
-        use iso_c_binding
-
-        implicit none
-
-        integer(c_int32_t), value, intent(in) :: pdg_id
-        real(c_double), value, intent(in)     :: x, q2
-        type(c_ptr), value, intent(in)        :: state
-        real(c_double)                        :: xfx_test
-        integer, pointer                      :: state_array(:)
-
-        call c_f_pointer(state, state_array, [2])
-        xfx_test = merge(x, -x, state_array(1).eq.0)
-    end function
-
-    function xfx1_test(pdg_id, x, q2, state) bind(c)
-        use iso_c_binding
-
-        implicit none
-
-        integer(c_int32_t), value, intent(in) :: pdg_id
-        real(c_double), value, intent(in)     :: x, q2
-        type(c_ptr), value, intent(in)        :: state
-        real(c_double)                        :: xfx1_test
-
-        xfx1_test = x
-    end function
-
-    function xfx2_test(pdg_id, x, q2, state) bind(c)
-        use iso_c_binding
-
-        implicit none
-
-        integer(c_int32_t), value, intent(in) :: pdg_id
-        real(c_double), value, intent(in)     :: x, q2
-        type(c_ptr), value, intent(in)        :: state
-        real(c_double)                        :: xfx2_test
-
-        xfx2_test = -x
-    end function
-
-    function alphas_test(q2, state) bind(c)
-        use iso_c_binding
-
-        implicit none
-
-        real(c_double), value, intent(in) :: q2
-        type(c_ptr), value, intent(in)    :: state
-        real(c_double)                    :: alphas_test
-
-        alphas_test = q2
-    end function
-
 end program test_pineappl

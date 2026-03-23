@@ -6,6 +6,7 @@ use super::error::{Error, Result};
 use super::evolution::{self, AlphasTable, EvolveInfo, OperatorSliceInfo};
 use super::fk_table::FkTable;
 use super::interpolation::Interp;
+use super::packed_array::PackedArray;
 use super::pids::PidBasis;
 use super::reference::Reference;
 use super::subgrid::{
@@ -27,7 +28,8 @@ use std::{iter, mem};
 const BIN_AXIS: Axis = Axis(1);
 
 // const ORDER_AXIS: Axis = Axis(0);
-// const CHANNEL_AXIS: Axis = Axis(2);
+
+const CHANNEL_AXIS: Axis = Axis(2);
 
 #[derive(Clone, Deserialize, Serialize)]
 struct Mmv4;
@@ -627,6 +629,26 @@ impl Grid {
             .for_each(|subgrid| subgrid.scale(factor));
     }
 
+    /// Repair the grid if it was written by bugged versions to disk.
+    ///
+    /// Returns `true` if this operations did anything. Currently, this scans for these problems:
+    /// - <https://github.com/NNPDF/pineappl/issues/338>
+    pub fn repair(&mut self) -> bool {
+        let mut repaired = false;
+
+        for subgrid in &mut self.subgrids {
+            // if the subgrid states it isn't empty and also doesn't return any elements it's
+            // broken; we need to fix that to avoid <https://github.com/NNPDF/pineappl/issues/338>
+            if !subgrid.is_empty() && subgrid.indexed_iter().count() == 0 {
+                *subgrid = EmptySubgridV1.into();
+
+                repaired = true;
+            }
+        }
+
+        repaired
+    }
+
     /// Scales each subgrid by a factor which is the product of the given values `alphas`, `alpha`,
     /// `logxir`, and `logxif`, each raised to the corresponding powers for each subgrid. In
     /// addition, every subgrid is scaled by a factor `global` independently of its order.
@@ -686,13 +708,13 @@ impl Grid {
 
     /// Return all subgrids as an `ArrayView3`.
     #[must_use]
-    pub fn subgrids(&self) -> ArrayView3<SubgridEnum> {
+    pub fn subgrids(&self) -> ArrayView3<'_, SubgridEnum> {
         self.subgrids.view()
     }
 
     /// Return all subgrids as an `ArrayViewMut3`.
     #[must_use]
-    pub fn subgrids_mut(&mut self) -> ArrayViewMut3<SubgridEnum> {
+    pub fn subgrids_mut(&mut self) -> ArrayViewMut3<'_, SubgridEnum> {
         self.subgrids.view_mut()
     }
 
@@ -943,17 +965,8 @@ impl Grid {
                     .multi_slice_mut((s![.., .., index], s![.., .., other_index]));
 
                 for (lhs, rhs) in a.iter_mut().zip(b.iter_mut()) {
-                    if !rhs.is_empty() {
-                        if lhs.is_empty() {
-                            // we can't merge into an EmptySubgridV1
-                            *lhs = mem::replace(rhs, EmptySubgridV1.into());
-                            // transpose `lhs`
-                            todo!();
-                        } else {
-                            lhs.merge(rhs, Some((a_subgrid, b_subgrid)));
-                            *rhs = EmptySubgridV1.into();
-                        }
-                    }
+                    lhs.merge(rhs, Some((a_subgrid, b_subgrid)));
+                    *rhs = EmptySubgridV1.into();
                 }
             }
         }
@@ -1107,34 +1120,24 @@ impl Grid {
         // the EKOs' indices matching this Grid's convolutions
         let mut eko_map = Vec::new();
 
-        // initial factorization scale
-        let mut fac0 = None;
-        // factorization slices we use
-        let mut used_op_fac1 = Vec::new();
-        // factorization slices we encounter, but possibly don't use
-        let mut op_fac1 = Vec::new();
+        // initial factorization and fragmentation scales
+        let mut scales0 = [None, None];
+        // factorization and fragmentation slices we use
+        let mut op_scales1 = [Vec::new(), Vec::new()];
+        // names for the scales in the same ordering
+        let names = ["fac", "frg"];
 
-        // initial fragmentation scale
-        let mut frg0 = None;
-        // fragmentation slices we use
-        let mut used_op_frg1 = Vec::new();
-        // fragmentation slices we encounter, but possibly don't use
-        let mut op_frg1 = Vec::new();
-
-        // factorization scales needed by the grid
-        let grid_fac1: Vec<_> = self
-            .evolve_info(order_mask)
-            .fac1
-            .into_iter()
-            .map(|fac| xi.1 * xi.1 * fac)
-            .collect();
-        // fragmentation scales needed by the grid
-        let grid_frg1: Vec<_> = self
-            .evolve_info(order_mask)
-            .frg1
-            .into_iter()
-            .map(|frg| xi.1 * xi.1 * frg)
-            .collect();
+        let EvolveInfo {
+            fac1: grid_fac1,
+            frg1: grid_frg1,
+            ..
+        } = self.evolve_info(order_mask);
+        let grid_scales1: [Vec<_>; 2] = [
+            // factorization scales needed by the grid
+            grid_fac1.into_iter().map(|fac| xi.1 * xi.1 * fac).collect(),
+            // fragmentation scales needed by the grid
+            grid_frg1.into_iter().map(|frg| xi.2 * xi.2 * frg).collect(),
+        ];
 
         for slice in zip_n(slices) {
             let (infos, operators): (Vec<_>, Vec<_>) = slice
@@ -1150,9 +1153,9 @@ impl Grid {
                 ));
             }
 
-            let mut fac1 = None;
-            let mut frg1 = None;
+            let mut scales1 = [None, None];
 
+            // check that all operators are compatible with each other
             for (info, operator) in infos.iter().zip(&operators) {
                 let dim_op_info = (
                     info.pids1.len(),
@@ -1168,49 +1171,24 @@ impl Grid {
                     )));
                 }
 
-                if info.conv_type.is_pdf() {
-                    if let Some(fac0) = fac0 {
-                        // check that this EKO slice is compatible with all previous slices
-                        if !approx_eq!(f64, fac0, info.fac0, ulps = 8) {
+                let idx = usize::from(!info.conv_type.is_pdf());
+
+                // check that both initial- and process-level scales agree among all operators of
+                // the same convolution type
+                for (scale, op_scale) in [
+                    (&mut scales0[idx], info.fac0),
+                    (&mut scales1[idx], info.fac1),
+                ] {
+                    if let &mut Some(scale) = scale {
+                        // check that the initial scale of all EKOs in this slice agree with each other
+                        if !approx_eq!(f64, scale, op_scale, ulps = 8) {
                             return Err(Error::General(format!(
-                                "EKO slice's fac0 = '{}' is incompatible with previous slices' fac0 = '{fac0}'",
-                                info.fac0
+                                "EKO slice's {0}{idx} = '{op_scale}' is incompatible with previous slices' {0}{idx} = '{scale}'",
+                                names[idx],
                             )));
                         }
                     } else {
-                        fac0 = Some(info.fac0);
-                    }
-
-                    if let Some(fac1) = fac1 {
-                        // we assume that all EKO slices always share the same factorization and/or
-                        // fragmentation scale at process level. If this isn't the case, for
-                        // instance when the fragmentation scale is functionally different from the
-                        // factorization scale, this implementation isn't general enough and has to
-                        // be changed
-                        if !subgrid::node_value_eq(info.fac1, fac1) {
-                            unimplemented!();
-                        }
-                    } else {
-                        fac1 = Some(info.fac1);
-                    }
-                } else {
-                    if let Some(frg0) = frg0 {
-                        if !approx_eq!(f64, frg0, info.fac0, ulps = 8) {
-                            return Err(Error::General(format!(
-                                "EKO slice's frg0 = '{}' is incompatible with previous slices' frg0 = '{frg0}'",
-                                info.fac0
-                            )));
-                        }
-                    } else {
-                        frg0 = Some(info.fac0);
-                    }
-
-                    if let Some(frg1) = frg1 {
-                        if !subgrid::node_value_eq(info.fac1, frg1) {
-                            unimplemented!();
-                        }
-                    } else {
-                        frg1 = Some(info.fac1);
+                        *scale = Some(op_scale);
                     }
                 }
             }
@@ -1235,58 +1213,40 @@ impl Grid {
                     .collect::<Result<_>>()?;
             }
 
-            if let Some(fac1) = fac1 {
-                op_fac1.push(fac1);
+            for ((&scale1, op_scales1), grid_scales1) in
+                scales1.iter().zip(&mut op_scales1).zip(&grid_scales1)
+            {
+                if let Some(scale1) = scale1 {
+                    // it's possible that due to small numerical differences we get two slices which
+                    // are almost the same. We have to skip those in order not to evolve the 'same'
+                    // slice twice
+                    if op_scales1
+                        .iter()
+                        .any(|&s| subgrid::node_value_eq(s, scale1))
+                    {
+                        continue;
+                    }
 
-                // it's possible that due to small numerical differences we get two slices which
-                // are almost the same. We have to skip those in order not to evolve the 'same'
-                // slice twice
-                if used_op_fac1
-                    .iter()
-                    .any(|&fac| subgrid::node_value_eq(fac, fac1))
-                {
-                    continue;
-                }
+                    // skip slices that the grid doesn't use
+                    if !grid_scales1
+                        .iter()
+                        .any(|&s| subgrid::node_value_eq(s, scale1))
+                    {
+                        continue;
+                    }
 
-                // skip slices that the grid doesn't use
-                if !grid_fac1
-                    .iter()
-                    .any(|&fac| subgrid::node_value_eq(fac, fac1))
-                {
-                    continue;
-                }
-            }
-
-            if let Some(frg1) = frg1 {
-                op_frg1.push(frg1);
-
-                // it's possible that due to small numerical differences we get two slices which
-                // are almost the same. We have to skip those in order not to evolve the 'same'
-                // slice twice
-                if used_op_frg1
-                    .iter()
-                    .any(|&frg| subgrid::node_value_eq(frg, frg1))
-                {
-                    continue;
-                }
-
-                // skip slices that the grid doesn't use
-                if !grid_frg1
-                    .iter()
-                    .any(|&frg| subgrid::node_value_eq(frg, frg1))
-                {
-                    continue;
+                    op_scales1.push(scale1);
                 }
             }
 
             let operators: Vec<_> = eko_map.iter().map(|&idx| operators[idx].view()).collect();
             let infos: Vec<_> = eko_map.iter().map(|&idx| infos[idx].clone()).collect();
 
-            let (fac, frg, scale_values) = match (fac0, frg0) {
-                (None, None) => unreachable!(),
-                (Some(fac0), None) => (ScaleFuncForm::Scale(0), ScaleFuncForm::NoScale, vec![fac0]),
-                (None, Some(frg0)) => (ScaleFuncForm::NoScale, ScaleFuncForm::Scale(0), vec![frg0]),
-                (Some(fac0), Some(frg0)) => {
+            let (fac, frg, scale_values) = match scales0 {
+                [None, None] => unreachable!(),
+                [Some(fac0), None] => (ScaleFuncForm::Scale(0), ScaleFuncForm::NoScale, vec![fac0]),
+                [None, Some(frg0)] => (ScaleFuncForm::NoScale, ScaleFuncForm::Scale(0), vec![frg0]),
+                [Some(fac0), Some(frg0)] => {
                     if approx_eq!(f64, fac0, frg0, ulps = 8) {
                         (ScaleFuncForm::Scale(0), ScaleFuncForm::Scale(0), vec![fac0])
                     } else {
@@ -1344,41 +1304,22 @@ impl Grid {
             } else {
                 result = Some(evolved_slice);
             }
-
-            if let Some(fac1) = fac1 {
-                used_op_fac1.push(fac1);
-            }
-
-            if let Some(frg1) = frg1 {
-                used_op_frg1.push(frg1);
-            }
         }
 
-        op_fac1.sort_by(f64::total_cmp);
-        op_frg1.sort_by(f64::total_cmp);
-
-        // make sure we've evolved all slices
-        if let Some(fac1) = grid_fac1.into_iter().find(|&grid_fac1| {
-            !used_op_fac1
+        // make sure we've evolved all slices in the grid
+        for ((grid_scales1, op_scales1), name) in grid_scales1.iter().zip(&op_scales1).zip(&names) {
+            if let Some(scale1) = grid_scales1
                 .iter()
-                .any(|&eko_fac1| subgrid::node_value_eq(grid_fac1, eko_fac1))
-        }) {
-            return Err(Error::General(format!(
-                "no operator for fac1 = {fac1} found in {op_fac1:?}"
-            )));
+                .find(|&&a| !op_scales1.iter().any(|&b| subgrid::node_value_eq(a, b)))
+            {
+                return Err(Error::General(format!(
+                    "no operator for {name}1 = '{scale1}' found"
+                )));
+            }
         }
 
-        // make sure we've evolved all slices
-        if let Some(frg1) = grid_frg1.into_iter().find(|&grid_frg1| {
-            !used_op_frg1
-                .iter()
-                .any(|&eko_frg1| subgrid::node_value_eq(grid_frg1, eko_frg1))
-        }) {
-            return Err(Error::General(format!(
-                "no operator for frg1 = {frg1} found in {op_frg1:?}"
-            )));
-        }
-
+        // if we didn't actually perform an evolution an empty grid isn't guaranteed to be an
+        // FK-table
         let result =
             result.ok_or_else(|| Error::General("no evolution was performed".to_owned()))?;
 
@@ -1481,6 +1422,244 @@ impl Grid {
                     .map(move |entry| Channel::new(vec![entry]))
             })
             .collect();
+    }
+
+    /// Merges the factors of the channels into the subgrids to normalize channel coefficients.
+    ///
+    /// This method factors out the smallest absolute coefficient from each channel using
+    /// [`boc::Channel::factor`] and then scales the corresponding subgrids by these factors.
+    pub fn merge_channel_factors(&mut self) {
+        let (factors, new_channels): (Vec<_>, Vec<_>) =
+            self.channels().iter().map(Channel::factor).unzip();
+
+        for (mut subgrids_bo, &factor) in self.subgrids.axis_iter_mut(CHANNEL_AXIS).zip(&factors) {
+            subgrids_bo.map_inplace(|subgrid| subgrid.scale(factor));
+        }
+
+        self.channels = new_channels;
+    }
+
+    /// Fix one of the convolutions in the Grid and return a new Grid with lower convolution dimension.
+    ///
+    /// This function integrates out one of the convolution dimensions of the grid by convolving it
+    /// with the provided function `xfx`.
+    ///
+    /// The `conv_idx` parameter specifies which convolution to fix. The `xfx` function provides
+    /// the values of the parton distribution function or fragmentation function for a given parton
+    /// ID, `x` value, and scale `mu2`. The `xi` parameter is a scale factor for the factorization
+    /// or fragmentation scale.
+    ///
+    /// # Special handling of fragmentation functions
+    ///
+    /// If the convolution being fixed is a fragmentation function, the dependency on the
+    /// fragmentation scale is removed from the grid. This has a direct impact on the perturbative
+    /// orders (`Order`). Specifically, the `logxia` of each `Order` is set to zero.
+    ///
+    /// As a result, multiple original orders might collapse into a single new order. When this
+    /// happens, the corresponding subgrids are merged together, ensuring that the total
+    /// contribution is preserved. The final grid is then optimized to remove any empty or
+    /// duplicate structures.
+    ///
+    /// # Panics
+    ///
+    /// This function panics if internal invariants are violated, which typically indicates a bug in
+    /// the library.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if `conv_idx` is out of bounds or if the grid has only one convolution,
+    /// as the last convolution cannot be fixed.
+    pub fn fix_convolution(
+        &self,
+        conv_idx: usize,
+        xfx: &mut dyn FnMut(i32, f64, f64) -> f64,
+        xi: f64,
+    ) -> Result<Self> {
+        if self.convolutions.len() <= 1 {
+            return Err(Error::General(
+                "cannot fix the last convolution".to_string(),
+            ));
+        }
+
+        if conv_idx >= self.convolutions.len() {
+            return Err(Error::General(format!(
+                "convolution index {} out of bounds (max: {})",
+                conv_idx,
+                self.convolutions.len() - 1
+            )));
+        }
+
+        let mut new_convolutions = self.convolutions.clone();
+        new_convolutions.remove(conv_idx);
+
+        let mut new_kinematics = self.kinematics.clone();
+        let mut new_interps = self.interps.clone();
+        let kin_pos = new_kinematics
+            .iter()
+            .position(|k| *k == Kinematics::X(conv_idx))
+            .unwrap();
+        new_kinematics.remove(kin_pos);
+        new_interps.remove(kin_pos);
+
+        for kin in &mut new_kinematics {
+            if let Kinematics::X(i) = kin {
+                if *i > conv_idx {
+                    *i -= 1;
+                }
+            }
+        }
+
+        let mut new_channel_map: BTreeMap<Vec<i32>, Vec<(usize, i32, f64)>> = BTreeMap::new();
+        for (ichan, chan) in self.channels().iter().enumerate() {
+            for (pids, factor) in chan.entry() {
+                let mut new_pids = pids.clone();
+                let fixed_pid = new_pids.remove(conv_idx);
+
+                new_channel_map
+                    .entry(new_pids)
+                    .or_default()
+                    .push((ichan, fixed_pid, *factor));
+            }
+        }
+
+        let new_channels: Vec<Channel> = new_channel_map
+            .keys()
+            .map(|pids| Channel::new(vec![(pids.clone(), 1.0)]))
+            .collect();
+        let new_channel_pids: Vec<_> = new_channel_map.keys().cloned().collect();
+
+        let conv_to_fix = &self.convolutions[conv_idx];
+        let (new_orders, order_map) = {
+            let mut unique_orders = Vec::new();
+
+            let other_conv_idx_opt = if self.convolutions.len() == 2 {
+                Some(1 - conv_idx)
+            } else {
+                None
+            };
+
+            let map: Vec<usize> = self
+                .orders
+                .iter()
+                .map(|o| {
+                    let mut new_o = o.clone();
+
+                    if conv_to_fix.conv_type().is_ff() {
+                        new_o.logxia = 0;
+                    } else if let Some(other_conv_idx) = other_conv_idx_opt {
+                        if conv_to_fix.conv_type().is_pdf()
+                            && self.convolutions[other_conv_idx].conv_type().is_ff()
+                        {
+                            new_o.logxif = 0;
+                        }
+                    }
+
+                    unique_orders
+                        .iter()
+                        .position(|uo| uo == &new_o)
+                        .unwrap_or_else(|| {
+                            unique_orders.push(new_o);
+                            unique_orders.len() - 1
+                        })
+                })
+                .collect();
+            (unique_orders, map)
+        };
+
+        let mut new_subgrids: Array3<SubgridEnum> = Array3::from_shape_simple_fn(
+            (new_orders.len(), self.bwfl.len(), new_channels.len()),
+            || EmptySubgridV1.into(),
+        );
+
+        for (inew_chan, new_pids) in new_channel_pids.iter().enumerate() {
+            let origins = &new_channel_map[new_pids];
+
+            (0..self.orders().len()).for_each(|iord| {
+                for ibin in 0..self.bwfl().bins().len() {
+                    let mut intermediate_sg: Option<SubgridEnum> = None;
+
+                    for &(ichan_orig, pid_fixed, factor) in origins {
+                        let sg_orig = &self.subgrids[[iord, ibin, ichan_orig]];
+                        if sg_orig.is_empty() {
+                            continue;
+                        }
+
+                        let mut new_node_values = sg_orig.node_values();
+                        new_node_values.remove(kin_pos);
+
+                        let mut sg_new_array =
+                            PackedArray::new(new_node_values.iter().map(Vec::len).collect());
+
+                        let scale_form = if conv_to_fix.conv_type().is_pdf() {
+                            &self.scales.fac
+                        } else {
+                            &self.scales.frg
+                        };
+
+                        for (mut idxs_orig, val_orig) in sg_orig.indexed_iter() {
+                            let x_val = idxs_orig.remove(kin_pos);
+
+                            let sg_orig_node_values = sg_orig.node_values();
+                            let self_kinematics = self.kinematics();
+
+                            let scale_dims: Vec<_> = sg_orig_node_values
+                                .iter()
+                                .enumerate()
+                                .filter(|(i, _)| {
+                                    matches!(self_kinematics.get(*i), Some(Kinematics::Scale(_)))
+                                })
+                                .map(|(_, v)| v.len())
+                                .collect();
+                            let mu2_nodes_calc =
+                                scale_form.calc(&sg_orig_node_values, self_kinematics);
+                            let mu2_idx = scale_form.idx(&idxs_orig, &scale_dims);
+                            let mu2_val = mu2_nodes_calc[mu2_idx] * xi * xi;
+
+                            let x = sg_orig_node_values[kin_pos][x_val];
+                            let pdf_val = xfx(pid_fixed, x, mu2_val) / x;
+                            let final_val = val_orig * factor * pdf_val;
+
+                            sg_new_array[idxs_orig.as_slice()] += final_val;
+                        }
+
+                        let sg_contrib: SubgridEnum =
+                            ImportSubgridV1::new(sg_new_array, new_node_values).into();
+
+                        if let Some(ref mut isg) = intermediate_sg {
+                            isg.merge(&sg_contrib, None);
+                        } else {
+                            intermediate_sg = Some(sg_contrib);
+                        }
+                    }
+
+                    if let Some(sg) = intermediate_sg {
+                        let new_iord = order_map[iord];
+                        new_subgrids[[new_iord, ibin, inew_chan]].merge(&sg, None);
+                    }
+                }
+            });
+        }
+
+        let mut new_grid = Self::new(
+            self.bwfl.clone(),
+            new_orders,
+            new_channels,
+            *self.pid_basis(),
+            new_convolutions,
+            new_interps,
+            new_kinematics,
+            self.scales.clone(),
+        );
+        new_grid.subgrids = new_subgrids;
+        new_grid.metadata = self.metadata.clone();
+
+        new_grid.optimize_using(
+            GridOptFlags::STRIP_EMPTY_ORDERS
+                | GridOptFlags::STRIP_EMPTY_CHANNELS
+                | GridOptFlags::MERGE_SAME_CHANNELS,
+        );
+
+        Ok(new_grid)
     }
 }
 
@@ -1657,6 +1836,38 @@ mod tests {
     }
 
     #[test]
+    fn grid_repair() {
+        use super::super::packed_array::PackedArray;
+        // create emtpy grid
+        let mut grid = Grid::new(
+            BinsWithFillLimits::from_fill_limits([0.0, 0.25, 0.5, 0.75, 1.0].to_vec()).unwrap(),
+            vec![Order::new(0, 2, 0, 0, 0)],
+            vec![channel![1.0 * (2, 2) + 1.0 * (4, 4)]],
+            PidBasis::Pdg,
+            vec![Conv::new(ConvType::UnpolPDF, 2212); 2],
+            v0::default_interps(false, 2),
+            vec![Kinematics::Scale(0), Kinematics::X(0), Kinematics::X(1)],
+            Scales {
+                ren: ScaleFuncForm::Scale(0),
+                fac: ScaleFuncForm::Scale(0),
+                frg: ScaleFuncForm::NoScale,
+            },
+        );
+        let was_repaired = grid.repair();
+        assert!(!was_repaired);
+        // insert nothing
+        let x = vec![
+            0.015625, 0.03125, 0.0625, 0.125, 0.1875, 0.25, 0.375, 0.5, 0.75, 1.0,
+        ];
+        let mut ar = PackedArray::new(vec![1, 10, 10]);
+        ar[[0, 0, 0]] = 0.;
+        let sg: SubgridEnum = ImportSubgridV1::new(ar, vec![vec![0.0], x.clone(), x]).into();
+        grid.subgrids_mut()[[0, 0, 0]] = sg;
+        let was_repaired = grid.repair();
+        assert!(was_repaired);
+    }
+
+    #[test]
     fn grid_merge_orders() {
         let mut grid = Grid::new(
             BinsWithFillLimits::from_fill_limits([0.0, 0.25, 0.5, 0.75, 1.0].to_vec()).unwrap(),
@@ -1818,6 +2029,32 @@ mod tests {
         assert_eq!(grid.bwfl().len(), 4);
         assert_eq!(grid.channels().len(), 2);
         assert_eq!(grid.orders().len(), 1);
+    }
+
+    #[test]
+    fn grid_merge_channel_factors() {
+        let mut grid = Grid::new(
+            BinsWithFillLimits::from_fill_limits([0.0, 1.0].to_vec()).unwrap(),
+            vec![Order::new(0, 2, 0, 0, 0)],
+            vec![Channel::new(vec![(vec![1, -1], 0.5), (vec![2, -2], 2.5)])],
+            PidBasis::Pdg,
+            vec![Conv::new(ConvType::UnpolPDF, 2212); 2],
+            v0::default_interps(false, 2),
+            vec![Kinematics::Scale(0), Kinematics::X(0), Kinematics::X(1)],
+            Scales {
+                ren: ScaleFuncForm::Scale(0),
+                fac: ScaleFuncForm::Scale(0),
+                frg: ScaleFuncForm::NoScale,
+            },
+        );
+
+        grid.merge_channel_factors();
+        grid.channels().iter().all(|channel| {
+            channel
+                .entry()
+                .iter()
+                .all(|(_, fac)| (*fac - 1.0).abs() < f64::EPSILON)
+        });
     }
 
     #[test]

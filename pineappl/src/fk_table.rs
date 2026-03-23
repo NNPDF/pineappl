@@ -3,8 +3,8 @@
 use super::boc::{Channel, Kinematics, Order};
 use super::convolutions::ConvolutionCache;
 use super::error::{Error, Result};
-use super::grid::Grid;
-use super::pids::OptRules;
+use super::grid::{Grid, GridOptFlags};
+use super::pids::{OptRules, PidBasis};
 use super::subgrid::{self, EmptySubgridV1, Subgrid};
 use ndarray::{s, ArrayD};
 use std::collections::BTreeMap;
@@ -31,6 +31,7 @@ pub struct FkTable {
 /// tables are typically stored at very small `Q2 = Q0`, the PDFs `f(x,Q0)` of heavy quarks are
 /// typically set to zero at this scale or set to the same value as their anti-quark PDF. This is
 /// used to optimize the size of FK tables.
+#[repr(C)]
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum FkAssumptions {
     /// All quark PDFs are non-zero at the FK table scale and completely independent.
@@ -246,6 +247,14 @@ impl FkTable {
             channel_mask,
             &[(1.0, 1.0, 1.0)],
         )
+    }
+
+    /// Rotate the FK Table into the specified basis.
+    pub fn rotate_pid_basis(&mut self, pid_basis: PidBasis) {
+        self.grid.rotate_pid_basis(pid_basis);
+        self.grid.split_channels();
+        self.grid.merge_channel_factors();
+        self.grid.optimize_using(GridOptFlags::all());
     }
 
     /// Optimize the size of this FK-table by throwing away heavy quark flavors assumed to be zero

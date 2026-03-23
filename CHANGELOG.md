@@ -7,6 +7,108 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- added an actual implementation of `pineappl_grid_metadata` and
+  `pineappl_grid_set_metadata` in the APIs
+
+### Fixed
+
+- fixed a bug in the Newton's convergence method by raising the maximum number
+  of iteration
+- fixed a bug in the implementation of `pineappl_channels_add` of the Fortran
+  API
+
+### Changed
+
+- raised MSRV to 1.94.0
+
+## [1.3.3] - 01/03/2026
+
+## Added
+
+- added support for the Python 3.14 on macOS (ARM64/x86)
+
+## Removed
+
+- removed support for the following Python versions due to unresolved issue in
+  maturin action on Windows (x86): Python 3.7, 3.8, 3.9
+
+## [1.3.2] - 21/02/2026
+
+Note: due to bugs in the workflow file this release does not have have Python
+wheels uploaded to PyPI.
+
+## [1.3.1] - 21/02/2026
+
+Note: due to bugs in the workflow file this release does not have have Python
+wheels uploaded to PyPI.
+
+### Added
+
+- added `pineappl_grid_set_subgrid` and `pineappl_grid_set_bwfl` methods to
+  the C-API to allow dumping coefficient functions directly as subgrids.
+- added a `fix_convolution` method to integrate out one of the convolution
+  dimensions in a grid by convolving it with a non-perturbative function
+
+## [1.3.0] - 06/12/2025
+
+### Added
+
+- added a `pineappl_grid_delete_bins` method to the C-API
+
+### Fixed
+
+- fixed bugs in stopping condition of the Newton iteration method
+- fixed a bug in comparing `interpolation::Interp` objects when one of the
+  boundaries is `NaN`
+
+## [1.2.0] - 22/08/2025
+
+### Added
+
+- added `Grid::repair` to repair bugs that survived by writing bugged grids to
+  disk, for example <https://github.com/NNPDF/pineappl/issues/338>. The CLI
+  offers this functionality via `pineappl write --repair` and it can also be
+  accessed via Python
+
+### Fixed
+
+- added a missing implementation for a branch in `Grid::merge` that was
+  triggered when exporting some PineAPPL grids generated from the 'pinejet'
+  group
+- fixed wrong coupling orders when exporting to APPLgrid. This happened when
+  the PineAPPL grid had orders that had any other ordering than 'LO', 'NLO',
+  'NNLO'
+- fixed a bug that caused exported grids to compare unsuccessfully when the
+  convolution functions were proton-anti-proton; APPLgrid doesn't store the
+  types of convolution functions, so we simply convert the grid to use only
+  proton PDFs
+
+### Changed
+
+- the function `Grid::evolve` now makes use of parallelization to take advantage
+  of the number of CPU cores available using the Rayon crate; the number of CPU
+  cores to be used can be controlled via the `RAYON_NUM_THREADS` environment
+  variable
+
+## [1.1.0] - 08/07/2025
+
+### Added
+
+- added a new `V3` metadata reader to the `pineappl evolve` CLI for EKOs
+  generated with `v0.15.0` or higher
+- C API: added new functions `pineappl_grid_evolve_info_shape`,
+  `pineappl_grid_evolve_info`, and `pineappl_grid_evolve` to evolve grids
+- C API: added `pineappl_fktable_optimize` to optimize FK Table-like objects
+  given an optimization assumption
+- added methods `Grid::merge_channel_factors` and `Channel::factor`
+
+### Fixed
+
+- fixed a bug that caused `pineappl export` to fail when called with grid
+  having non-trivial factors in their channel definitions
+
 ## [1.0.0] - 10/06/2025
 
 PineAPPL 1.0 is a major rewrite from the previous version, allowing grids to
@@ -27,6 +129,28 @@ the old file format can still be read with this new version.
   `+f` and both by adding `+pf` or `+fp`
 - added switches `--fk-table-fac0` and `--fk-table-frg0` to `pineappl read` to
   read out the squared factorization and fragmentation scales of FK-tables
+- C API: added new functions `pineappl_channels_new` and `pineappl_channels_delete`
+  to create and delete an instance of `Channels` object
+- C API: added `pineappl_grid_channels` and `pineappl_channels_count` to get
+  the channel objects for a given grid and their numbers
+- C API: added a function `pineappl_channels_combinations` to retrieve the
+  number of combinations of channels for a specified entry, and
+  `pineappl_channels_entry` to retrieve the channel combination for a given
+  entry
+- C API: added a new function `pineappl_grid_new2` to create a grid with the
+  new features introduced in `v1.0.0`; this includes the support for an
+  arbitrary number of initial and final state hadrons
+- C API: added new functions to fill grids with an arbitrary number of
+  initial and final state hadrons; these include `pineappl_grid_fill2`,
+  `pineappl_grid_fill_all2`, and `pineappl_grid_fill_array2`
+- C API: added new functions to extract the various properties of a given
+  grid; these include `pineappl_grid_conv_types`, `pineappl_grid_convolutions_len`,
+  and `pineappl_grid_kinematics_len`
+- C API: added a new function `pineappl_grid_convolve` to convolve grids
+  with an arbitrary combination of initial and final state hadrons
+- C API: added various functions to extract the subgrids of a given grid;
+  these include `pineappl_grid_subgrid_shape`, `pineappl_grid_subgrid_node_values`,
+  and `pineappl_grid_subgrid_array`
 
 ### Changed
 
@@ -743,7 +867,13 @@ the old file format can still be read with this new version.
 
 - first release
 
-[Unreleased]: https://github.com/NNPDF/pineappl/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/NNPDF/pineappl/compare/v1.3.3...HEAD
+[1.3.3]: https://github.com/NNPDF/pineappl/compare/v1.3.2...v1.3.3
+[1.3.2]: https://github.com/NNPDF/pineappl/compare/v1.3.1...v1.3.2
+[1.3.1]: https://github.com/NNPDF/pineappl/compare/v1.3.0...v1.3.1
+[1.3.0]: https://github.com/NNPDF/pineappl/compare/v1.2.0...v1.3.0
+[1.2.0]: https://github.com/NNPDF/pineappl/compare/v1.1.0...v1.2.0
+[1.1.0]: https://github.com/NNPDF/pineappl/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/NNPDF/pineappl/compare/v0.8.2...v1.0.0
 [0.8.7]: https://github.com/NNPDF/pineappl/compare/v0.8.6...v0.8.7
 [0.8.6]: https://github.com/NNPDF/pineappl/compare/v0.8.5...v0.8.6

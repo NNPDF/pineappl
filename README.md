@@ -2,7 +2,7 @@
   <img alt="PineAPPL-Logo" src="logo/pineappl-logo.png" width=200>
 </p>
 <p align="center">
-  <a href="https://github.com/NNPDF/pineappl/actions?query=workflow%3ARust"><img alt="Rust" src="https://github.com/NNPDF/pineappl/workflows/Rust/badge.svg"></a>
+  <a href="https://github.com/NNPDF/pineappl/actions/workflows/rust.yml"><img alt="Rust" src="https://github.com/NNPDF/pineappl/actions/workflows/rust.yml/badge.svg?branch=master"></a>
   <a href="https://codecov.io/gh/NNPDF/pineappl"><img alt="codecov" src="https://codecov.io/gh/NNPDF/pineappl/branch/master/graph/badge.svg"></a>
   <a href="https://docs.rs/pineappl"><img alt="Documentation" src="https://docs.rs/pineappl/badge.svg"></a>
   <a href="https://crates.io/crates/pineappl"><img alt="crates.io" src="https://img.shields.io/crates/v/pineappl.svg"></a>

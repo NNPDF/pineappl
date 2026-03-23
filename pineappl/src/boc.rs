@@ -14,23 +14,29 @@ use std::cmp::Ordering;
 use std::ops::Range;
 use std::str::FromStr;
 
-/// TODO
+/// Defines kinematic variables stored in each subgrid of a [`Grid`]. A grid with two convolutions
+/// will need exactly two `X`-type kinematic variables, specifically `X(0)` and `X(1)` for the
+/// first and second convolutions, respectively. Furthermore, at least one `Scale`-type kinematics
+/// is needed to denote factorization, renormalization and/or fragmentation scales. More scales
+/// can be used to make the three scales have functionally different forms.
 #[repr(C)]
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub enum Kinematics {
-    /// TODO
+    /// Denotes a scale-type kinematic variable.
     Scale(usize),
-    /// TODO
+    /// Denotes a x-type kinematic variable.
     X(usize),
 }
 
-/// TODO
+/// Defines how the factorization, renormalization and fragmentation scale are calculated from the
+/// available kinematic scales. A `ScaleFuncForm::Scale(0)` means that the corresponding scale will
+/// be calculated from the kinematic variable given as `Kinematics::Scale(0)`.
 #[repr(C)]
 #[derive(Clone, Deserialize, Eq, PartialEq, Serialize)]
 pub enum ScaleFuncForm {
-    /// TODO
+    /// The corresponding scale will not be used.
     NoScale,
-    /// TODO
+    /// Calculates the corresponding scale as the numerical value given `Kinematics::Scale(0)`.
     Scale(usize),
     /// TODO
     QuadraticSum(usize, usize),
@@ -162,14 +168,15 @@ impl ScaleFuncForm {
     }
 }
 
-/// TODO
+/// Instances of this type define how the renormalization, factorization and fragmentation scales
+/// are calculated.
 #[derive(Clone, Deserialize, Eq, PartialEq, Serialize)]
 pub struct Scales {
-    /// TODO
+    /// The renormalization scale used by the strong coupling.
     pub ren: ScaleFuncForm,
-    /// TODO
+    /// The factorization scale used by parton distribution functions.
     pub fac: ScaleFuncForm,
-    /// TODO
+    /// The fragmentation scale used by fragmentation functions.
     pub frg: ScaleFuncForm,
 }
 
@@ -1085,6 +1092,44 @@ impl Channel {
                 None
             }
         })
+    }
+
+    /// Finds the factor with the smallest absolute value in the channel and
+    /// divides all coefficients by this value.
+    ///
+    /// # Returns
+    ///
+    /// A tuple containing:
+    /// - the factored-out coefficient
+    /// - a new `Channel` with all coefficients divided by the factored value
+    ///
+    /// # Panics
+    ///
+    /// TODO
+    #[must_use]
+    pub fn factor(&self) -> (f64, Self) {
+        let factor = self
+            .entry
+            .iter()
+            .map(|(_, f)| *f)
+            .min_by(|a, b| {
+                a.abs()
+                    .partial_cmp(&b.abs())
+                    // UNWRAP: if we can't compare the numbers the data structure is bugged
+                    .unwrap()
+            })
+            // UNWRAP: every `Channel` has at least one entry
+            .unwrap();
+
+        let new_channel = Self::new(
+            self.entry
+                .iter()
+                .cloned()
+                .map(|(e, f)| (e, f / factor))
+                .collect(),
+        );
+
+        (factor, new_channel)
     }
 }
 

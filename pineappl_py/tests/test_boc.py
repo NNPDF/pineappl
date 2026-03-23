@@ -59,9 +59,13 @@ def _generated_bwfl_fields(n_bins: int, n_dimensions: int) -> BwflFields:
 
 class TestChannel:
     def test_init(self):
-        le = Channel([([2, 2], 0.5)])
-        assert isinstance(le, Channel)
-        assert le.into_array() == [([2, 2], 0.5)]
+        channel = Channel([([2, -2], 0.5)])
+        assert isinstance(channel, Channel)
+        assert channel.into_array() == [([2, -2], 0.5)]
+
+        channels = Channel([([2, -2], 0.5), ([3, -3], 1.5)])
+        assert isinstance(channels, Channel)
+        assert channels.into_array() == [([2, -2], 0.5), ([3, -3], 1.5)]
 
 
 class TestKinematics:

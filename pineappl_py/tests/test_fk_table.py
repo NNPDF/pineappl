@@ -5,7 +5,6 @@ three (general) convolutions.
 """
 
 import numpy as np
-import tempfile
 
 from pineappl.boc import Channel, Order
 from pineappl.convolutions import Conv, ConvType
@@ -15,7 +14,7 @@ from pineappl.pids import PidBasis
 
 
 class TestFkTable:
-    def test_convolve(self, fake_grids):
+    def test_convolve(self, fake_grids, tmp_path):
         # Define convolution types and the initial state hadrons
         # We consider an initial state Polarized Proton
         h = ConvType(polarized=True, time_like=False)
@@ -65,9 +64,9 @@ class TestFkTable:
         )
 
         # Test writing/dumping the FK table into disk
-        with tempfile.TemporaryDirectory() as tmpdir:
-            fk.write(f"{tmpdir}/toy_fktable.pineappl")
-            fk.write_lz4(f"{tmpdir}/toy_fktable.pineappl.lz4")
+        path = f"{tmp_path}/toy_fktable.pineappl"
+        fk.write(path)
+        fk.write_lz4(path)
 
     def test_fktable(
         self,
@@ -113,8 +112,38 @@ class TestFkTable:
 
         # Check that FK table is in the Evolution basis and rotate into PDG
         assert fk.pid_basis == PidBasis.Evol
-        new_fk = fk.rotate_pid_basis(PidBasis.Pdg)
-        assert new_fk.pid_basis == PidBasis.Pdg
+        fk.rotate_pid_basis(PidBasis.Pdg)
+        assert fk.pid_basis == PidBasis.Pdg
+
+    def test_fktable_rotations(
+        self,
+        pdf,
+        download_objects,
+        tmp_path,
+        fkname: str = "FKTABLE_CMSTTBARTOT8TEV-TOPDIFF8TEVTOT.pineappl.lz4",
+    ):
+        expected_results = [3.72524538e04]  # Numbers computed using `v0.8.6`
+
+        fk_table = download_objects(f"{fkname}")
+        fk = FkTable.read(fk_table)
+
+        # rotate in the PDG basis and check that all the factors are unity
+        fk.rotate_pid_basis(PidBasis.Pdg)
+        assert fk.pid_basis == PidBasis.Pdg
+
+        # check that the convolutions are still the same
+        np.testing.assert_allclose(
+            fk.convolve(
+                pdg_convs=fk.convolutions,
+                xfxs=[pdf.unpolarized_pdf, pdf.unpolarized_pdf],
+            ),
+            expected_results,
+        )
+
+        # check that the FK table can be loaded properly
+        path = f"{tmp_path}/rotated_fktable.pineappl.lz4"
+        fk.write_lz4(path)
+        _ = FkTable.read(path)
 
     def test_unpolarized_convolution(
         self,
@@ -125,7 +154,7 @@ class TestFkTable:
         """Check the convolution of an actual FK table that involves two
         symmetrical unpolarized protons:
         """
-        expected_results = [3.72524538e04]
+        expected_results = [3.72524538e04]  # Numbers computed using `v0.8.6`
         fk_table = download_objects(f"{fkname}")
         fk = FkTable.read(fk_table)
 
