@@ -1,5 +1,5 @@
 <p align="center">
-  <img alt="PineAPPL-Logo" src="logo/pineappl-logo.png" width=200>
+  <img alt="PineAPPL-Logo" src="logo/pineappl-logo.svg" width=200>
 </p>
 <p align="center">
   <a href="https://github.com/NNPDF/pineappl/actions/workflows/rust.yml"><img alt="Rust" src="https://github.com/NNPDF/pineappl/actions/workflows/rust.yml/badge.svg?branch=master"></a>
