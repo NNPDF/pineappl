@@ -61,7 +61,7 @@
      y="45.625"
      width="60"
      height="24"
-     fill="#ff6700"
+     fill="#ffaa00"
      id="top_grid_bg" />
   <!-- Top grid - simple lines -->
   <g
@@ -216,25 +216,23 @@
     <!-- <circle cx="72" cy="47.25" r="1.5" fill="#374151" /> -->
   </g>
   <!-- PineAPPL text -->
-  <!-- Light color: fill="#FFDD44" -->
   <text
      id="svg_21"
-     fill="#FFDD44"
-     stroke="#374151"
+     fill="#374151"
      font-weight="bold"
      font-size="20px"
      font-family="'Klavika'"
      text-anchor="middle"
      y="85.866478"
      x="59.955414"
-     style="stroke-width:0.5">PineAPPL</text>
+     style="stroke-width:1.5">PineAPPL</text>
   <!-- Bottom grid background -->
   <rect
      x="30"
      y="90.125"
      width="60"
      height="24"
-     fill="#ff6700"
+     fill="#ffaa00"
      id="bottom_grid_bg" />
   <!-- Bottom grid - simple lines -->
   <g
