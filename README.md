@@ -6,7 +6,7 @@
   <a href="https://codecov.io/gh/NNPDF/pineappl"><img alt="codecov" src="https://codecov.io/gh/NNPDF/pineappl/branch/master/graph/badge.svg"></a>
   <a href="https://docs.rs/pineappl"><img alt="Documentation" src="https://docs.rs/pineappl/badge.svg"></a>
   <a href="https://crates.io/crates/pineappl"><img alt="crates.io" src="https://img.shields.io/crates/v/pineappl.svg"></a>
-  <a href="docs/installation.md"><img alt="MSRV" src="https://img.shields.io/badge/Rust-1.80+-lightgray.svg"></a>
+  <a href="docs/installation.md"><img alt="MSRV" src="https://img.shields.io/badge/Rust-1.94+-lightgray.svg"></a>
 </p>
 
 # What is PineAPPL?
