@@ -13,7 +13,6 @@ use std::ops::RangeInclusive;
 use std::path::Path;
 use std::process::ExitCode;
 use std::str::FromStr;
-use std::str::rsplit_once;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ConvFuns {
