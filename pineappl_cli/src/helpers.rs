@@ -535,7 +535,7 @@ mod test {
                 ],
                 members: vec![None, None],
                 conv_types: vec![
-                    ConvType::UnpolPDF
+                    ConvType::UnpolPDF,
                     ConvType::UnpolFF,
                 ],
                 label: "blub".to_owned()
