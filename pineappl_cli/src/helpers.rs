@@ -26,10 +26,11 @@ impl FromStr for ConvFuns {
     type Err = Error;
 
     fn from_str(arg: &str) -> std::result::Result<Self, Self::Err> {
-        let (names, label) = arg.rsplit_once('=').unwrap_or((arg, arg));
+        let (names, label) = arg.split_once('=').unwrap_or((arg, arg));
         let (lhapdf_names, members, conv_types) = names
             .split(',')
             .map(|fun| {
+                // Split from the right to recover weird names (#386)
                 let (name, typ) = fun.rsplit_once('+').unwrap_or((fun, ""));
                 let (name, mem) = name.split_once('/').map_or((name, None), |(name, mem)| {
                     (
@@ -522,21 +523,15 @@ mod test {
 
     #[test]
     fn issue_386() {
-        // names may containt "special characters", such as `+` and `=`, in which case you need to
+        // names may contain the "special character" `+`, in which case you need to
         // enforce the special meaning (by giving the character again) and can not rely on the
         // default behavior.
         assert_eq!(
-            "n=p-PDF,D0+Dpm+f=blub".parse::<ConvFuns>().unwrap(),
+            "D0+Dpm+f=blub".parse::<ConvFuns>().unwrap(),
             ConvFuns {
-                lhapdf_names: vec![
-                    "n=p-PDF".to_owned(),
-                    "D0+Dpm".to_owned()
-                ],
-                members: vec![None, None],
-                conv_types: vec![
-                    ConvType::UnpolPDF,
-                    ConvType::UnpolFF,
-                ],
+                lhapdf_names: vec!["D0+Dpm".to_owned()],
+                members: vec![None],
+                conv_types: vec![ConvType::UnpolFF,],
                 label: "blub".to_owned()
             }
         );
