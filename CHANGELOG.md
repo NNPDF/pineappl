@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   of iteration
 - fixed a bug in the implementation of `pineappl_channels_add` of the Fortran
   API
+- Improve detection of convolution function in the CLI
 
 ### Changed
 
