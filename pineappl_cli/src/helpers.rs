@@ -26,11 +26,23 @@ impl FromStr for ConvFuns {
     type Err = Error;
 
     fn from_str(arg: &str) -> std::result::Result<Self, Self::Err> {
+        // split from the left, as '=' characters are allowed in labels but not in names
         let (names, label) = arg.split_once('=').unwrap_or((arg, arg));
         let (lhapdf_names, members, conv_types) = names
             .split(',')
             .map(|fun| {
-                let (name, typ) = fun.split_once('+').unwrap_or((fun, ""));
+                // `fun` may contain an arbitrary number of '+' characters
+                let (name, typ) = if let Some(name) = fun.strip_suffix("+p") {
+                    (name, ConvType::PolPDF)
+                } else if let Some(name) = fun.strip_suffix("+f") {
+                    (name, ConvType::UnpolFF)
+                } else if let Some(name) =
+                    fun.strip_suffix("+pf").or_else(|| fun.strip_suffix("+fp"))
+                {
+                    (name, ConvType::PolFF)
+                } else {
+                    (fun, ConvType::UnpolPDF)
+                };
                 let (name, mem) = name.split_once('/').map_or((name, None), |(name, mem)| {
                     (
                         name,
@@ -42,13 +54,6 @@ impl FromStr for ConvFuns {
                     )
                 });
                 let name = name.to_owned();
-                let typ = match typ {
-                    "" => ConvType::UnpolPDF,
-                    "p" => ConvType::PolPDF,
-                    "f" => ConvType::UnpolFF,
-                    "pf" | "fp" => ConvType::PolFF,
-                    _ => bail!("unknown convolution type '{typ}'"),
-                };
                 Ok::<_, Error>((name, mem, typ))
             })
             .collect::<Result<Vec<(_, _, _)>, _>>()?
@@ -516,6 +521,32 @@ mod test {
                     ConvType::UnpolPDF
                 ],
                 label: "X".to_owned()
+            }
+        );
+    }
+
+    #[test]
+    fn issue_386() {
+        // names may contain the character '+', which must not be confused with the convolution
+        // function types
+        assert_eq!(
+            "D0+Dpm+f=blub".parse::<ConvFuns>().unwrap(),
+            ConvFuns {
+                lhapdf_names: vec!["D0+Dpm".to_owned()],
+                members: vec![None],
+                conv_types: vec![ConvType::UnpolFF],
+                label: "blub".to_owned()
+            }
+        );
+
+        // even unpolarized PDFs may contain '+' characters
+        assert_eq!(
+            "D0+Dpm=blub++".parse::<ConvFuns>().unwrap(),
+            ConvFuns {
+                lhapdf_names: vec!["D0+Dpm".to_owned()],
+                members: vec![None],
+                conv_types: vec![ConvType::UnpolPDF],
+                label: "blub++".to_owned()
             }
         );
     }
