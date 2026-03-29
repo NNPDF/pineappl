@@ -659,7 +659,7 @@ impl BinLimits {
     /// # Examples
     ///
     /// ```rust
-    /// use pineappl::bin::BinLimits;
+    /// use pineappl_v0::bin::BinLimits;
     ///
     /// // example with equally sized bins
     /// let equal_bins = BinLimits::new(vec![0.25, 0.5, 0.75, 1.0]);
@@ -705,7 +705,7 @@ impl BinLimits {
     /// # Examples
     ///
     /// ```rust
-    /// use pineappl::bin::BinLimits;
+    /// use pineappl_v0::bin::BinLimits;
     ///
     /// // example with equally sized bins
     /// let equal_bins = BinLimits::new(vec![0.25, 0.5, 0.75, 1.0]);

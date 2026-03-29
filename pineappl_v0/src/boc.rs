@@ -133,7 +133,7 @@ impl Order {
     ///   - the mixed NNLO QCD—EW.
     ///
     /// ```rust
-    /// use pineappl::boc::Order;
+    /// use pineappl_v0::boc::Order;
     ///
     /// let orders = [
     ///     Order::new(0, 2, 0, 0), //   LO        :          alpha^2
@@ -164,7 +164,7 @@ impl Order {
     /// `true`:
     ///
     /// ```rust
-    /// use pineappl::boc::Order;
+    /// use pineappl_v0::boc::Order;
     ///
     /// let orders = [
     ///     Order::new(0, 2, 0, 0), //  LO         :        alpha^2
@@ -181,7 +181,7 @@ impl Order {
     /// the selection for different LOs:
     ///
     /// ```rust
-    /// use pineappl::boc::Order;
+    /// use pineappl_v0::boc::Order;
     ///
     /// let orders = [
     ///     Order::new(2, 0, 0, 0), //   LO QCD    : alphas^2
@@ -276,7 +276,7 @@ impl Channel {
     /// Ordering of the arguments doesn't matter:
     ///
     /// ```rust
-    /// use pineappl::boc::Channel;
+    /// use pineappl_v0::boc::Channel;
     ///
     /// let entry1 = Channel::new(vec![(2, 2, 1.0), (4, 4, 1.0)]);
     /// let entry2 = Channel::new(vec![(4, 4, 1.0), (2, 2, 1.0)]);
@@ -288,7 +288,7 @@ impl Channel {
     /// Same arguments are merged together:
     ///
     /// ```rust
-    /// use pineappl::boc::Channel;
+    /// use pineappl_v0::boc::Channel;
     ///
     /// let entry1 = Channel::new(vec![(1, 1, 1.0), (1, 1, 3.0), (3, 3, 1.0), (1, 1, 6.0)]);
     /// let entry2 = Channel::new(vec![(1, 1, 10.0), (3, 3, 1.0)]);
@@ -301,7 +301,7 @@ impl Channel {
     /// Creating an empty channel panics:
     ///
     /// ```rust,should_panic
-    /// use pineappl::boc::Channel;
+    /// use pineappl_v0::boc::Channel;
     ///
     /// let _ = Channel::new(vec![]);
     /// ```
@@ -336,8 +336,8 @@ impl Channel {
     /// # Examples
     ///
     /// ```rust
-    /// use pineappl::boc::Channel;
-    /// use pineappl::channel;
+    /// use pineappl_v0::boc::Channel;
+    /// use pineappl_v0::channel;
     ///
     /// let entry = Channel::translate(&channel![103, 11, 1.0], &|evol_id| match evol_id {
     ///     103 => vec![(2, 1.0), (-2, -1.0), (1, -1.0), (-1, 1.0)],
@@ -365,8 +365,8 @@ impl Channel {
     /// # Examples
     ///
     /// ```rust
-    /// use pineappl::channel;
-    /// use pineappl::boc::Channel;
+    /// use pineappl_v0::channel;
+    /// use pineappl_v0::boc::Channel;
     ///
     /// let entry = channel![4, 4, 1.0; 2, 2, 1.0];
     ///
@@ -390,7 +390,7 @@ impl Channel {
     /// # Examples
     ///
     /// ```rust
-    /// use pineappl::boc::Channel;
+    /// use pineappl_v0::boc::Channel;
     ///
     /// let entry1 = Channel::new(vec![(2, 2, 2.0), (4, 4, 2.0)]);
     /// let entry2 = Channel::new(vec![(4, 4, 1.0), (2, 2, 1.0)]);
@@ -491,7 +491,7 @@ impl FromStr for Channel {
 /// In the following example `entry1` and `entry2` represent the same values:
 ///
 /// ```rust
-/// use pineappl::channel;
+/// use pineappl_v0::channel;
 ///
 /// let entry1 = channel![2, 2, 1.0; 4, 4, 1.0];
 /// let entry2 = channel![4, 4, 1.0; 2, 2, 1.0];
