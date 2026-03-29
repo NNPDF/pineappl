@@ -25,6 +25,7 @@ Starting with this version, PineAPPL has an official logo!
 ### Changed
 
 - raised MSRV to 1.94.0
+- raised Rust edition to 2024
 
 ## [1.3.3] - 01/03/2026
 

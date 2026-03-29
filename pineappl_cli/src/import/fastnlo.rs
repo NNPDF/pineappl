@@ -72,7 +72,7 @@ fn reconstruct_channels(
 
                 assert!(channel.len() == nsubproc);
 
-                for (i, &l) in channel.iter().enumerate().filter(|(_, &l)| l != 0.0) {
+                for (i, &l) in channel.iter().enumerate().filter(|&(_, &l)| l != 0.0) {
                     let ap = pid_to_pdg_id(i32::try_from(a).unwrap() - 6);
                     let bp = pid_to_pdg_id(i32::try_from(b).unwrap() - 6);
 

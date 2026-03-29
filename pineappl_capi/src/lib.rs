@@ -257,7 +257,7 @@ pub struct Lumi(Vec<Channel>);
 ///
 /// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
 /// this function is not safe to call.
-#[no_mangle]
+#[unsafe(no_mangle)]
 #[must_use]
 pub unsafe extern "C" fn pineappl_grid_bin_count(grid: *const Grid) -> usize {
     let grid = unsafe { &*grid };
@@ -271,7 +271,7 @@ pub unsafe extern "C" fn pineappl_grid_bin_count(grid: *const Grid) -> usize {
 ///
 /// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
 /// this function is not safe to call.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn pineappl_grid_bin_dimensions(grid: *const Grid) -> usize {
     let grid = unsafe { &*grid };
 
@@ -285,7 +285,7 @@ pub unsafe extern "C" fn pineappl_grid_bin_dimensions(grid: *const Grid) -> usiz
 /// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
 /// this function is not safe to call. The parameter `bin_sizes` must point to an array that is as
 /// long as `grid` has bins.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn pineappl_grid_bin_normalizations(grid: *const Grid, bin_sizes: *mut f64) {
     let grid = unsafe { &*grid };
     let bins = grid.bwfl().len();
@@ -304,7 +304,7 @@ pub unsafe extern "C" fn pineappl_grid_bin_normalizations(grid: *const Grid, bin
 /// this function is not safe to call. The parameter `left` must point to an array that is as large
 /// as `grid` has bins. If `dimension` is larger or equal the number of dimensions for this grid,
 /// nothing is written into `left`, the result is undefined.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn pineappl_grid_bin_limits_left(
     grid: *const Grid,
     dimension: usize,
@@ -332,7 +332,7 @@ pub unsafe extern "C" fn pineappl_grid_bin_limits_left(
 /// this function is not safe to call. The parameter `right` must point to an array that is as
 /// large as `grid` has bins. If `dimension` is larger or equal the number of dimensions for this
 /// grid, nothing is written into `right`, the result is undefined.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn pineappl_grid_bin_limits_right(
     grid: *const Grid,
     dimension: usize,
@@ -358,7 +358,7 @@ pub unsafe extern "C" fn pineappl_grid_bin_limits_right(
 ///
 /// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
 /// this function is not safe to call.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn pineappl_grid_clone(grid: *const Grid) -> Box<Grid> {
     let grid = unsafe { &*grid };
 
@@ -374,7 +374,7 @@ pub unsafe extern "C" fn pineappl_grid_clone(grid: *const Grid) -> Box<Grid> {
     since = "0.8.0",
     note = "use `pineappl_grid_convolve_with_one` instead"
 )]
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn pineappl_grid_convolute_with_one(
     grid: *const Grid,
     pdg_id: i32,
@@ -412,7 +412,7 @@ pub unsafe extern "C" fn pineappl_grid_convolute_with_one(
     since = "0.8.0",
     note = "use `pineappl_grid_convolve_with_two` instead"
 )]
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn pineappl_grid_convolute_with_two(
     grid: *const Grid,
     pdg_id1: i32,
@@ -465,7 +465,7 @@ pub unsafe extern "C" fn pineappl_grid_convolute_with_two(
 /// be null pointers and point to valid functions. The parameters `order_mask` and `channel_mask`
 /// must either be null pointers or point to arrays that are as long as `grid` has orders and
 /// channels, respectively. Finally, `results` must be as long as `grid` has bins.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn pineappl_grid_convolve_with_one(
     grid: *const Grid,
     pdg_id: i32,
@@ -529,7 +529,7 @@ pub unsafe extern "C" fn pineappl_grid_convolve_with_one(
 /// be null pointers and point to valid functions. The parameters `order_mask` and `channel_mask`
 /// must either be null pointers or point to arrays that are as long as `grid` has orders and
 /// channels, respectively. Finally, `results` must be as long as `grid` has bins.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn pineappl_grid_convolve_with_two(
     grid: *const Grid,
     pdg_id1: i32,
@@ -586,7 +586,7 @@ pub unsafe extern "C" fn pineappl_grid_convolve_with_two(
 ///
 /// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
 /// this function is not safe to call.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn pineappl_grid_dedup_channels(grid: *mut Grid, ulps: i64) {
     let grid = unsafe { &mut *grid };
 
@@ -594,7 +594,7 @@ pub unsafe extern "C" fn pineappl_grid_dedup_channels(grid: *mut Grid, ulps: i64
 }
 
 /// Delete a grid previously created with `pineappl_grid_new`.
-#[no_mangle]
+#[unsafe(no_mangle)]
 #[allow(unused_variables)]
 pub extern "C" fn pineappl_grid_delete(grid: Option<Box<Grid>>) {}
 
@@ -606,7 +606,7 @@ pub extern "C" fn pineappl_grid_delete(grid: Option<Box<Grid>>) {}
 /// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
 /// this function is not safe to call.
 #[deprecated(since = "1.0.0", note = "use `pineappl_grid_fill2` instead")]
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn pineappl_grid_fill(
     grid: *mut Grid,
     x1: f64,
@@ -631,7 +631,7 @@ pub unsafe extern "C" fn pineappl_grid_fill(
 /// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
 /// this function is not safe to call.
 #[deprecated(since = "1.0.0", note = "use `pineappl_grid_fill_all2` instead")]
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn pineappl_grid_fill_all(
     grid: *mut Grid,
     x1: f64,
@@ -657,7 +657,7 @@ pub unsafe extern "C" fn pineappl_grid_fill_all(
 /// this function is not safe to call. Additionally, all remaining pointer parameters must be
 /// arrays as long as specified by `size`.
 #[deprecated(since = "1.0.0", note = "use `pineappl_grid_fill_array2` instead")]
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn pineappl_grid_fill_array(
     grid: *mut Grid,
     x1: *const f64,
@@ -692,7 +692,7 @@ pub unsafe extern "C" fn pineappl_grid_fill_array(
 /// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
 /// this function is not safe to call.
 #[deprecated(since = "1.0.0", note = "use `pineappl_grid_channels` instead")]
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn pineappl_grid_lumi(grid: *const Grid) -> Box<Lumi> {
     let grid = unsafe { &*grid };
 
@@ -707,7 +707,7 @@ pub unsafe extern "C" fn pineappl_grid_lumi(grid: *const Grid) -> Box<Lumi> {
 /// this function is not safe to call. The pointer `order_params` must point to an array as large
 /// as four times the number of orders in `grid`.
 #[deprecated(since = "1.0.0", note = "use `pineappl_grid_order_params2` instead")]
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn pineappl_grid_order_params(grid: *const Grid, order_params: *mut u32) {
     let grid = unsafe { &*grid };
     let orders = grid.orders();
@@ -727,7 +727,7 @@ pub unsafe extern "C" fn pineappl_grid_order_params(grid: *const Grid, order_par
 ///
 /// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
 /// this function is not safe to call.
-#[no_mangle]
+#[unsafe(no_mangle)]
 #[must_use]
 pub unsafe extern "C" fn pineappl_grid_order_count(grid: *const Grid) -> usize {
     let grid = unsafe { &*grid };
@@ -760,7 +760,7 @@ pub unsafe extern "C" fn pineappl_grid_order_count(grid: *const Grid) -> usize {
 ///
 /// TODO
 #[deprecated(since = "1.0.0", note = "use `pineappl_grid_new2` instead")]
-#[no_mangle]
+#[unsafe(no_mangle)]
 #[must_use]
 pub unsafe extern "C" fn pineappl_grid_new(
     lumi: *const Lumi,
@@ -833,7 +833,7 @@ pub unsafe extern "C" fn pineappl_grid_new(
 /// # Panics
 ///
 /// TODO
-#[no_mangle]
+#[unsafe(no_mangle)]
 #[must_use]
 pub unsafe extern "C" fn pineappl_grid_read(filename: *const c_char) -> Box<Grid> {
     let filename = unsafe { CStr::from_ptr(filename) };
@@ -854,7 +854,7 @@ pub unsafe extern "C" fn pineappl_grid_read(filename: *const c_char) -> Box<Grid
 /// # Panics
 ///
 /// TODO
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn pineappl_grid_merge_bins(grid: *mut Grid, from: usize, to: usize) {
     let grid = unsafe { &mut *grid };
 
@@ -873,7 +873,7 @@ pub unsafe extern "C" fn pineappl_grid_merge_bins(grid: *mut Grid, from: usize, 
 /// # Panics
 ///
 /// TODO
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn pineappl_grid_delete_bins(
     grid: *mut Grid,
     bin_indices_ptr: *const usize,
@@ -894,7 +894,7 @@ pub unsafe extern "C" fn pineappl_grid_delete_bins(
 /// # Panics
 ///
 /// TODO
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn pineappl_grid_merge_and_delete(grid: *mut Grid, other: Option<Box<Grid>>) {
     if let Some(other) = other {
         let grid = unsafe { &mut *grid };
@@ -909,7 +909,7 @@ pub unsafe extern "C" fn pineappl_grid_merge_and_delete(grid: *mut Grid, other: 
 ///
 /// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
 /// this function is not safe to call.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn pineappl_grid_scale(grid: *mut Grid, factor: f64) {
     let grid = unsafe { &mut *grid };
 
@@ -924,7 +924,7 @@ pub unsafe extern "C" fn pineappl_grid_scale(grid: *mut Grid, factor: f64) {
 /// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
 /// this function is not safe to call.
 #[deprecated(since = "1.0.0", note = "use `pineappl_grid_split_channels` instead")]
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn pineappl_grid_split_lumi(grid: *mut Grid) {
     let grid = unsafe { &mut *grid };
 
@@ -937,7 +937,7 @@ pub unsafe extern "C" fn pineappl_grid_split_lumi(grid: *mut Grid) {
 ///
 /// If `grid` does not point to a valid `Grid` object (for example when `grid` is the null pointer)
 /// or if `pid_basis` does not refer to a correct basis, then this function is not safe to call.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn pineappl_grid_rotate_pid_basis(grid: *mut Grid, pid_basis: PidBasis) {
     let grid = unsafe { &mut *grid };
 
@@ -950,7 +950,7 @@ pub unsafe extern "C" fn pineappl_grid_rotate_pid_basis(grid: *mut Grid, pid_bas
 ///
 /// If `grid` does not point to a valid `Grid` object, for example when `grid` is the `NULL`
 /// pointer, this function is not safe to call.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn pineappl_grid_pid_basis(grid: *mut Grid) -> PidBasis {
     let grid = unsafe { &mut *grid };
 
@@ -963,7 +963,7 @@ pub unsafe extern "C" fn pineappl_grid_pid_basis(grid: *mut Grid) -> PidBasis {
 ///
 /// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
 /// this function is not safe to call.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn pineappl_grid_optimize(grid: *mut Grid) {
     let grid = unsafe { &mut *grid };
 
@@ -977,7 +977,7 @@ pub unsafe extern "C" fn pineappl_grid_optimize(grid: *mut Grid) {
 ///
 /// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
 /// this function is not safe to call.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn pineappl_grid_optimize_using(grid: *mut Grid, flags: GridOptFlags) {
     let grid = unsafe { &mut *grid };
 
@@ -993,7 +993,7 @@ pub unsafe extern "C" fn pineappl_grid_optimize_using(grid: *mut Grid, flags: Gr
 /// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
 /// this function is not safe to call. The pointer `factors` must be an array of at least the size
 /// given by `count`.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn pineappl_grid_scale_by_bin(
     grid: *mut Grid,
     count: usize,
@@ -1013,7 +1013,7 @@ pub unsafe extern "C" fn pineappl_grid_scale_by_bin(
 ///
 /// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
 /// this function is not safe to call.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn pineappl_grid_scale_by_order(
     grid: *mut Grid,
     alphas: f64,
@@ -1040,7 +1040,7 @@ pub unsafe extern "C" fn pineappl_grid_scale_by_order(
 ///
 /// TODO
 #[deprecated(since = "1.0.0", note = "use `pineappl_grid_metadata` instead")]
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn pineappl_grid_key_value(
     grid: *const Grid,
     key: *const c_char,
@@ -1079,7 +1079,7 @@ pub unsafe extern "C" fn pineappl_grid_key_value(
 ///
 /// TODO
 #[deprecated(since = "1.0.0", note = "use `pineappl_grid_set_metadata` instead")]
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn pineappl_grid_set_key_value(
     grid: *mut Grid,
     key: *const c_char,
@@ -1120,7 +1120,7 @@ pub unsafe extern "C" fn pineappl_grid_set_key_value(
 /// # Panics
 ///
 /// TODO
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn pineappl_grid_set_remapper(
     grid: *mut Grid,
     dimensions: usize,
@@ -1167,7 +1167,7 @@ pub unsafe extern "C" fn pineappl_grid_set_remapper(
 /// # Panics
 ///
 /// TODO
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn pineappl_grid_write(grid: *const Grid, filename: *const c_char) {
     let grid = unsafe { &*grid };
     let filename = unsafe { CStr::from_ptr(filename) };
@@ -1190,7 +1190,7 @@ pub unsafe extern "C" fn pineappl_grid_write(grid: *const Grid, filename: *const
 /// `pdg_id_pairs` must be an array with length `2 * combinations`, and `factors` with length of
 /// `combinations`.
 #[deprecated(since = "1.0.0", note = "use `pineappl_channels_add` instead")]
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn pineappl_lumi_add(
     lumi: *mut Lumi,
     combinations: usize,
@@ -1221,7 +1221,7 @@ pub unsafe extern "C" fn pineappl_lumi_add(
 /// The parameter `lumi` must point to a valid `Lumi` object created by `pineappl_lumi_new` or
 /// `pineappl_grid_lumi`.
 #[deprecated(since = "1.0.0", note = "use `pineappl_channels_combinations` instead")]
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn pineappl_lumi_combinations(lumi: *const Lumi, entry: usize) -> usize {
     let lumi = unsafe { &*lumi };
 
@@ -1235,7 +1235,7 @@ pub unsafe extern "C" fn pineappl_lumi_combinations(lumi: *const Lumi, entry: us
 /// The parameter `lumi` must point to a valid `Lumi` object created by `pineappl_lumi_new` or
 /// `pineappl_grid_lumi`.
 #[deprecated(since = "1.0.0", note = "use `pineappl_channels_count` instead")]
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn pineappl_lumi_count(lumi: *const Lumi) -> usize {
     let lumi = unsafe { &*lumi };
 
@@ -1244,7 +1244,7 @@ pub unsafe extern "C" fn pineappl_lumi_count(lumi: *const Lumi) -> usize {
 
 /// Delete luminosity function previously created with `pineappl_lumi_new`.
 #[deprecated(since = "1.0.0", note = "use `pineappl_channels_delete` instead")]
-#[no_mangle]
+#[unsafe(no_mangle)]
 #[allow(unused_variables)]
 pub extern "C" fn pineappl_lumi_delete(lumi: Option<Box<Lumi>>) {}
 
@@ -1258,7 +1258,7 @@ pub extern "C" fn pineappl_lumi_delete(lumi: Option<Box<Lumi>>) {}
 /// returned by `pineappl_lumi_combinations` and `pdg_ids` must point to an array that is twice as
 /// long.
 #[deprecated(since = "1.0.0", note = "use `pineappl_channels_entry` instead")]
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn pineappl_lumi_entry(
     lumi: *const Lumi,
     entry: usize,
@@ -1285,7 +1285,7 @@ pub unsafe extern "C" fn pineappl_lumi_entry(
 /// Creates a new luminosity function and returns a pointer to it. If no longer needed, the object
 /// should be deleted using `pineappl_lumi_delete`.
 #[deprecated(since = "1.0.0", note = "use `pineappl_channels_new` instead")]
-#[no_mangle]
+#[unsafe(no_mangle)]
 #[must_use]
 pub extern "C" fn pineappl_lumi_new() -> Box<Lumi> {
     Box::default()
@@ -1303,7 +1303,7 @@ pub struct KeyVal {
 
 /// Delete the previously created object pointed to by `key_vals`.
 #[deprecated(since = "1.0.0", note = "")]
-#[no_mangle]
+#[unsafe(no_mangle)]
 #[allow(unused_variables)]
 pub extern "C" fn pineappl_keyval_delete(key_vals: Option<Box<KeyVal>>) {}
 
@@ -1314,7 +1314,7 @@ pub extern "C" fn pineappl_keyval_delete(key_vals: Option<Box<KeyVal>>) {}
 /// The parameter `key_vals` must point to a valid `KeyVal` object created by
 /// `pineappl_keyval_new`. `key` must be a valid C string.
 #[deprecated(since = "1.0.0", note = "")]
-#[no_mangle]
+#[unsafe(no_mangle)]
 #[must_use]
 pub unsafe extern "C" fn pineappl_keyval_bool(key_vals: *const KeyVal, key: *const c_char) -> bool {
     let key_vals = unsafe { &*key_vals };
@@ -1330,7 +1330,7 @@ pub unsafe extern "C" fn pineappl_keyval_bool(key_vals: *const KeyVal, key: *con
 /// The parameter `key_vals` must point to a valid `KeyVal` object created by
 /// `pineappl_keyval_new`. `key` must be a valid C string.
 #[deprecated(since = "1.0.0", note = "")]
-#[no_mangle]
+#[unsafe(no_mangle)]
 #[must_use]
 pub unsafe extern "C" fn pineappl_keyval_double(
     key_vals: *const KeyVal,
@@ -1349,7 +1349,7 @@ pub unsafe extern "C" fn pineappl_keyval_double(
 /// The parameter `key_vals` must point to a valid `KeyVal` object created by
 /// `pineappl_keyval_new`. `key` must be a valid C string.
 #[deprecated(since = "1.0.0", note = "")]
-#[no_mangle]
+#[unsafe(no_mangle)]
 #[must_use]
 pub unsafe extern "C" fn pineappl_keyval_int(key_vals: *const KeyVal, key: *const c_char) -> i32 {
     let key_vals = unsafe { &*key_vals };
@@ -1365,7 +1365,7 @@ pub unsafe extern "C" fn pineappl_keyval_int(key_vals: *const KeyVal, key: *cons
 /// The parameter `key_vals` must point to a valid `KeyVal` object created by
 /// `pineappl_keyval_new`. `key` must be a valid C string.
 #[deprecated(since = "1.0.0", note = "")]
-#[no_mangle]
+#[unsafe(no_mangle)]
 #[must_use]
 pub unsafe extern "C" fn pineappl_keyval_string(
     key_vals: *const KeyVal,
@@ -1379,7 +1379,7 @@ pub unsafe extern "C" fn pineappl_keyval_string(
 
 /// Return a pointer to newly-created `pineappl_keyval` object.
 #[deprecated(since = "1.0.0", note = "")]
-#[no_mangle]
+#[unsafe(no_mangle)]
 #[must_use]
 pub extern "C" fn pineappl_keyval_new() -> Box<KeyVal> {
     Box::default()
@@ -1392,7 +1392,7 @@ pub extern "C" fn pineappl_keyval_new() -> Box<KeyVal> {
 /// The parameter `key_vals` must point to a valid `KeyVal` object created by
 /// `pineappl_keyval_new`. `key` must be a valid C string.
 #[deprecated(since = "1.0.0", note = "")]
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn pineappl_keyval_set_bool(
     key_vals: *mut KeyVal,
     key: *const c_char,
@@ -1413,7 +1413,7 @@ pub unsafe extern "C" fn pineappl_keyval_set_bool(
 /// The parameter `key_vals` must point to a valid `KeyVal` object created by
 /// `pineappl_keyval_new`. `key` must be a valid C string.
 #[deprecated(since = "1.0.0", note = "")]
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn pineappl_keyval_set_double(
     key_vals: *mut KeyVal,
     key: *const c_char,
@@ -1434,7 +1434,7 @@ pub unsafe extern "C" fn pineappl_keyval_set_double(
 /// The parameter `key_vals` must point to a valid `KeyVal` object created by
 /// `pineappl_keyval_new`. `key` must be a valid C string.
 #[deprecated(since = "1.0.0", note = "")]
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn pineappl_keyval_set_int(
     key_vals: *mut KeyVal,
     key: *const c_char,
@@ -1455,7 +1455,7 @@ pub unsafe extern "C" fn pineappl_keyval_set_int(
 /// The parameter `key_vals` must point to a valid `KeyVal` object created by
 /// `pineappl_keyval_new`. `key` must be a valid C string.
 #[deprecated(since = "1.0.0", note = "")]
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn pineappl_keyval_set_string(
     key_vals: *mut KeyVal,
     key: *const c_char,
@@ -1477,7 +1477,7 @@ pub unsafe extern "C" fn pineappl_keyval_set_string(
 ///
 /// The parameter `string` must be a pointer to string created by [`pineappl_grid_key_value`] or
 /// `NULL`, otherwise this function is not safe to call.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn pineappl_string_delete(string: *mut c_char) {
     if !string.is_null() {
         mem::drop(unsafe { CString::from_raw(string) });
@@ -1524,7 +1524,7 @@ pub struct OperatorInfo {
 
 /// An exact duplicate of `pineappl_lumi_new` to make naming (lumi -> channel) consistent.
 /// should be deleted using `pineappl_channels_delete`.
-#[no_mangle]
+#[unsafe(no_mangle)]
 #[must_use]
 pub extern "C" fn pineappl_channels_new(convolutions: usize) -> Box<Channels> {
     Box::new(Channels {
@@ -1542,7 +1542,7 @@ pub extern "C" fn pineappl_channels_new(convolutions: usize) -> Box<Channels> {
 /// `factors` with length of `combinations`. The `nb_convolutions` describe the number of
 /// parton distributions involved, while `combinations` represent the number of different
 /// channel combinations.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn pineappl_channels_add(
     channels: *mut Channels,
     combinations: usize,
@@ -1576,7 +1576,7 @@ pub unsafe extern "C" fn pineappl_channels_add(
 ///
 /// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
 /// this function is not safe to call.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn pineappl_grid_channels(grid: *const Grid) -> Box<Channels> {
     let grid = unsafe { &*grid };
 
@@ -1592,7 +1592,7 @@ pub unsafe extern "C" fn pineappl_grid_channels(grid: *const Grid) -> Box<Channe
 ///
 /// The parameter `channels` must point to a valid `Lumi` object created by `pineappl_channels_new` or
 /// `pineappl_grid_channels`.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn pineappl_channels_count(channels: *const Channels) -> usize {
     let Channels { channels, .. } = unsafe { &*channels };
 
@@ -1605,7 +1605,7 @@ pub unsafe extern "C" fn pineappl_channels_count(channels: *const Channels) -> u
 ///
 /// The parameter `channels` must point to a valid `Channels` object created by `pineappl_channels_new` or
 /// `pineappl_grid_channels`.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn pineappl_channels_combinations(
     channels: *const Channels,
     entry: usize,
@@ -1616,7 +1616,7 @@ pub unsafe extern "C" fn pineappl_channels_combinations(
 }
 
 /// An exact duplicate of `pineappl_lumi_delete` to make naming (lumi -> channel) consistent.
-#[no_mangle]
+#[unsafe(no_mangle)]
 #[allow(unused_variables)]
 pub extern "C" fn pineappl_channels_delete(channels: Option<Box<Channels>>) {}
 
@@ -1653,7 +1653,7 @@ pub extern "C" fn pineappl_channels_delete(channels: Option<Box<Channels>>) {}
 /// # Panics
 ///
 /// TODO
-#[no_mangle]
+#[unsafe(no_mangle)]
 #[must_use]
 pub unsafe extern "C" fn pineappl_grid_new2(
     bins: usize,
@@ -1736,7 +1736,7 @@ pub unsafe extern "C" fn pineappl_grid_new2(
 ///
 /// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
 /// this function is not safe to call.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn pineappl_grid_fill2(
     grid: *mut Grid,
     order: usize,
@@ -1758,7 +1758,7 @@ pub unsafe extern "C" fn pineappl_grid_fill2(
 ///
 /// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
 /// this function is not safe to call.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn pineappl_grid_fill_all2(
     grid: *mut Grid,
     order: usize,
@@ -1784,7 +1784,7 @@ pub unsafe extern "C" fn pineappl_grid_fill_all2(
 /// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
 /// this function is not safe to call. Additionally, all remaining pointer parameters must be
 /// arrays as long as specified by `size`.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn pineappl_grid_fill_array2(
     grid: *mut Grid,
     orders: *const usize,
@@ -1817,7 +1817,7 @@ pub unsafe extern "C" fn pineappl_grid_fill_array2(
 ///
 /// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
 /// this function is not safe to call.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn pineappl_grid_split_channels(grid: *mut Grid) {
     let grid = unsafe { &mut *grid };
 
@@ -1833,7 +1833,7 @@ pub unsafe extern "C" fn pineappl_grid_split_channels(grid: *mut Grid) {
 /// [`pineappl_channels_new`] or [`pineappl_grid_channels`]. The parameter `factors` must point to
 /// an array as long as the result of [`pineappl_channels_combinations`] and `pdg_ids` must
 /// point to an array as long as the result multiplied with the number of convolutions.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn pineappl_channels_entry(
     channels: *const Channels,
     entry: usize,
@@ -1868,7 +1868,7 @@ pub unsafe extern "C" fn pineappl_channels_entry(
 /// If `grid` does not point to a valid `Grid` object, for example when `grid` is the `NULL`
 /// pointer, this function is not safe to call. The parameter `key` must be non-`NULL` and a valid
 /// C string.
-#[no_mangle]
+#[unsafe(no_mangle)]
 #[must_use]
 pub unsafe extern "C" fn pineappl_grid_metadata(
     grid: *const Grid,
@@ -1891,7 +1891,7 @@ pub unsafe extern "C" fn pineappl_grid_metadata(
 /// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
 /// this function is not safe to call. The parameters `key` and `value` must be non-`NULL` and
 /// valid C strings.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn pineappl_grid_set_metadata(
     grid: *mut Grid,
     key: *const c_char,
@@ -1916,7 +1916,7 @@ pub unsafe extern "C" fn pineappl_grid_set_metadata(
 /// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
 /// this function is not safe to call. The pointer `order_params` must point to an array as large
 /// as four times the number of orders in `grid`.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn pineappl_grid_order_params2(grid: *const Grid, order_params: *mut u32) {
     let grid = unsafe { &*grid };
     let orders = grid.orders();
@@ -1940,7 +1940,7 @@ pub unsafe extern "C" fn pineappl_grid_order_params2(grid: *const Grid, order_pa
 /// be null pointers and point to valid functions. The parameters `order_mask` and `channel_mask`
 /// must either be null pointers or point to arrays that are as long as `grid` has orders and
 /// channels, respectively. Finally, `results` must be as long as `grid` has bins.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn pineappl_grid_convolve(
     grid: *const Grid,
     xfx: extern "C" fn(pdg_id: i32, x: f64, q2: f64, state: *mut c_void) -> f64,
@@ -2020,7 +2020,7 @@ pub unsafe extern "C" fn pineappl_grid_convolve(
 /// # Panics
 ///
 /// TODO
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn pineappl_grid_fix_convolution(
     grid: *const Grid,
     conv_idx: usize,
@@ -2042,7 +2042,7 @@ pub unsafe extern "C" fn pineappl_grid_fix_convolution(
 /// # Safety
 ///
 /// TODO
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn pineappl_grid_conv_types(grid: *const Grid, conv_types: *mut ConvType) {
     let grid = unsafe { &*grid };
     let conv_types = unsafe { slice::from_raw_parts_mut(conv_types, grid.convolutions().len()) };
@@ -2061,7 +2061,7 @@ pub unsafe extern "C" fn pineappl_grid_conv_types(grid: *const Grid, conv_types:
 ///
 /// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
 /// this function is not safe to call.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn pineappl_grid_convolutions_len(grid: *mut Grid) -> usize {
     let grid = unsafe { &mut *grid };
 
@@ -2074,7 +2074,7 @@ pub unsafe extern "C" fn pineappl_grid_convolutions_len(grid: *mut Grid) -> usiz
 ///
 /// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
 /// this function is not safe to call.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn pineappl_grid_kinematics_len(grid: *mut Grid) -> usize {
     let grid = unsafe { &mut *grid };
 
@@ -2088,7 +2088,7 @@ pub unsafe extern "C" fn pineappl_grid_kinematics_len(grid: *mut Grid) -> usize 
 /// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
 /// this function is not safe to call. Additionally, the pointer that specifies the shape of the
 /// subgrid has to be an array whose size must be as given by `pineappl_grid_kinematics_len`.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn pineappl_grid_subgrid_shape(
     grid: *const Grid,
     bin: usize,
@@ -2114,7 +2114,7 @@ pub unsafe extern "C" fn pineappl_grid_subgrid_shape(
 ///
 /// # Safety
 ///
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn pineappl_grid_subgrid_node_values(
     grid: *const Grid,
     bin: usize,
@@ -2139,7 +2139,7 @@ pub unsafe extern "C" fn pineappl_grid_subgrid_node_values(
 /// this function is not safe to call. Additionally, the pointer that specifies the size of the subgrid
 /// when flattened must be an array; its size must be computed by multiplying the shape dimension as
 /// given by `pineappl_grid_subgrid_shape`.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn pineappl_grid_subgrid_array(
     grid: *const Grid,
     bin: usize,
@@ -2169,7 +2169,7 @@ pub unsafe extern "C" fn pineappl_grid_subgrid_array(
 ///
 /// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
 /// this function is not safe to call.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn pineappl_grid_set_subgrid(
     grid: *mut Grid,
     bin: usize,
@@ -2225,7 +2225,7 @@ pub unsafe extern "C" fn pineappl_grid_set_subgrid(
 ///
 /// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
 /// this function is not safe to call.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn pineappl_grid_set_bwfl(
     grid: *mut Grid,
     bins_lower: *mut f64,
@@ -2267,7 +2267,7 @@ pub unsafe extern "C" fn pineappl_grid_set_bwfl(
 ///
 /// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
 /// this function is not safe to call.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn pineappl_grid_evolve_info_shape(
     grid: *const Grid,
     order_mask: *const bool,
@@ -2301,7 +2301,7 @@ pub unsafe extern "C" fn pineappl_grid_evolve_info_shape(
 ///
 /// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
 /// this function is not safe to call.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn pineappl_grid_evolve_info(
     grid: *const Grid,
     order_mask: *const bool,
@@ -2375,7 +2375,7 @@ pub type OperatorCallback = unsafe extern "C" fn(
 ///
 /// This function might panic if the either the `op_info` and/or `operators` are/is incompatible
 /// with the `Grid`.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn pineappl_grid_evolve(
     grid: *const Grid,
     nb_slices: usize,
@@ -2489,7 +2489,7 @@ pub unsafe extern "C" fn pineappl_grid_evolve(
 /// # Panics
 ///
 /// This function panics if `grid` is not an FK table-like object.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn pineappl_fktable_optimize(grid: *mut Grid, assumptions: FkAssumptions) {
     let grid = unsafe { &mut *grid };
     // SAFETY: this code has been copied from the `take_mut` crate
