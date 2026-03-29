@@ -34,7 +34,7 @@ serde = { features = ["derive"], version = "1.0.130" }
 thiserror = "1.0.30"
 
 [dev-dependencies]
-lhapdf = { package = "managed-lhapdf", version = "0.3.4" }
+lhapdf = { package = "managed-lhapdf", version = "0.4.0" }
 num-complex = "0.4.4"
 rand = { default-features = false, version = "0.8.4" }
 rand_pcg = { default-features = false, version = "0.3.1" }
