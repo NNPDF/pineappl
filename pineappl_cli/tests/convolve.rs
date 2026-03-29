@@ -490,3 +490,51 @@ fn neopdf_backend() {
         .success()
         .stdout(str::contains(DEFAULT_STR));
 }
+
+#[test]
+fn integrated_neopdf_backend() {
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "--pdf-backend=neopdf",
+            "convolve",
+            "--integrated",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
+            "NNPDF31_nlo_as_0118_luxqed",
+        ])
+        .assert()
+        .success()
+        .stdout(INTEGRATED_STR);
+}
+
+#[test]
+fn bins_13567_neopdf_backend() {
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "--pdf-backend=neopdf",
+            "convolve",
+            "--bins=1,3,5-7",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
+            "NNPDF31_nlo_as_0118_luxqed",
+        ])
+        .assert()
+        .success()
+        .stdout(BINS_13567_STR);
+}
+
+#[test]
+fn force_positive_neopdf_backend() {
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "--force-positive",
+            "--pdf-backend=neopdf",
+            "convolve",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
+            "NNPDF31_nlo_as_0118_luxqed",
+        ])
+        .assert()
+        .success()
+        .stdout(FORCE_POSITIVE_STR);
+}

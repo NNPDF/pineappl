@@ -8,8 +8,7 @@ use anyhow::{anyhow, Context, Result};
 use std::fmt;
 use std::str::FromStr;
 
-/// Constant for 1-sigma confidence level (for compatibility with `lhapdf::CL_1_SIGMA`).
-pub const CL_1_SIGMA: f64 = 68.268_949_213_708_58;
+pub use neopdf::uncertainty::CL_1_SIGMA;
 
 /// The type of PDF set (space-like for PDFs, time-like for FFs).
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -374,47 +373,20 @@ impl PdfSetBackend for NeopdfSet {
             .collect())
     }
 
-    fn uncertainty(&self, values: &[f64], cl: f64, _alternative: bool) -> Result<Uncertainty> {
-        let central = values[0];
-
-        let (errminus, errplus) = if self.error_type.to_lowercase().contains("replicas")
-            || self.error_type.to_lowercase().contains("monte carlo")
-        {
-            let n = values.len() as f64;
-            let mean: f64 = values.iter().skip(1).sum::<f64>() / (n - 1.0);
-            let variance: f64 = values
-                .iter()
-                .skip(1)
-                .map(|&v| (v - mean).powi(2))
-                .sum::<f64>()
-                / (n - 1.0);
-            let std_dev = variance.sqrt();
-
-            let scale = if (cl - 68.27).abs() < 0.1 {
-                1.0
-            } else if (cl - 95.45).abs() < 0.1 {
-                2.0
-            } else {
-                cl / 100.0 * 1.645 // approximate
-            };
-
-            (std_dev * scale, std_dev * scale)
-        } else {
-            let mut sum_sq = 0.0;
-            for pair in values[1..].chunks(2) {
-                if pair.len() == 2 {
-                    let diff = (pair[0] - pair[1]).abs() / 2.0;
-                    sum_sq += diff.powi(2);
-                }
-            }
-            let err = sum_sq.sqrt();
-            (err, err)
-        };
+    fn uncertainty(&self, values: &[f64], cl: f64, alternative: bool) -> Result<Uncertainty> {
+        let unc = neopdf::uncertainty::uncertainty(
+            values,
+            &self.error_type,
+            neopdf::uncertainty::CL_1_SIGMA,
+            cl,
+            alternative,
+        )
+        .map_err(|e| anyhow::anyhow!(e))?;
 
         Ok(Uncertainty {
-            central,
-            errminus,
-            errplus,
+            central: unc.central,
+            errminus: unc.errminus,
+            errplus: unc.errplus,
         })
     }
 }
