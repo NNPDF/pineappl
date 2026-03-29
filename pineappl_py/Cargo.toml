@@ -8,6 +8,7 @@ authors = [
 description = "Python bindings to PineAPPL"
 name = "pineappl_py"
 readme = "README.md"
+publish = false
 
 categories.workspace = true
 edition.workspace = true
