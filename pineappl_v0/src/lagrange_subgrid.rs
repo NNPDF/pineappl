@@ -227,7 +227,7 @@ impl Subgrid for LagrangeSubgridV1 {
         }
     }
 
-    fn mu2_grid(&self) -> Cow<[Mu2]> {
+    fn mu2_grid(&self) -> Cow<'_, [Mu2]> {
         (0..self.ntau)
             .map(|itau| {
                 let q2 = fq2(self.gettau(itau));
@@ -236,11 +236,11 @@ impl Subgrid for LagrangeSubgridV1 {
             .collect()
     }
 
-    fn x1_grid(&self) -> Cow<[f64]> {
+    fn x1_grid(&self) -> Cow<'_, [f64]> {
         (0..self.ny).map(|iy| fx(self.gety(iy))).collect()
     }
 
-    fn x2_grid(&self) -> Cow<[f64]> {
+    fn x2_grid(&self) -> Cow<'_, [f64]> {
         self.x1_grid()
     }
 
@@ -338,7 +338,7 @@ impl Subgrid for LagrangeSubgridV1 {
         .into()
     }
 
-    fn indexed_iter(&self) -> SubgridIndexedIter {
+    fn indexed_iter(&self) -> SubgridIndexedIter<'_> {
         self.grid.as_ref().map_or_else(
             || Box::new(iter::empty()) as Box<dyn Iterator<Item = ((usize, usize, usize), f64)>>,
             |grid| {
@@ -610,7 +610,7 @@ impl Subgrid for LagrangeSubgridV2 {
         }
     }
 
-    fn mu2_grid(&self) -> Cow<[Mu2]> {
+    fn mu2_grid(&self) -> Cow<'_, [Mu2]> {
         (0..self.ntau)
             .map(|itau| {
                 let q2 = fq2(self.gettau(itau));
@@ -619,11 +619,11 @@ impl Subgrid for LagrangeSubgridV2 {
             .collect()
     }
 
-    fn x1_grid(&self) -> Cow<[f64]> {
+    fn x1_grid(&self) -> Cow<'_, [f64]> {
         (0..self.ny1).map(|iy| fx(self.gety1(iy))).collect()
     }
 
-    fn x2_grid(&self) -> Cow<[f64]> {
+    fn x2_grid(&self) -> Cow<'_, [f64]> {
         (0..self.ny2).map(|iy| fx(self.gety2(iy))).collect()
     }
 
@@ -732,7 +732,7 @@ impl Subgrid for LagrangeSubgridV2 {
         .into()
     }
 
-    fn indexed_iter(&self) -> SubgridIndexedIter {
+    fn indexed_iter(&self) -> SubgridIndexedIter<'_> {
         self.grid.as_ref().map_or_else(
             || Box::new(iter::empty()) as Box<dyn Iterator<Item = ((usize, usize, usize), f64)>>,
             |grid| {
@@ -922,7 +922,7 @@ impl Subgrid for LagrangeSparseSubgridV1 {
         }
     }
 
-    fn mu2_grid(&self) -> Cow<[Mu2]> {
+    fn mu2_grid(&self) -> Cow<'_, [Mu2]> {
         (0..self.ntau)
             .map(|itau| {
                 let q2 = fq2(self.gettau(itau));
@@ -931,11 +931,11 @@ impl Subgrid for LagrangeSparseSubgridV1 {
             .collect()
     }
 
-    fn x1_grid(&self) -> Cow<[f64]> {
+    fn x1_grid(&self) -> Cow<'_, [f64]> {
         (0..self.ny).map(|iy| fx(self.gety(iy))).collect()
     }
 
-    fn x2_grid(&self) -> Cow<[f64]> {
+    fn x2_grid(&self) -> Cow<'_, [f64]> {
         self.x1_grid()
     }
 
@@ -1006,7 +1006,7 @@ impl Subgrid for LagrangeSparseSubgridV1 {
         .into()
     }
 
-    fn indexed_iter(&self) -> SubgridIndexedIter {
+    fn indexed_iter(&self) -> SubgridIndexedIter<'_> {
         Box::new(self.array.indexed_iter().map(|(tuple, value)| {
             (
                 tuple,

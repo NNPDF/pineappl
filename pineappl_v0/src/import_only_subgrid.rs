@@ -57,7 +57,7 @@ impl Subgrid for ImportOnlySubgridV1 {
         panic!("ImportOnlySubgridV1 doesn't support the fill operation");
     }
 
-    fn mu2_grid(&self) -> Cow<[Mu2]> {
+    fn mu2_grid(&self) -> Cow<'_, [Mu2]> {
         self.q2_grid
             .iter()
             .copied()
@@ -65,11 +65,11 @@ impl Subgrid for ImportOnlySubgridV1 {
             .collect()
     }
 
-    fn x1_grid(&self) -> Cow<[f64]> {
+    fn x1_grid(&self) -> Cow<'_, [f64]> {
         Cow::Borrowed(&self.x1_grid)
     }
 
-    fn x2_grid(&self) -> Cow<[f64]> {
+    fn x2_grid(&self) -> Cow<'_, [f64]> {
         Cow::Borrowed(&self.x2_grid)
     }
 
@@ -151,7 +151,7 @@ impl Subgrid for ImportOnlySubgridV1 {
         .into()
     }
 
-    fn indexed_iter(&self) -> SubgridIndexedIter {
+    fn indexed_iter(&self) -> SubgridIndexedIter<'_> {
         Box::new(self.array.indexed_iter())
     }
 
@@ -227,15 +227,15 @@ impl Subgrid for ImportOnlySubgridV2 {
         panic!("ImportOnlySubgridV2 doesn't support the fill operation");
     }
 
-    fn mu2_grid(&self) -> Cow<[Mu2]> {
+    fn mu2_grid(&self) -> Cow<'_, [Mu2]> {
         Cow::Borrowed(&self.mu2_grid)
     }
 
-    fn x1_grid(&self) -> Cow<[f64]> {
+    fn x1_grid(&self) -> Cow<'_, [f64]> {
         Cow::Borrowed(&self.x1_grid)
     }
 
-    fn x2_grid(&self) -> Cow<[f64]> {
+    fn x2_grid(&self) -> Cow<'_, [f64]> {
         Cow::Borrowed(&self.x2_grid)
     }
 
@@ -363,7 +363,7 @@ impl Subgrid for ImportOnlySubgridV2 {
         .into()
     }
 
-    fn indexed_iter(&self) -> SubgridIndexedIter {
+    fn indexed_iter(&self) -> SubgridIndexedIter<'_> {
         Box::new(self.array.indexed_iter())
     }
 

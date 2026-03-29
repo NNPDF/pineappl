@@ -313,7 +313,7 @@ impl Grid {
         }
     }
 
-    fn pdg_channels(&self) -> Cow<[Channel]> {
+    fn pdg_channels(&self) -> Cow<'_, [Channel]> {
         match self.pid_basis() {
             PidBasis::Evol => self
                 .channels
@@ -953,13 +953,13 @@ impl Grid {
 
     /// Return all subgrids as an `ArrayView3`.
     #[must_use]
-    pub fn subgrids(&self) -> ArrayView3<SubgridEnum> {
+    pub fn subgrids(&self) -> ArrayView3<'_, SubgridEnum> {
         self.subgrids.view()
     }
 
     /// Return all subgrids as an `ArrayViewMut3`.
     #[must_use]
-    pub fn subgrids_mut(&mut self) -> ArrayViewMut3<SubgridEnum> {
+    pub fn subgrids_mut(&mut self) -> ArrayViewMut3<'_, SubgridEnum> {
         self.subgrids.view_mut()
     }
 
@@ -1016,7 +1016,7 @@ impl Grid {
 
     /// Returns all information about the bins in this grid.
     #[must_use]
-    pub const fn bin_info(&self) -> BinInfo {
+    pub const fn bin_info(&self) -> BinInfo<'_> {
         BinInfo::new(&self.bin_limits, self.remapper())
     }
 

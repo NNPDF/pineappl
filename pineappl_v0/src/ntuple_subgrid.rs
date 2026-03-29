@@ -39,15 +39,15 @@ impl Subgrid for NtupleSubgridV1 {
         self.ntuples.push(ntuple.clone());
     }
 
-    fn mu2_grid(&self) -> Cow<[Mu2]> {
+    fn mu2_grid(&self) -> Cow<'_, [Mu2]> {
         Cow::Borrowed(&[])
     }
 
-    fn x1_grid(&self) -> Cow<[f64]> {
+    fn x1_grid(&self) -> Cow<'_, [f64]> {
         Cow::Borrowed(&[])
     }
 
-    fn x2_grid(&self) -> Cow<[f64]> {
+    fn x2_grid(&self) -> Cow<'_, [f64]> {
         Cow::Borrowed(&[])
     }
 
@@ -75,7 +75,7 @@ impl Subgrid for NtupleSubgridV1 {
         Self::new().into()
     }
 
-    fn indexed_iter(&self) -> SubgridIndexedIter {
+    fn indexed_iter(&self) -> SubgridIndexedIter<'_> {
         panic!("NtupleSubgridV1 doesn't support the indexed_iter operation");
     }
 

@@ -67,15 +67,15 @@ pub trait Subgrid {
     /// Return a slice of [`Mu2`] values corresponding to the (squared) renormalization and
     /// factorization values of the grid. If the subgrid does not use a grid, this method should
     /// return an empty slice.
-    fn mu2_grid(&self) -> Cow<[Mu2]>;
+    fn mu2_grid(&self) -> Cow<'_, [Mu2]>;
 
     /// Return a slice of values of `x1`. If the subgrid does not use a grid, this method should
     /// return an empty slice.
-    fn x1_grid(&self) -> Cow<[f64]>;
+    fn x1_grid(&self) -> Cow<'_, [f64]>;
 
     /// Return a slice of values of `x2`. If the subgrid does not use a grid, this method should
     /// return an empty slice.
-    fn x2_grid(&self) -> Cow<[f64]>;
+    fn x2_grid(&self) -> Cow<'_, [f64]>;
 
     /// Convolute the subgrid with a luminosity function, which takes indices as arguments that
     /// correspond to the entries given in the slices `x1`, `x2` and `mu2`.
@@ -109,7 +109,7 @@ pub trait Subgrid {
     fn clone_empty(&self) -> SubgridEnum;
 
     /// Return an iterator over all non-zero elements of the subgrid.
-    fn indexed_iter(&self) -> SubgridIndexedIter;
+    fn indexed_iter(&self) -> SubgridIndexedIter<'_>;
 
     /// Return statistics for this subgrid.
     fn stats(&self) -> Stats;
