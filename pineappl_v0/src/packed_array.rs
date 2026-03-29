@@ -109,7 +109,7 @@ impl<T: Copy + Default + PartialEq> PackedArray<T, 3> {
 
         for ((i, j, k), &entry) in array
             .indexed_iter()
-            .filter(|(_, &entry)| entry != Default::default())
+            .filter(|&(_, &entry)| entry != Default::default())
         {
             result[[i + xstart, j, k]] = entry;
         }

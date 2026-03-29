@@ -748,14 +748,14 @@ mod tests {
 
         for _ in 0..1000 {
             grid1.fill(&Ntuple {
-                x1: rng.gen(),
-                x2: rng.gen(),
+                x1: rng.r#gen(),
+                x2: rng.r#gen(),
                 q2: q2_range.sample(&mut rng),
                 weight: 1.0,
             });
             grid2.fill(&Ntuple {
-                x1: rng.gen(),
-                x2: rng.gen(),
+                x1: rng.r#gen(),
+                x2: rng.r#gen(),
                 q2: q2_range.sample(&mut rng),
                 weight: 1.0,
             });

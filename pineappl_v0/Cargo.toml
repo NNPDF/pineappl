@@ -5,7 +5,7 @@ name = "pineappl_v0"
 readme = "README.md"
 
 categories.workspace = true
-edition = "2021"
+edition.workspace = true
 keywords.workspace = true
 license.workspace = true
 repository.workspace = true

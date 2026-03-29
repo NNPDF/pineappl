@@ -342,7 +342,7 @@ impl Subgrid for LagrangeSubgridV1 {
         self.grid.as_ref().map_or_else(
             || Box::new(iter::empty()) as Box<dyn Iterator<Item = ((usize, usize, usize), f64)>>,
             |grid| {
-                Box::new(grid.indexed_iter().filter(|(_, &value)| value != 0.0).map(
+                Box::new(grid.indexed_iter().filter(|&(_, &value)| value != 0.0).map(
                     |(tuple, &value)| {
                         (
                             (self.itaumin + tuple.0, tuple.1, tuple.2),
@@ -736,7 +736,7 @@ impl Subgrid for LagrangeSubgridV2 {
         self.grid.as_ref().map_or_else(
             || Box::new(iter::empty()) as Box<dyn Iterator<Item = ((usize, usize, usize), f64)>>,
             |grid| {
-                Box::new(grid.indexed_iter().filter(|(_, &value)| value != 0.0).map(
+                Box::new(grid.indexed_iter().filter(|&(_, &value)| value != 0.0).map(
                     |(tuple, &value)| {
                         (
                             (self.itaumin + tuple.0, tuple.1, tuple.2),

@@ -83,8 +83,8 @@ fn hadronic_pspgen(rng: &mut impl Rng, mmin: f64, mmax: f64) -> Psp2to2 {
 
     let mut jacobian = 1.0;
 
-    let r1 = rng.gen::<f64>();
-    let r2 = rng.gen::<f64>();
+    let r1 = rng.r#gen::<f64>();
+    let r2 = rng.r#gen::<f64>();
     let tau0 = smin / smax;
     let tau = tau0.powf(r1);
     let y = tau.powf(1.0 - r2);
@@ -94,7 +94,7 @@ fn hadronic_pspgen(rng: &mut impl Rng, mmin: f64, mmax: f64) -> Psp2to2 {
     jacobian *= tau * tau0.ln().powi(2) * r1;
 
     // theta integration (in the CMS)
-    let cos_theta = 2.0 * rng.gen::<f64>() - 1.0;
+    let cos_theta = 2.0 * rng.r#gen::<f64>() - 1.0;
     jacobian *= 2.0;
 
     let t = -0.5 * s * (1.0 - cos_theta);
