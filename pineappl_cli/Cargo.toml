@@ -30,7 +30,7 @@ lhapdf = { package = "managed-lhapdf", version = "0.3.4" }
 lz4_flex = { optional = true, version = "0.11.6" }
 ndarray = "0.16.1"
 ndarray-npy = { default-features = false, features = ["npz"], optional = true, version = "0.9.1" }
-neopdf = "0.3.1"
+neopdf = "0.3.2"
 pineappl = { path = "../pineappl", version = "=1.3.3" }
 pineappl_applgrid = { optional = true, path = "../pineappl_applgrid", version = "=1.3.3" }
 pineappl_fastnlo = { optional = true, path = "../pineappl_fastnlo", version = "=1.3.3" }
