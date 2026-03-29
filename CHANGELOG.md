@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+Starting with this version, PineAPPL has an official logo!
+
 ### Added
 
 - added an actual implementation of `pineappl_grid_metadata` and
