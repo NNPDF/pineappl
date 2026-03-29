@@ -1,11 +1,11 @@
 [package]
 authors = ["Christopher Schwan <handgranaten-herbert@posteo.de>"]
 description = "PineAPPL is not an extension of APPLgrid"
-name = "pineappl"
+name = "pineappl_v0"
 readme = "README.md"
 
 categories.workspace = true
-edition.workspace = true
+edition = "2021"
 keywords.workspace = true
 license.workspace = true
 repository.workspace = true
@@ -24,7 +24,7 @@ enum_dispatch = "0.3.7"
 float-cmp = "0.9.0"
 git-version = "0.3.5"
 itertools = "0.10.1"
-lz4_flex = "0.9.2"
+lz4_flex = "0.11.6"
 ndarray = { features = ["serde"], version = "0.15.4" }
 rustc-hash = "1.1.0"
 serde = { features = ["derive"], version = "1.0.130" }
@@ -32,7 +32,7 @@ thiserror = "1.0.30"
 
 [dev-dependencies]
 anyhow = "1.0.48"
-lhapdf = { package = "managed-lhapdf", version = "0.3.2" }
+lhapdf = { package = "managed-lhapdf", version = "0.4.0" }
 num-complex = "0.4.4"
 rand = { default-features = false, version = "0.8.4" }
 rand_pcg = { default-features = false, version = "0.3.1" }

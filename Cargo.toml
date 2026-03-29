@@ -6,6 +6,7 @@ members = [
     "pineappl_cli",
     "pineappl_fastnlo",
     "pineappl_py",
+    "pineappl_v0",
     "xtask",
 ]
 default-members = [
