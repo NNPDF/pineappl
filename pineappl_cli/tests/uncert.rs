@@ -1,6 +1,7 @@
 #![allow(missing_docs)]
 
 use assert_cmd::Command;
+use predicates::str;
 use std::num::NonZeroUsize;
 use std::thread;
 
@@ -202,6 +203,28 @@ const SCALE_ENV_9_STR: &str = "b   etal    dsig/detal  9pt-svar (env)
 5 3.25  3.5 2.4586691e2   -5.40    4.73
 6  3.5    4 1.1586851e2   -5.37    4.94
 7    4  4.5 2.7517266e1   -5.36    5.22
+";
+
+const NEOPDF_CONV_FUN_STR: &str = "-+----+----+-----------+-----------+---------+---------
+0    2 2.25 7.5459110e2 7.5461655e2     -1.14      1.14
+1 2.25  2.5 6.9028342e2 6.9027941e2     -1.16      1.16
+2  2.5 2.75 6.0025198e2 6.0022595e2     -1.18      1.18
+3 2.75    3 4.8552235e2 4.8548211e2     -1.22      1.22
+4    3 3.25 3.6195456e2 3.6191001e2     -1.27      1.27
+5 3.25  3.5 2.4586691e2 2.4582640e2     -1.35      1.35
+6  3.5    4 1.1586851e2 1.1584074e2     -1.51      1.51
+7    4  4.5 2.7517266e1 2.7504644e1     -2.77      2.77
+";
+
+const NEOPDF_CONV_FUN_CL_90_STR: &str = "-+----+----+-----------+-----------+---------+---------
+0    2 2.25 7.5459110e2 7.5461655e2     -1.87      1.87
+1 2.25  2.5 6.9028342e2 6.9027941e2     -1.90      1.90
+2  2.5 2.75 6.0025198e2 6.0022595e2     -1.95      1.95
+3 2.75    3 4.8552235e2 4.8548211e2     -2.00      2.00
+4    3 3.25 3.6195456e2 3.6191001e2     -2.08      2.08
+5 3.25  3.5 2.4586691e2 2.4582640e2     -2.22      2.22
+6  3.5    4 1.1586851e2 1.1584074e2     -2.48      2.48
+7    4  4.5 2.7517266e1 2.7504644e1     -4.56      4.56
 ";
 
 #[test]
@@ -436,4 +459,89 @@ fn scale_env_9() {
         .assert()
         .success()
         .stdout(SCALE_ENV_9_STR);
+}
+
+#[test]
+fn conv_fun_neopdf_backend() {
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "--pdf-backend=neopdf",
+            "uncert",
+            "--conv-fun",
+            "--threads=1",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
+            "NNPDF31_nlo_as_0118_luxqed",
+        ])
+        .assert()
+        .success()
+        .stdout(str::contains(NEOPDF_CONV_FUN_STR));
+}
+
+#[test]
+fn conv_fun_cl_90_neopdf_backend() {
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "--pdf-backend=neopdf",
+            "uncert",
+            "--conv-fun",
+            "--cl=90",
+            "--threads=1",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
+            "NNPDF31_nlo_as_0118_luxqed",
+        ])
+        .assert()
+        .success()
+        .stdout(str::contains(NEOPDF_CONV_FUN_CL_90_STR));
+}
+
+#[test]
+fn scale_env_neopdf_backend() {
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "--pdf-backend=neopdf",
+            "uncert",
+            "--scale-env",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
+            "NNPDF31_nlo_as_0118_luxqed",
+        ])
+        .assert()
+        .success()
+        .stdout(str::contains(SCALE_ENV_STR));
+}
+
+#[test]
+fn conv_fun_orders_a2_as1a2_neopdf_beckend() {
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "--pdf-backend=neopdf",
+            "uncert",
+            "--conv-fun=0",
+            "--orders=a2,as1a2",
+            "--threads=1",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
+            "NNPDF31_nlo_as_0118_luxqed",
+        ])
+        .assert()
+        .success()
+        .stdout(ORDERS_A2_AS1A2_STR);
+}
+
+#[test]
+fn scale_abs_9_neopdf_backend() {
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "--pdf-backend=neopdf",
+            "uncert",
+            "--scale-abs=9",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
+            "NNPDF31_nlo_as_0118_luxqed",
+        ])
+        .assert()
+        .success()
+        .stdout(SCALE_ABS_9_STR);
 }

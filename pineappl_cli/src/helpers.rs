@@ -1,3 +1,4 @@
+use super::pdf_backend::{self, Backend, ForcePositive, PdfBackend, PdfSetBackend};
 use super::GlobalConfiguration;
 use anyhow::{anyhow, bail, Context, Error, Result};
 use itertools::Itertools;
@@ -69,6 +70,7 @@ impl FromStr for ConvFuns {
     }
 }
 
+/// Creates convolution functions using LHAPDF backend (legacy).
 pub fn create_conv_funs(funs: &ConvFuns) -> Result<Vec<Pdf>> {
     Ok(funs
         .lhapdf_names
@@ -87,6 +89,22 @@ pub fn create_conv_funs(funs: &ConvFuns) -> Result<Vec<Pdf>> {
         .collect::<Result<_, _>>()?)
 }
 
+/// Creates convolution functions using the specified backend.
+pub fn create_conv_funs_with_backend(
+    funs: &ConvFuns,
+    backend: Backend,
+) -> Result<Vec<Box<dyn PdfBackend>>> {
+    funs.lhapdf_names
+        .iter()
+        .zip(&funs.members)
+        .map(|(name, member)| {
+            let member = member.unwrap_or(0);
+            pdf_backend::create_pdf(name, member, backend)
+        })
+        .collect()
+}
+
+/// Creates convolution functions for a PDF set using LHAPDF backend (legacy).
 pub fn create_conv_funs_for_set(
     funs: &ConvFuns,
     index_of_set: usize,
@@ -113,6 +131,30 @@ pub fn create_conv_funs_for_set(
             let mut conv_funs = create_conv_funs(funs)?;
             conv_funs[index_of_set] = conv_fun;
 
+            Ok::<_, Error>(conv_funs)
+        })
+        .collect::<Result<_, _>>()?;
+
+    Ok((set, conv_funs))
+}
+
+/// Creates convolution functions for a PDF set using the specified backend.
+///
+/// Returns a tuple of (`PdfSetBackend`, Vec<Vec<Box<dyn PdfBackend>>>).
+pub fn create_conv_funs_for_set_with_backend(
+    funs: &ConvFuns,
+    index_of_set: usize,
+    backend: Backend,
+) -> Result<(Box<dyn PdfSetBackend>, Vec<Vec<Box<dyn PdfBackend>>>)> {
+    let setname = &funs.lhapdf_names[index_of_set];
+    let set = pdf_backend::create_pdf_set(setname, backend)?;
+
+    let set_members = set.mk_pdfs()?;
+    let conv_funs = set_members
+        .into_iter()
+        .map(|member_pdf| {
+            let mut conv_funs = create_conv_funs_with_backend(funs, backend)?;
+            conv_funs[index_of_set] = member_pdf;
             Ok::<_, Error>(conv_funs)
         })
         .collect::<Result<_, _>>()?;
@@ -243,6 +285,7 @@ pub enum ConvoluteMode {
     Normal,
 }
 
+/// Performs convolution with scale variations using LHAPDF backend (legacy).
 pub fn convolve_scales(
     grid: &Grid,
     conv_funs: &mut [Pdf],
@@ -326,8 +369,125 @@ pub fn convolve_scales(
     match mode {
         ConvoluteMode::Asymmetry => {
             let bin_count = grid.bwfl().len();
+            assert!((bins.is_empty() || (bins.len() == bin_count)) && (bin_count % 2 == 0));
 
-            // calculating the asymmetry for a subset of bins doesn't work
+            results
+                .iter()
+                .skip((bin_count / 2) * scales.len())
+                .zip(
+                    results
+                        .chunks_exact(scales.len())
+                        .take(bin_count / 2)
+                        .rev()
+                        .flatten(),
+                )
+                .map(|(pos, neg)| (pos - neg) / (pos + neg))
+                .collect()
+        }
+        ConvoluteMode::Integrated => {
+            results
+                .iter_mut()
+                .zip(
+                    grid.bwfl()
+                        .normalizations()
+                        .into_iter()
+                        .enumerate()
+                        .filter(|(index, _)| bins.is_empty() || bins.contains(index))
+                        .flat_map(|(_, norm)| iter::repeat(norm).take(scales.len())),
+                )
+                .for_each(|(value, norm)| *value *= norm);
+
+            results
+        }
+        ConvoluteMode::Normal => results,
+    }
+}
+
+/// Performs convolution with scale variations using the backend abstraction.
+#[allow(clippy::too_many_arguments)]
+pub fn convolve_scales_with_backend(
+    grid: &Grid,
+    conv_funs: &mut [Box<dyn PdfBackend>],
+    conv_types: &[ConvType],
+    orders: &[(u8, u8)],
+    bins: &[usize],
+    channels: &[bool],
+    scales: &[(f64, f64, f64)],
+    mode: ConvoluteMode,
+    cfg: &GlobalConfiguration,
+) -> Vec<f64> {
+    let orders: Vec<_> = grid
+        .orders()
+        .iter()
+        .map(|order| {
+            orders.is_empty()
+                || orders
+                    .iter()
+                    .any(|other| (order.alphas == other.0) && (order.alpha == other.1))
+        })
+        .collect();
+
+    if cfg.force_positive {
+        for fun in conv_funs.iter_mut() {
+            fun.set_force_positive(ForcePositive::ClipNegative);
+        }
+    }
+
+    // TODO: promote this to an error
+    assert!(
+        cfg.use_alphas_from < conv_funs.len(),
+        "expected `use_alphas_from` to be an integer within `[0, {})`, but got `{}`",
+        conv_funs.len(),
+        cfg.use_alphas_from
+    );
+
+    let x_min_max: Vec<_> = conv_funs
+        .iter_mut()
+        .map(|fun| (fun.x_min(), fun.x_max()))
+        .collect();
+
+    let mut funs: Vec<_> = conv_funs
+        .iter()
+        .zip(&x_min_max)
+        .map(|(fun, &(x_min, x_max))| {
+            move |id: i32, x: f64, q2: f64| {
+                if !cfg.allow_extrapolation && (x < x_min || x > x_max) {
+                    0.0
+                } else {
+                    fun.xfx_q2(id, x, q2)
+                }
+            }
+        })
+        .collect();
+
+    let xfx: Vec<_> = funs
+        .iter_mut()
+        .map(|fun| fun as &mut dyn FnMut(i32, f64, f64) -> f64)
+        .collect();
+
+    let mut alphas_funs: Vec<_> = conv_funs
+        .iter()
+        .map(|fun| {
+            let fun_ref = fun.as_ref();
+            move |q2: f64| fun_ref.alphas_q2(q2)
+        })
+        .collect();
+
+    let convolutions: Vec<_> = conv_funs
+        .iter()
+        .zip(conv_types)
+        .map(|(fun, &conv_type)| {
+            let pid = fun.particle_id();
+            Conv::new(conv_type, pid)
+        })
+        .collect();
+
+    let mut cache = ConvolutionCache::new(convolutions, xfx, &mut alphas_funs[cfg.use_alphas_from]);
+    let mut results = grid.convolve(&mut cache, &orders, bins, channels, scales);
+
+    match mode {
+        ConvoluteMode::Asymmetry => {
+            let bin_count = grid.bwfl().len();
             assert!((bins.is_empty() || (bins.len() == bin_count)) && (bin_count % 2 == 0));
 
             results
@@ -378,6 +538,7 @@ pub fn scales_vector(grid: &Grid, scales: usize) -> &[(f64, f64, f64)] {
     }
 }
 
+/// Performs convolution using LHAPDF backend (legacy).
 pub fn convolve(
     grid: &Grid,
     conv_funs: &mut [Pdf],
@@ -390,6 +551,32 @@ pub fn convolve(
     cfg: &GlobalConfiguration,
 ) -> Vec<f64> {
     convolve_scales(
+        grid,
+        conv_funs,
+        conv_types,
+        orders,
+        bins,
+        lumis,
+        scales_vector(grid, scales),
+        mode,
+        cfg,
+    )
+}
+
+/// Performs convolution using the backend abstraction.
+#[allow(clippy::too_many_arguments)]
+pub fn convolve_with_backend(
+    grid: &Grid,
+    conv_funs: &mut [Box<dyn PdfBackend>],
+    conv_types: &[ConvType],
+    orders: &[(u8, u8)],
+    bins: &[usize],
+    lumis: &[bool],
+    scales: usize,
+    mode: ConvoluteMode,
+    cfg: &GlobalConfiguration,
+) -> Vec<f64> {
+    convolve_scales_with_backend(
         grid,
         conv_funs,
         conv_types,
