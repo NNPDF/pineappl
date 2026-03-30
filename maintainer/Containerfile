@@ -2,7 +2,7 @@
 # https://github.com/rust-lang/rust/issues/79946#issuecomment-1693289299
 FROM debian:11-slim
 
-ARG CARGOC_V=0.10.3
+ARG CARGOC_V=0.10.21
 
 # important for building the APPLgrid interface in the CI
 ENV APPL_IGRID_DIR="/usr/local/src/applgrid/src"

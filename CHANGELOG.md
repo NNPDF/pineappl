@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+Starting with this version, PineAPPL has an official logo!
+
 ### Added
 
 - added an actual implementation of `pineappl_grid_metadata` and
@@ -18,10 +20,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   of iteration
 - fixed a bug in the implementation of `pineappl_channels_add` of the Fortran
   API
+- Improve detection of convolution function in the CLI
 
 ### Changed
 
 - raised MSRV to 1.94.0
+- raised Rust edition to 2024
 
 ## [1.3.3] - 01/03/2026
 

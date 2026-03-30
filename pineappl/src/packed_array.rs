@@ -145,7 +145,7 @@ impl<T: Copy + Default + PartialEq> PackedArray<T> {
 
         for ((i, j, k), &entry) in array
             .indexed_iter()
-            .filter(|(_, &entry)| entry != Default::default())
+            .filter(|&(_, &entry)| entry != Default::default())
         {
             result[[i + xstart, j, k]] = entry;
         }
@@ -161,7 +161,7 @@ impl<T: Copy + Default + PartialEq> From<ArrayViewD<'_, T>> for PackedArray<T> {
         for (i, &entry) in array
             .iter()
             .enumerate()
-            .filter(|(_, &entry)| entry != Default::default())
+            .filter(|&(_, &entry)| entry != Default::default())
         {
             result[i] = entry;
         }

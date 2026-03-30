@@ -72,7 +72,7 @@ fn reconstruct_channels(
 
                 assert!(channel.len() == nsubproc);
 
-                for (i, &l) in channel.iter().enumerate().filter(|(_, &l)| l != 0.0) {
+                for (i, &l) in channel.iter().enumerate().filter(|&(_, &l)| l != 0.0) {
                     let ap = pid_to_pdg_id(i32::try_from(a).unwrap() - 6);
                     let bp = pid_to_pdg_id(i32::try_from(b).unwrap() - 6);
 
@@ -438,8 +438,6 @@ fn convert_coeff_add_flex(
                         if npdf == 1 {
                             array[[is1, is2, ix1]] = value * factor * x1_values[ix1];
                         } else if npdf == 2 {
-                            assert_eq!(is2, 0);
-
                             array[[is1, is2, ix1, ix2]] =
                                 value * factor * x1_values[ix1] * x2_values[ix2];
                         }
@@ -466,8 +464,7 @@ fn convert_coeff_add_flex(
                 } else {
                     vec![
                         scale_nodes1.iter().map(|s| s * s).collect(),
-                        // scale_nodes2.iter().map(|s| s * s).collect(),
-                        vec![100000.0],
+                        scale_nodes2.iter().map(|s| s * s).collect(),
                         x1_values.clone(),
                         x2_values.clone(),
                     ]
