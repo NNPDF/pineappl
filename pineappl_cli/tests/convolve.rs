@@ -508,6 +508,23 @@ fn integrated_neopdf_backend() {
 }
 
 #[test]
+fn three_pdfs_neopdf_backend() {
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "--pdf-backend=neopdf",
+            "convolve",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
+            "NNPDF31_nlo_as_0118_luxqed/0",
+            "NNPDF31_nlo_as_0118_luxqed/1",
+            "NNPDF31_nlo_as_0118_luxqed/2",
+        ])
+        .assert()
+        .success()
+        .stdout(THREE_PDFS_STR);
+}
+
+#[test]
 fn bins_13567_neopdf_backend() {
     Command::cargo_bin("pineappl")
         .unwrap()
