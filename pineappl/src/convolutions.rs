@@ -31,7 +31,14 @@ pub struct ConvolutionCache<'a> {
 }
 
 impl<'a> ConvolutionCache<'a> {
-    /// TODO
+    /// Construct a new convolution cache.
+    ///
+    /// - `convolutions` describes each convolution function (PDF/FF type and hadron PID).
+    /// - `xfx` provides one callback per convolution, used to evaluate `x f(x, μ^2)` for
+    ///   a given PID, `x`, and scale `μ^2`.
+    /// - `alphas` provides a callback to evaluate `μ^2`.
+    ///
+    /// The cache is filled lazily as [`Grid`] convolution is performed.
     pub fn new(
         convolutions: Vec<Conv>,
         xfx: Vec<&'a mut dyn FnMut(i32, f64, f64) -> f64>,
@@ -168,7 +175,11 @@ impl<'a> ConvolutionCache<'a> {
     }
 }
 
-/// TODO
+/// A convolution cache configured for a specific [`Grid`].
+///
+/// This is a lightweight adaptor around [`ConvolutionCache`] that precomputes the bookkeeping
+/// needed to evaluate PDF/FF factors and `α` at the scales required by a particular grid and
+/// subgrid. It is created internally by [`ConvolutionCache`] when convolving a grid.
 pub struct GridConvCache<'a, 'b> {
     cache: &'b mut ConvolutionCache<'a>,
     perm: Vec<(usize, bool)>,
@@ -179,7 +190,20 @@ pub struct GridConvCache<'a, 'b> {
 }
 
 impl GridConvCache<'_, '_> {
-    /// TODO
+    /// Compute `αs` and convolution-function products for a given tuple of indices.
+    ///
+    /// The returned value is the product of all requested convolution functions evaluated at the
+    /// subgrid's `x` nodes and the appropriate scale(s), multiplied by `αs` raised to `as_order`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `indices` do not follow the current internal convention used by the cache. At the
+    /// moment the implementation assumes that:
+    /// - `indices[0..x_start]` correspond to scale indices (starting with a factorization-scale
+    ///   dimension), and
+    /// - the remaining indices correspond to the \(x\) dimensions in the same order as `pdg_ids`.
+    ///
+    /// This restriction is tracked in the codebase (see the TODO in the implementation).
     pub fn as_fx_prod(&mut self, pdg_ids: &[i32], as_order: u8, indices: &[usize]) -> f64 {
         // TODO: here we assume that
         // - indices[0] is the (squared) factorization scale,
@@ -288,7 +312,7 @@ impl GridConvCache<'_, '_> {
     }
 }
 
-/// TODO
+/// Convolution type: PDF vs FF and polarized vs unpolarized.
 #[repr(C)]
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub enum ConvType {
@@ -303,7 +327,7 @@ pub enum ConvType {
 }
 
 impl ConvType {
-    /// TODO
+    /// Construct a [`ConvType`] from the two boolean flags.
     #[must_use]
     pub const fn new(polarized: bool, time_like: bool) -> Self {
         match (polarized, time_like) {
@@ -314,13 +338,13 @@ impl ConvType {
         }
     }
 
-    /// TODO
+    /// Return `true` if this convolution type is a (polarized or unpolarized) PDF.
     #[must_use]
     pub const fn is_pdf(&self) -> bool {
         matches!(self, Self::UnpolPDF | Self::PolPDF)
     }
 
-    /// TODO
+    /// Return `true` if this convolution type is a (polarized or unpolarized) FF.
     #[must_use]
     pub const fn is_ff(&self) -> bool {
         matches!(self, Self::UnpolFF | Self::PolFF)
