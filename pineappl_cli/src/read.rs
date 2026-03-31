@@ -5,7 +5,7 @@ use clap::{Args, Parser, ValueHint};
 use itertools::Itertools;
 use pineappl::boc::Order;
 use pineappl::fk_table::FkTable;
-use prettytable::{cell, row, Row};
+use prettytable::{Row, cell, row};
 use std::path::PathBuf;
 use std::process::ExitCode;
 

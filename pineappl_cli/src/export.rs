@@ -1,6 +1,6 @@
 use super::helpers::{self, ConvFuns, ConvoluteMode};
 use super::{GlobalConfiguration, Subcommand};
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use clap::builder::{PossibleValuesParser, TypedValueParser};
 use clap::{Parser, ValueHint};
 use lhapdf::Pdf;
@@ -125,7 +125,9 @@ impl Subcommand for Opts {
             .zip(order_mask.iter())
             .filter_map(|(order, keep)| (!keep).then_some(order.clone()))
         {
-            println!("WARNING: the order O(as^{alphas} a^{alpha} lr^{logxir} lf^{logxif} la^{logxia}) isn't supported by {grid_type} and will be skipped.");
+            println!(
+                "WARNING: the order O(as^{alphas} a^{alpha} lr^{logxir} lf^{logxif} la^{logxia}) isn't supported by {grid_type} and will be skipped."
+            );
         }
 
         let orders: Vec<_> = grid
@@ -191,11 +193,7 @@ impl Subcommand for Opts {
                         // ALLOW: here we really need an exact comparison
                         // TODO: change allow to `expect` if MSRV >= 1.81.0
                         #[allow(clippy::float_cmp)]
-                        if a == b {
-                            0.0
-                        } else {
-                            b / a - 1.0
-                        }
+                        if a == b { 0.0 } else { b / a - 1.0 }
                     })
                     .collect();
 

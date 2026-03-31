@@ -174,16 +174,18 @@ pub fn read_uncompressed_v0(mut reader: impl BufRead) -> Result<Grid> {
                 fac.dedup_by(subgrid::node_value_eq_ref_mut);
                 vec![ren, fac]
             } else {
-                vec![old_subgrid
-                    .mu2_grid()
-                    .iter()
-                    .map(|mu2v0| {
-                        // TODO: implement importing flexible-scale grids
-                        assert!(subgrid::node_value_eq(mu2v0.ren, mu2v0.fac));
+                vec![
+                    old_subgrid
+                        .mu2_grid()
+                        .iter()
+                        .map(|mu2v0| {
+                            // TODO: implement importing flexible-scale grids
+                            assert!(subgrid::node_value_eq(mu2v0.ren, mu2v0.fac));
 
-                        mu2v0.fac
-                    })
-                    .collect()]
+                            mu2v0.fac
+                        })
+                        .collect(),
+                ]
             };
 
             let mut dim = if flexible_scale_grid {
@@ -280,7 +282,9 @@ fn read_convolutions_from_metadata(grid: &GridV0) -> Vec<Option<Conv>> {
                             .map(String::as_str),
                     ) {
                         (_, Some("None")) => None,
-                        (Some(Ok(pid)), Some("UnpolPDF")) => Some(Conv::new(ConvType::UnpolPDF, pid)),
+                        (Some(Ok(pid)), Some("UnpolPDF")) => {
+                            Some(Conv::new(ConvType::UnpolPDF, pid))
+                        }
                         (Some(Ok(pid)), Some("PolPDF")) => Some(Conv::new(ConvType::PolPDF, pid)),
                         (Some(Ok(pid)), Some("UnpolFF")) => Some(Conv::new(ConvType::UnpolFF, pid)),
                         (Some(Ok(pid)), Some("PolFF")) => Some(Conv::new(ConvType::PolFF, pid)),
@@ -324,7 +328,9 @@ fn read_convolutions_from_metadata(grid: &GridV0) -> Vec<Option<Conv>> {
                             panic!("metadata 'convolution_type_{index} = {type_}' is unknown")
                         }
                         (Some(Err(err)), Some(_)) => {
-                            panic!("metadata 'convolution_particle_{index}' could not be parsed: {err}")
+                            panic!(
+                                "metadata 'convolution_particle_{index}' could not be parsed: {err}"
+                            )
                         }
                     }
                 })

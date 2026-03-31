@@ -8,12 +8,12 @@ use super::packed_array::PackedArray;
 use super::pids::PidBasis;
 use super::subgrid::{self, ImportSubgridV1, Subgrid, SubgridEnum};
 use float_cmp::approx_eq;
-use itertools::izip;
 use itertools::Itertools;
+use itertools::izip;
 use ndarray::linalg;
 use ndarray::{
-    s, Array1, Array2, Array3, ArrayD, ArrayView1, ArrayView4, ArrayViewD, ArrayViewMutD, Axis,
-    Ix1, Ix2,
+    Array1, Array2, Array3, ArrayD, ArrayView1, ArrayView4, ArrayViewD, ArrayViewMutD, Axis, Ix1,
+    Ix2, s,
 };
 use rayon::iter::{IndexedParallelIterator, IntoParallelRefMutIterator, ParallelIterator};
 use std::iter;
@@ -33,8 +33,9 @@ pub struct EvolveInfo {
     pub ren1: Vec<f64>,
 }
 
-/// Information about the evolution kernel operator slice (EKO) passed to [`Grid::evolve`] as
-/// `operator`, which is used to convert a [`Grid`] into an [`FkTable`](super::fk_table::FkTable).
+/// Information about the evolution kernel operator slice (EKO) passed to [`Grid::evolve`].
+///
+/// This is used to convert a [`Grid`] into an [`FkTable`](super::fk_table::FkTable).
 /// The dimensions of the EKO must correspond to the values given in [`fac1`](Self::fac1),
 /// [`pids0`](Self::pids0), [`x0`](Self::x0), [`pids1`](Self::pids1) and [`x1`](Self::x1), exactly
 /// in this order. Members with a `1` are defined at the squared factorization scale given as
@@ -370,9 +371,11 @@ pub(crate) fn evolve_slice(
     // TODO: implement matching of different scales for different EKOs
     let mut fac1_scales: Vec<_> = infos.iter().map(|info| info.fac1).collect();
     fac1_scales.sort_by(f64::total_cmp);
-    assert!(fac1_scales
-        .windows(2)
-        .all(|scales| subgrid::node_value_eq(scales[0], scales[1])));
+    assert!(
+        fac1_scales
+            .windows(2)
+            .all(|scales| subgrid::node_value_eq(scales[0], scales[1]))
+    );
     let fac1 = fac1_scales[0];
 
     assert_eq!(operators.len(), infos.len());

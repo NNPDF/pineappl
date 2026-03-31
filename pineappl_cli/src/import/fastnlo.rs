@@ -10,8 +10,8 @@ use pineappl::packed_array::PackedArray;
 use pineappl::pids::PidBasis;
 use pineappl::subgrid::ImportSubgridV1;
 use pineappl_fastnlo::ffi::{
-    self, fastNLOCoeffAddBase, fastNLOCoeffAddFix, fastNLOCoeffAddFlex, fastNLOLHAPDF,
-    fastNLOPDFLinearCombinations, EScaleFunctionalForm,
+    self, EScaleFunctionalForm, fastNLOCoeffAddBase, fastNLOCoeffAddFix, fastNLOCoeffAddFlex,
+    fastNLOLHAPDF, fastNLOPDFLinearCombinations,
 };
 use std::f64::consts::TAU;
 use std::iter;

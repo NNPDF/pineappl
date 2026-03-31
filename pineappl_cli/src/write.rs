@@ -3,8 +3,8 @@ use super::{GlobalConfiguration, Subcommand};
 use anyhow::{Context, Result};
 use clap::builder::{PossibleValuesParser, TypedValueParser};
 use clap::{
-    value_parser, Arg, ArgAction, ArgMatches, Args, Command, Error, FromArgMatches, Parser,
-    ValueHint,
+    Arg, ArgAction, ArgMatches, Args, Command, Error, FromArgMatches, Parser, ValueHint,
+    value_parser,
 };
 use pineappl::boc::{Bin, BinsWithFillLimits, Channel, Order};
 use pineappl::fk_table::{FkAssumptions, FkTable};

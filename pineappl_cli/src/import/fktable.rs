@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Context, Result};
+use anyhow::{Context, Result, anyhow};
 use flate2::read::GzDecoder;
 use ndarray::s;
 use pineappl::boc::{BinsWithFillLimits, Kinematics, Order, ScaleFuncForm, Scales};

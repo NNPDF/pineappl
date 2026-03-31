@@ -6,7 +6,7 @@ use clap::{Parser, ValueHint};
 use itertools::Itertools;
 use pineappl::boc::Channel;
 use pineappl::grid::Grid;
-use rayon::{prelude::*, ThreadPoolBuilder};
+use rayon::{ThreadPoolBuilder, prelude::*};
 use std::fmt::Write;
 use std::num::NonZeroUsize;
 use std::ops::Range;

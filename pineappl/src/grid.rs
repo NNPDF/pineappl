@@ -18,7 +18,7 @@ use float_cmp::approx_eq;
 use git_version::git_version;
 use itertools::Itertools;
 use lz4_flex::frame::{FrameDecoder, FrameEncoder};
-use ndarray::{s, Array2, Array3, ArrayView3, ArrayViewMut3, Axis, CowArray, Dimension, Ix4, Zip};
+use ndarray::{Array2, Array3, ArrayView3, ArrayViewMut3, Axis, CowArray, Dimension, Ix4, Zip, s};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::io::{BufRead, BufReader, BufWriter, Read, Write};
@@ -108,7 +108,10 @@ impl Grid {
                 .find_map(|(pids, _)| (pids.len() != convolutions.len()).then_some(pids.len()));
 
             if let Some(pids_len) = offending_entry {
-                panic!("channel #{channel_idx} has wrong number of PIDs: expected {}, found {pids_len}", convolutions.len());
+                panic!(
+                    "channel #{channel_idx} has wrong number of PIDs: expected {}, found {pids_len}",
+                    convolutions.len()
+                );
             }
         }
 
@@ -973,7 +976,7 @@ impl Grid {
     }
 
     /// Upgrades the internal data structures to their latest versions.
-    pub fn upgrade(&mut self) {}
+    pub const fn upgrade(&mut self) {}
 
     /// Return the metadata of this grid.
     #[must_use]
@@ -987,7 +990,7 @@ impl Grid {
     ///
     /// TODO
     #[must_use]
-    pub fn metadata_mut(&mut self) -> &mut BTreeMap<String, String> {
+    pub const fn metadata_mut(&mut self) -> &mut BTreeMap<String, String> {
         &mut self.metadata
     }
 

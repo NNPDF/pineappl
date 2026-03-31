@@ -55,7 +55,7 @@
 //!
 //! [translation tables]: https://github.com/eqrion/cbindgen/blob/master/docs.md#std-types
 
-use itertools::{izip, Itertools};
+use itertools::{Itertools, izip};
 use ndarray::{Array4, CowArray};
 use pineappl::boc::{Bin, BinsWithFillLimits, Channel, Kinematics, Order, ScaleFuncForm, Scales};
 use pineappl::convolutions::{Conv, ConvType, ConvolutionCache};
@@ -445,18 +445,20 @@ pub unsafe extern "C" fn pineappl_grid_convolute_with_two(
     }
 }
 
-/// Convolutes the specified grid with the PDF `xfx`, which is the PDF for a hadron with the PDG id
-/// `pdg_id`, and strong coupling `alphas`. These functions must evaluate the PDFs for the given
-/// `x` and `q2` for the parton with the given PDG id, `pdg_id`, and return the result. Note that
-/// the value must be the PDF multiplied with its argument `x`. The value of the pointer `state`
-/// provided to these functions is the same one given to this function. The parameter `order_mask`
-/// must be as long as there are perturbative orders contained in `grid` and is used to selectively
-/// disable (`false`) or enable (`true`) individual orders. If `order_mask` is set to `NULL`, all
-/// orders are active. The parameter `channel_mask` can be used similarly, but must be as long as
-/// the channels `grid` was created with has entries, or `NULL` to enable all channels. The values
-/// `xi_ren` and `xi_fac` can be used to vary the renormalization and factorization from its
-/// central value, which corresponds to `1.0`. After convolution of the grid with the PDFs the
-/// differential cross section for each bin is written into `results`.
+/// Convolutes the specified grid with the PDF `xfx`.
+///
+/// `xfx` is the PDF for a hadron with the PDG id `pdg_id`, and strong coupling `alphas`. These
+/// functions must evaluate the PDFs for the given `x` and `q2` for the parton with the given PDG
+/// id, `pdg_id`, and return the result. Note that the value must be the PDF multiplied with its
+/// argument `x`. The value of the pointer `state` provided to these functions is the same one given
+/// to this function. The parameter `order_mask` must be as long as there are perturbative orders
+/// contained in `grid` and is used to selectively disable (`false`) or enable (`true`) individual
+/// orders. If `order_mask` is set to `NULL`, all orders are active. The parameter `channel_mask`
+/// can be used similarly, but must be as long as the channels `grid` was created with has entries,
+/// or `NULL` to enable all channels. The values `xi_ren` and `xi_fac` can be used to vary the
+/// renormalization and factorization from its central value, which corresponds to `1.0`. After
+/// convolution of the grid with the PDFs the differential cross section for each bin is written
+/// into `results`.
 ///
 /// # Safety
 ///
@@ -508,19 +510,20 @@ pub unsafe extern "C" fn pineappl_grid_convolve_with_one(
     ));
 }
 
-/// Convolutes the specified grid with the PDFs `xfx1` and `xfx2`, which are the PDFs of hadrons
-/// with PDG ids `pdg_id1` and `pdg_id2`, respectively, and strong coupling `alphas`. These
-/// functions must evaluate the PDFs for the given `x` and `q2` for the parton with the given PDG
-/// id, `pdg_id`, and return the result. Note that the value must be the PDF multiplied with its
-/// argument `x`. The value of the pointer `state` provided to these functions is the same one
-/// given to this function. The parameter `order_mask` must be as long as there are perturbative
-/// orders contained in `grid` and is used to selectively disable (`false`) or enable (`true`)
-/// individual orders. If `order_mask` is set to `NULL`, all orders are active. The parameter
-/// `channel_mask` can be used similarly, but must be as long as the channels `grid` was created
-/// with has entries, or `NULL` to enable all channels. The values `xi_ren` and `xi_fac` can be
-/// used to vary the renormalization and factorization from its central value, which corresponds to
-/// `1.0`. After convolution of the grid with the PDFs the differential cross section for each bin
-/// is written into `results`.
+/// Convolutes the specified grid with the PDFs `xfx1` and `xfx2`.
+///
+/// `xfx1` and `xfx2` are the PDFs of hadrons with PDG ids `pdg_id1` and `pdg_id2`, respectively,
+/// and strong coupling `alphas`. These functions must evaluate the PDFs for the given `x` and `q2`
+/// for the parton with the given PDG id, `pdg_id`, and return the result. Note that the value must
+/// be the PDF multiplied with its argument `x`. The value of the pointer `state` provided to these
+/// functions is the same one given to this function. The parameter `order_mask` must be as long as
+/// there are perturbative orders contained in `grid` and is used to selectively disable (`false`)
+/// or enable (`true`) individual orders. If `order_mask` is set to `NULL`, all orders are active.
+/// The parameter `channel_mask` can be used similarly, but must be as long as the channels `grid`
+/// was created with has entries, or `NULL` to enable all channels. The values `xi_ren` and `xi_fac`
+/// can be used to vary the renormalization and factorization from its central value, which
+/// corresponds to `1.0`. After convolution of the grid with the PDFs the differential cross section
+/// for each bin is written into `results`.
 ///
 /// # Safety
 ///
@@ -578,9 +581,10 @@ pub unsafe extern "C" fn pineappl_grid_convolve_with_two(
     ));
 }
 
-/// Try to deduplicate channels of `grid` by detecting pairs of them that contain the same
-/// subgrids. The numerical equality is tested using a tolerance of `ulps`, given in [units of
-/// least precision](https://docs.rs/float-cmp/latest/float_cmp/index.html#some-explanation).
+/// Try to deduplicate channels of `grid` by detecting pairs of them that contain the same subgrids.
+///
+/// The numerical equality is tested using a tolerance of `ulps`, given in
+/// [units of least precision](https://docs.rs/float-cmp/latest/float_cmp/index.html#some-explanation).
 ///
 /// # Safety
 ///
@@ -622,9 +626,10 @@ pub unsafe extern "C" fn pineappl_grid_fill(
     grid.fill(order, observable, lumi, &[q2, x1, x2], weight);
 }
 
-/// Fill `grid` for the given momentum fractions `x1` and `x2`, at the scale `q2` for the given
-/// value of the `order` and `observable` with `weights`. The parameter of weight must contain a
-/// result for entry of the luminosity function the grid was created with.
+/// Fill `grid` for the given momentum fractions `x1` and `x2`, at the scale `q2`.
+///
+/// This is done for a given value of the `order` and `observable` with `weights`. The parameter
+/// of weight must contain a result for entry of the luminosity function the grid was created with.
 ///
 /// # Safety
 ///
@@ -984,9 +989,10 @@ pub unsafe extern "C" fn pineappl_grid_optimize_using(grid: *mut Grid, flags: Gr
     grid.optimize_using(flags);
 }
 
-/// Scales each subgrid by a bin-dependent factor given in `factors`. If a bin does not have a
-/// corresponding entry in `factors` it is not rescaled. If `factors` has more entries than there
-/// are bins the superfluous entries do not have an effect.
+/// Scales each subgrid by a bin-dependent factor given in `factors`.
+///
+/// If a bin does not have a corresponding entry in `factors` it is not rescaled. If `factors` has
+/// more entries than there are bins the superfluous entries do not have an effect.
 ///
 /// # Safety
 ///
@@ -1107,9 +1113,11 @@ pub unsafe extern "C" fn pineappl_grid_set_key_value(
     grid.metadata_mut().insert(key, value);
 }
 
-/// Sets a remapper for the grid. This can be used to 'upgrade' one-dimensional bin limits to
-/// N-dimensional ones. The new bin limits must be given in the form of tuples giving the left and
-/// right limits, and a tuple for each dimension.
+/// Sets a remapper for the grid.
+///
+/// This can be used to 'upgrade' one-dimensional bin limits to N-dimensional ones. The new bin
+/// limits must be given in the form of tuples giving the left and right limits, and a tuple for
+/// each dimension.
 ///
 /// # Safety
 ///
@@ -1236,7 +1244,7 @@ pub unsafe extern "C" fn pineappl_lumi_combinations(lumi: *const Lumi, entry: us
 /// `pineappl_grid_lumi`.
 #[deprecated(since = "1.0.0", note = "use `pineappl_channels_count` instead")]
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn pineappl_lumi_count(lumi: *const Lumi) -> usize {
+pub const unsafe extern "C" fn pineappl_lumi_count(lumi: *const Lumi) -> usize {
     let lumi = unsafe { &*lumi };
 
     lumi.0.len()
@@ -1593,7 +1601,7 @@ pub unsafe extern "C" fn pineappl_grid_channels(grid: *const Grid) -> Box<Channe
 /// The parameter `channels` must point to a valid `Lumi` object created by `pineappl_channels_new` or
 /// `pineappl_grid_channels`.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn pineappl_channels_count(channels: *const Channels) -> usize {
+pub const unsafe extern "C" fn pineappl_channels_count(channels: *const Channels) -> usize {
     let Channels { channels, .. } = unsafe { &*channels };
 
     channels.len()
