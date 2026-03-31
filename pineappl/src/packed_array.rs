@@ -7,8 +7,10 @@ use std::mem;
 use std::ops::{Index, IndexMut, MulAssign};
 
 /// `D`-dimensional array similar to [`ndarray::ArrayBase`], except that `T::default()` is not
-/// stored to save space. Instead, adjacent non-default elements are grouped together and the index
-/// of their first element (`start_index`) and the length of the group (`lengths`) is stored.
+/// stored to save space.
+///
+/// Instead, adjacent non-default elements are grouped together and the index of their first
+/// element (`start_index`) and the length of the group (`lengths`) is stored.
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct PackedArray<T> {
     /// The actual values stored in the array. The length of `entries` is always the sum of the
@@ -37,7 +39,7 @@ impl<T: Copy + Default + PartialEq> PackedArray<T> {
 
     /// Returns `true` if the array contains no element.
     #[must_use]
-    pub fn is_empty(&self) -> bool {
+    pub const fn is_empty(&self) -> bool {
         self.entries.is_empty()
     }
 
@@ -57,7 +59,7 @@ impl<T: Copy + Default + PartialEq> PackedArray<T> {
     /// Returns the overhead of storing the `start_indices` and the `lengths` of the groups, in
     /// units of `f64`.
     #[must_use]
-    pub fn overhead(&self) -> usize {
+    pub const fn overhead(&self) -> usize {
         ((self.start_indices.len() + self.lengths.len()) * mem::size_of::<usize>())
             / mem::size_of::<f64>()
     }
@@ -77,7 +79,7 @@ impl<T: Copy + Default + PartialEq> PackedArray<T> {
         self.entries.iter().filter(|x| **x != T::default()).count()
     }
 
-    /// TODO
+    /// Iterator over non-default stored elements as `(multi_index, value)`.
     pub fn indexed_iter(&self) -> impl Iterator<Item = (Vec<usize>, T)> + '_ {
         self.start_indices
             .iter()
@@ -90,11 +92,13 @@ impl<T: Copy + Default + PartialEq> PackedArray<T> {
             .map(|(indices, entry)| (indices, *entry))
     }
 
-    /// TODO
+    /// Flat index into `self` for a sub-block starting at `start_index` with shape `fill_shape`,
+    /// where `i` is the linear index inside the sub-block (row-major).
     ///
     /// # Panics
     ///
-    /// TODO
+    /// Panics if `start_index.len() != fill_shape.len()`, if `i` is out of range for `fill_shape`,
+    /// or if the computed multi-index is out of bounds for `self.shape()`.
     // TODO: rewrite this method into `sub_block_iter_mut() -> impl Iterator<Item = &mut f64>`
     #[must_use]
     pub fn sub_block_idx(
@@ -170,11 +174,11 @@ impl<T: Copy + Default + PartialEq> From<ArrayViewD<'_, T>> for PackedArray<T> {
     }
 }
 
-/// Converts a `multi_index` into a flat index.
+/// Converts a `multi_index` into a flat index (row-major).
 ///
 /// # Panics
 ///
-/// TODO
+/// Panics if `multi_index` and `shape` have different lengths.
 #[must_use]
 pub fn ravel_multi_index(multi_index: &[usize], shape: &[usize]) -> usize {
     assert_eq!(multi_index.len(), shape.len());
@@ -185,11 +189,11 @@ pub fn ravel_multi_index(multi_index: &[usize], shape: &[usize]) -> usize {
         .fold(0, |acc, (i, d)| acc * d + i)
 }
 
-/// TODO
+/// Converts a flat `index` into a multi-index for `shape` (row-major).
 ///
 /// # Panics
 ///
-/// TODO
+/// Panics if `index` is not strictly less than the product of `shape`.
 #[must_use]
 pub fn unravel_index(mut index: usize, shape: &[usize]) -> Vec<usize> {
     assert!(index < shape.iter().product());

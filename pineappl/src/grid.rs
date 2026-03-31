@@ -156,13 +156,13 @@ impl Grid {
         }
     }
 
-    /// TODO
+    /// Optional reference cross sections and uncertainties carried with this grid.
     #[must_use]
     pub const fn reference(&self) -> &Reference {
         &self.reference
     }
 
-    /// TODO
+    /// Replace the attached [`Reference`] data (caller should keep layout consistent with bins).
     pub fn set_reference(&mut self, reference: Reference) {
         // TODO: check that the number of bins and channels is consistent between the grid and
         // `reference`
@@ -201,7 +201,9 @@ impl Grid {
     ///
     /// # Panics
     ///
-    /// TODO
+    /// Panics if [`ConvolutionCache::new_grid_conv_cache`] cannot match the grid convolutions to
+    /// the cache, if non-empty `order_mask` or `channel_mask` slices are shorter than the number of
+    /// orders or channels respectively, or if PDF lookup inside the cache panics.
     pub fn convolve(
         &self,
         cache: &mut ConvolutionCache,
@@ -288,7 +290,8 @@ impl Grid {
     ///
     /// # Panics
     ///
-    /// TODO
+    /// In debug builds, panics if `ntuple.len()` differs from the number of interpolations. Filling
+    /// an [`ImportSubgridV1`](crate::subgrid::ImportSubgridV1) always panics because it is read-only.
     pub fn fill(
         &mut self,
         order: usize,
@@ -655,10 +658,6 @@ impl Grid {
     /// Scales each subgrid by a factor which is the product of the given values `alphas`, `alpha`,
     /// `logxir`, and `logxif`, each raised to the corresponding powers for each subgrid. In
     /// addition, every subgrid is scaled by a factor `global` independently of its order.
-    ///
-    /// # Panics
-    ///
-    /// TODO
     pub fn scale_by_order(
         &mut self,
         alphas: f64,
@@ -721,11 +720,11 @@ impl Grid {
         self.subgrids.view_mut()
     }
 
-    /// TODO
+    /// Replace bin definitions while keeping the same number of bins as the existing grid.
     ///
     /// # Errors
     ///
-    /// TODO
+    /// Returns [`Error::General`] if `bwfl` has a different number of bins than this grid.
     pub fn set_bwfl(&mut self, bwfl: BinsWithFillLimits) -> Result<()> {
         let bins = bwfl.len();
         let grid_bins = self.bwfl().len();
@@ -741,7 +740,7 @@ impl Grid {
         Ok(())
     }
 
-    /// TODO
+    /// Bin limits, fill limits, and per-bin normalizations.
     #[must_use]
     pub const fn bwfl(&self) -> &BinsWithFillLimits {
         &self.bwfl
@@ -984,11 +983,7 @@ impl Grid {
         &self.metadata
     }
 
-    /// Return the metadata of this grid.
-    ///
-    /// # Panics
-    ///
-    /// TODO
+    /// Mutable access to string metadata key-value pairs stored in the grid file header.
     #[must_use]
     pub const fn metadata_mut(&mut self) -> &mut BTreeMap<String, String> {
         &mut self.metadata

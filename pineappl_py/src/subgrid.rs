@@ -6,7 +6,7 @@ use pineappl::packed_array::PackedArray;
 use pineappl::subgrid::{ImportSubgridV1, Subgrid, SubgridEnum};
 use pyo3::prelude::*;
 
-/// PyO3 wrapper to :rustdoc:`pineappl::subgrid::ImportSubgridV1 <subgrid/struct.ImportSubgridV1.html>`.
+/// `PyO3` wrapper to :rustdoc:`pineappl::subgrid::ImportSubgridV1 <subgrid/struct.ImportSubgridV1.html>`.
 #[pyclass(name = "ImportSubgridV1")]
 #[derive(Clone)]
 #[repr(transparent)]
@@ -19,17 +19,19 @@ impl PyImportSubgridV1 {
     /// Constructor.
     ///
     /// # Panics
-    /// TODO
+    ///
+    /// Panics if the array shape does not match `node_values` or indexing the packed array fails.
     ///
     /// Parameters
     /// ----------
     /// array : numpy.ndarray(float)
     ///     `N`-dimensional array with all weights
-    /// node_values: list(list(float))
+    /// `node_values`: list(list(float))
     ///     list containing the arrays of energy scales {q1, ..., qn} and momentum fractions
     ///     {x1, ..., xn}.
     #[new]
     #[must_use]
+    #[allow(clippy::needless_pass_by_value)]
     pub fn new(array: PyReadonlyArrayDyn<f64>, node_values: Vec<Vec<f64>>) -> Self {
         let mut sparse_array: PackedArray<f64> =
             PackedArray::new(node_values.iter().map(Vec::len).collect());
@@ -56,7 +58,7 @@ impl PyImportSubgridV1 {
     }
 }
 
-/// PyO3 wrapper to :rustdoc:`pineappl::subgrid::SubgridEnum <subgrid/struct.SubgridEnum.html>`
+/// `PyO3` wrapper to :rustdoc:`pineappl::subgrid::SubgridEnum <subgrid/struct.SubgridEnum.html>`
 #[pyclass(name = "SubgridEnum")]
 #[derive(Clone)]
 #[repr(transparent)]

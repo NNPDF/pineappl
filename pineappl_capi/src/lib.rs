@@ -75,22 +75,22 @@ use std::os::raw::{c_char, c_void};
 use std::path::Path;
 use std::slice;
 
-/// TODO
+/// Select subgrid type optimization when passed to grid optimization (see `GridOptFlags::OPTIMIZE_SUBGRID_TYPE`).
 pub const PINEAPPL_GOF_OPTIMIZE_SUBGRID_TYPE: GridOptFlags = GridOptFlags::OPTIMIZE_SUBGRID_TYPE;
 
-/// TODO
+/// Select static-scale / node optimization (see `GridOptFlags::OPTIMIZE_NODES`).
 pub const PINEAPPL_GOF_OPTIMIZE_NODES: GridOptFlags = GridOptFlags::OPTIMIZE_NODES;
 
-/// TODO
+/// Merge transposed channels when convolutions coincide (see `GridOptFlags::SYMMETRIZE_CHANNELS`).
 pub const PINEAPPL_GOF_SYMMETRIZE_CHANNELS: GridOptFlags = GridOptFlags::SYMMETRIZE_CHANNELS;
 
-/// TODO
+/// Drop orders whose subgrids are all empty (see `GridOptFlags::STRIP_EMPTY_ORDERS`).
 pub const PINEAPPL_GOF_STRIP_EMPTY_ORDERS: GridOptFlags = GridOptFlags::STRIP_EMPTY_ORDERS;
 
-/// TODO
+/// Merge channels with identical parton content (see `GridOptFlags::MERGE_SAME_CHANNELS`).
 pub const PINEAPPL_GOF_MERGE_SAME_CHANNELS: GridOptFlags = GridOptFlags::MERGE_SAME_CHANNELS;
 
-/// TODO
+/// Remove channels with only empty subgrids (see `GridOptFlags::STRIP_EMPTY_CHANNELS`).
 pub const PINEAPPL_GOF_STRIP_EMPTY_CHANNELS: GridOptFlags = GridOptFlags::STRIP_EMPTY_CHANNELS;
 
 // TODO: make sure no `panic` calls leave functions marked as `extern "C"`
@@ -763,7 +763,8 @@ pub unsafe extern "C" fn pineappl_grid_order_count(grid: *const Grid) -> usize {
 ///
 /// # Panics
 ///
-/// TODO
+/// Panics if bin limits, order parameters, or metadata cannot be converted into a valid `Grid`
+/// (invalid strings, parse errors, or inconsistent state); the C API aborts on these errors.
 #[deprecated(since = "1.0.0", note = "use `pineappl_grid_new2` instead")]
 #[unsafe(no_mangle)]
 #[must_use]
@@ -837,7 +838,7 @@ pub unsafe extern "C" fn pineappl_grid_new(
 ///
 /// # Panics
 ///
-/// TODO
+/// Panics if the file cannot be opened or the grid cannot be deserialized.
 #[unsafe(no_mangle)]
 #[must_use]
 pub unsafe extern "C" fn pineappl_grid_read(filename: *const c_char) -> Box<Grid> {
@@ -858,7 +859,7 @@ pub unsafe extern "C" fn pineappl_grid_read(filename: *const c_char) -> Box<Grid
 ///
 /// # Panics
 ///
-/// TODO
+/// Panics if the bin merge range is invalid for this grid.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn pineappl_grid_merge_bins(grid: *mut Grid, from: usize, to: usize) {
     let grid = unsafe { &mut *grid };
@@ -877,7 +878,7 @@ pub unsafe extern "C" fn pineappl_grid_merge_bins(grid: *mut Grid, from: usize, 
 ///
 /// # Panics
 ///
-/// TODO
+/// Does not panic for out-of-range indices; they are ignored by the underlying implementation.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn pineappl_grid_delete_bins(
     grid: *mut Grid,
@@ -898,7 +899,7 @@ pub unsafe extern "C" fn pineappl_grid_delete_bins(
 ///
 /// # Panics
 ///
-/// TODO
+/// Panics if merging the two grids fails (for example incompatible binning).
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn pineappl_grid_merge_and_delete(grid: *mut Grid, other: Option<Box<Grid>>) {
     if let Some(other) = other {
@@ -1012,8 +1013,9 @@ pub unsafe extern "C" fn pineappl_grid_scale_by_bin(
 }
 
 /// Scales each subgrid by a factor which is the product of the given values `alphas`, `alpha`,
-/// `logxir`, and `logxif`, each raised to the corresponding powers for each subgrid. In addition,
-/// every subgrid is scaled by a factor `global` independently of its order.
+/// `logxir`, and `logxif`, each raised to the corresponding powers for each subgrid.
+///
+/// In addition, every subgrid is scaled by a factor `global` independently of its order.
 ///
 /// # Safety
 ///
@@ -1044,7 +1046,7 @@ pub unsafe extern "C" fn pineappl_grid_scale_by_order(
 ///
 /// # Panics
 ///
-/// TODO
+/// Panics if constructing the returned C string fails (for example embedded null bytes in metadata).
 #[deprecated(since = "1.0.0", note = "use `pineappl_grid_metadata` instead")]
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn pineappl_grid_key_value(
@@ -1083,7 +1085,7 @@ pub unsafe extern "C" fn pineappl_grid_key_value(
 ///
 /// # Panics
 ///
-/// TODO
+/// Panics if initial-state metadata strings cannot be parsed as integers when updating convolutions.
 #[deprecated(since = "1.0.0", note = "use `pineappl_grid_set_metadata` instead")]
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn pineappl_grid_set_key_value(
@@ -1127,7 +1129,7 @@ pub unsafe extern "C" fn pineappl_grid_set_key_value(
 ///
 /// # Panics
 ///
-/// TODO
+/// Panics if the constructed bins are inconsistent with the grid or `set_bwfl` rejects them.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn pineappl_grid_set_remapper(
     grid: *mut Grid,
@@ -1174,7 +1176,7 @@ pub unsafe extern "C" fn pineappl_grid_set_remapper(
 ///
 /// # Panics
 ///
-/// TODO
+/// Panics if the output file cannot be created or writing the grid fails.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn pineappl_grid_write(grid: *const Grid, filename: *const c_char) {
     let grid = unsafe { &*grid };
@@ -1504,19 +1506,19 @@ pub struct Channels {
 /// Type for defining the interpolation object
 #[repr(C)]
 pub struct Interp {
-    /// TODO
+    /// Physical lower edge of the interpolation range (before internal mapping).
     pub min: f64,
-    /// TODO
+    /// Physical upper edge of the interpolation range (before internal mapping).
     pub max: f64,
-    /// TODO
+    /// Number of support nodes.
     pub nodes: usize,
-    /// TODO
+    /// Polynomial interpolation order.
     pub order: usize,
-    /// TODO
+    /// Reweighting mode in the physical variable.
     pub reweight: ReweightMeth,
-    /// TODO
+    /// Map between physical variable and internal coordinate.
     pub map: Map,
-    /// TODO
+    /// Interpolation kernel (Lagrange, ...).
     pub interp_meth: InterpMeth,
 }
 
@@ -1656,11 +1658,15 @@ pub extern "C" fn pineappl_channels_delete(channels: Option<Box<Channels>>) {}
 ///
 /// # Safety
 ///
-/// TODO
+/// `bin_limits` must point to at least `bins + 1` floats. `order_params` must point to `5 * orders`
+/// bytes. `channels` must be a valid `Channels` pointer. `convolutions` must point to as many
+/// `Conv` values as recorded in `channels`. `interps` must point to `interpolations` elements.
+/// `kinematics` must point to one entry per interpolation. `scales` must point to three
+/// `ScaleFuncForm` values (ren, fac, frg). Any mismatch is undefined behavior.
 ///
 /// # Panics
 ///
-/// TODO
+/// Panics if bin limits, orders, or internal `Grid::new` validation fail (unwraps in the Rust layer).
 #[unsafe(no_mangle)]
 #[must_use]
 pub unsafe extern "C" fn pineappl_grid_new2(
@@ -2023,11 +2029,12 @@ pub unsafe extern "C" fn pineappl_grid_convolve(
 ///
 /// # Safety
 ///
-/// TODO
+/// `grid` must be a valid grid pointer. `xfx` must be a valid function pointer obeying the same
+/// calling convention; `state` is passed through to `xfx` and may be null if unused.
 ///
 /// # Panics
 ///
-/// TODO
+/// Panics if `fix_convolution` fails in the Rust API (for example invalid `conv_idx`).
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn pineappl_grid_fix_convolution(
     grid: *const Grid,
@@ -2049,7 +2056,8 @@ pub unsafe extern "C" fn pineappl_grid_fix_convolution(
 ///
 /// # Safety
 ///
-/// TODO
+/// `grid` must be valid. `conv_types` must point to writable memory for `grid.convolutions().len()`
+/// elements.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn pineappl_grid_conv_types(grid: *const Grid, conv_types: *mut ConvType) {
     let grid = unsafe { &*grid };
@@ -2227,7 +2235,7 @@ pub unsafe extern "C" fn pineappl_grid_set_subgrid(
 ///
 /// # Panics
 ///
-/// TODO
+/// Panics if the new bin layout cannot be built or `set_bwfl` rejects it (for example bin count mismatch).
 ///
 /// # Safety
 ///
@@ -2361,7 +2369,7 @@ pub type OperatorCallback = unsafe extern "C" fn(
 /// * `grid` - A `Grid` object
 /// * `op_info` - An array of `OperatorInfo` objects containing the information about the evolution.
 /// * `operator` - A callack that returns the evolution operator.
-/// * `max_orders` - The maximum QCD and EW orders `(αs, α)`.
+/// * `max_orders` - The maximum QCD and EW orders `(alpha_s, alpha)`.
 /// * `params_state` - Parameters that get passed to `operator`.
 /// * `x_in` - The  x-grid that defines the Grid.
 /// * `x_out` - The x-grid that will define the evolved Grid.
@@ -2370,7 +2378,7 @@ pub type OperatorCallback = unsafe extern "C" fn(
 /// * `eko_shape` - The shape of the evolution operator.
 /// * `xi` - The values that defines that scale variations.
 /// * `ren` - An array containing the values of the renormalization scale variation.
-/// * `alphas` - An array containing the values of `αs`. It must have the same size as `ren1`.
+/// * `alphas` - An array containing the values of `alpha_s`. It must have the same size as `ren1`.
 ///
 /// # Safety
 ///

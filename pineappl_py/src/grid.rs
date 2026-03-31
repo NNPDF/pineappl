@@ -23,7 +23,7 @@ use std::fs::File;
 use std::io::BufReader;
 use std::path::PathBuf;
 
-/// PyO3 wrapper to :rustdoc:`pineappl::grid::Grid <grid/struct.Grid.html>`.
+/// `PyO3` wrapper to :rustdoc:`pineappl::grid::Grid <grid/struct.Grid.html>`.
 #[pyclass(name = "Grid", subclass)]
 #[repr(transparent)]
 #[derive(Clone)]
@@ -43,13 +43,13 @@ impl PyGrid {
     ///
     /// Parameters
     /// ----------
-    /// pid_basis : PidBasis
+    /// `pid_basis` : `PidBasis`
     ///     choice of basis which can be `Evol` or `Pdg`
     /// channels : list(PyChannel)
     ///     channels
     /// orders : list(PyOrder)
     ///     orders
-    /// bins : PyBinsWithFillLimits
+    /// bins : `PyBinsWithFillLimits`
     ///     bin configurations
     /// convolutions : list(PyConv)
     ///     contains the types of convolution
@@ -57,10 +57,11 @@ impl PyGrid {
     ///     types of interpolations required by each kinematic
     /// kinematics : list(PyKinematics)
     ///     list of kinematics
-    /// scale_funcs : PyScales
+    /// `scale_funcs` : `PyScales`
     ///     `Scales` object
     #[new]
     #[must_use]
+    #[allow(clippy::needless_pass_by_value)]
     pub fn new_grid(
         pid_basis: PyPidBasis,
         channels: Vec<PyRef<PyChannel>>,
@@ -108,6 +109,7 @@ impl PyGrid {
     ///     list containing information on kinematics
     /// weight : float
     ///     cross section weight
+    #[allow(clippy::needless_pass_by_value)]
     pub fn fill(
         &mut self,
         order: usize,
@@ -143,6 +145,7 @@ impl PyGrid {
     ///     list of `ntuple` kinematics
     /// weights : np.array(float)
     ///     cross section weight for all events
+    #[allow(clippy::needless_pass_by_value)]
     pub fn fill_array(
         &mut self,
         order: usize,
@@ -170,6 +173,7 @@ impl PyGrid {
     ///     list containing information on kinematics
     /// weights : np.array(float)
     ///     cross section weights, one for each channels
+    #[allow(clippy::needless_pass_by_value)]
     pub fn fill_all_channels(
         &mut self,
         order: usize,
@@ -192,8 +196,9 @@ impl PyGrid {
     ///     bin index
     /// channel : int
     ///     channel index
-    /// subgrid : PySubgridEnum
+    /// subgrid : `PySubgridEnum`
     ///     subgrid object
+    #[allow(clippy::needless_pass_by_value)]
     pub fn set_subgrid(
         &mut self,
         order: usize,
@@ -208,7 +213,7 @@ impl PyGrid {
     ///
     /// Returns
     /// -------
-    /// PyBinsWithFillLimits:
+    /// `PyBinsWithFillLimits`:
     ///     a `PyBinsWithFillLimits` object with containing the bin specifications
     #[must_use]
     pub fn bwfl(&self) -> PyBinsWithFillLimits {
@@ -220,11 +225,12 @@ impl PyGrid {
     /// Set the bin specifications for this grid.
     ///
     /// # Errors
-    /// TODO
+    ///
+    /// Raises `ValueError` if the new bin layout is incompatible with this grid (for example bin count mismatch).
     ///
     /// Parameters
     /// ----------
-    /// specs: PyBinsWithFillLimits
+    /// specs: `PyBinsWithFillLimits`
     ///     the object to define the bin specs
     pub fn set_bwfl(&mut self, specs: PyBinsWithFillLimits) -> PyResult<()> {
         match self.grid.set_bwfl(specs.bins_fill_limits) {
@@ -269,7 +275,7 @@ impl PyGrid {
     /// Returns
     /// -------
     /// list(list(float)):
-    ///     limits/edges of the bins with shape (n_bins, n_dimension, 2)
+    ///     limits/edges of the bins with shape (`n_bins`, `n_dimension`, 2)
     #[must_use]
     pub fn bin_limits(&self) -> Vec<Vec<(f64, f64)>> {
         self.grid
@@ -324,9 +330,6 @@ impl PyGrid {
 
     /// Set a metadata key-value pair in the grid.
     ///
-    /// # Panics
-    /// TODO
-    ///
     /// Parameters
     /// ----------
     /// key : str
@@ -355,23 +358,25 @@ impl PyGrid {
     /// Convolve the grid with as many distributions.
     ///
     /// # Panics
-    /// TODO
+    ///
+    /// Panics if Python callbacks fail, if the convolution cache cannot be matched to the grid, or
+    /// if mask lengths are inconsistent with the grid when non-empty.
     ///
     /// Parameters
     /// ----------
-    /// pdg_convs : list(PyConv)
+    /// `pdg_convs` : list(PyConv)
     ///     list containing the types of convolutions and PID
     /// xfxs : list(callable)
     ///     list of lhapdf-like callable with arguments `pid, x, Q2` returning x*pdf
     /// alphas : callable
-    ///     lhapdf like callable with arguments `Q2` returning :math:`\alpha_s`
-    /// order_mask : numpy.ndarray(bool)
+    ///     LHAPDF-like callable with argument `Q2` returning `alpha_s(Q2)`
+    /// `order_mask` : numpy.ndarray(bool)
     ///     Mask for selecting specific orders. The value `True` means the corresponding order
     ///     is included. An empty list corresponds to all orders being enabled.
-    /// bin_indices : numpy.ndarray(int)
+    /// `bin_indices` : numpy.ndarray(int)
     ///     A list with the indices of the corresponding bins that should be calculated. An
     ///     empty list means that all bins should be calculated.
-    /// channel_mask : numpy.ndarray(bool)
+    /// `channel_mask` : numpy.ndarray(bool)
     ///     Mask for selecting specific channels. The value `True` means the
     ///     corresponding channel is included. An empty list corresponds to all channels being
     ///     enabled.
@@ -388,6 +393,7 @@ impl PyGrid {
     ///     cross sections for all bins, for each scale-variation tuple (first all bins, then
     ///     the scale variation)
     #[must_use]
+    #[allow(clippy::needless_pass_by_value)]
     #[pyo3(signature = (pdg_convs, xfxs, alphas, order_mask = None, bin_indices = None, channel_mask = None, xi = None))]
     pub fn convolve<'py>(
         &self,
@@ -438,7 +444,8 @@ impl PyGrid {
     ///
     /// # Panics
     ///
-    /// TODO
+    /// Panics if the wrapped Rust `fix_convolution` fails (for example invalid convolution index)
+    /// or if the PDF callback raises or returns a non-float.
     ///
     /// Parameters
     /// ----------
@@ -467,17 +474,14 @@ impl PyGrid {
 
     /// Collect information for convolution with an evolution operator.
     ///
-    /// # Panics
-    /// TODO
-    ///
     /// Parameters
     /// ----------
-    /// order_mask : numpy.ndarray(bool)
+    /// `order_mask` : numpy.ndarray(bool)
     ///     boolean mask to activate orders
     ///
     /// Returns
     /// -------
-    /// PyEvolveInfo :
+    /// `PyEvolveInfo` :
     ///     evolution informations
     #[must_use]
     pub fn evolve_info(&self, order_mask: Vec<bool>) -> PyEvolveInfo {
@@ -500,21 +504,22 @@ impl PyGrid {
     ///
     /// Parameters
     /// ----------
-    /// slices : list(Generator(tuple(PyOperatorSliceInfo, PyReadOnlyArray4)))
-    ///     list of EKOs where each element is in turn a list of (PyOperatorSliceInfo, 4D array)
-    /// order_mask : numpy.ndarray(bool)
+    /// slices : list(Generator(tuple(PyOperatorSliceInfo, `PyReadOnlyArray4`)))
+    ///     list of EKOs where each element is in turn a list of (`PyOperatorSliceInfo`, 4D array)
+    /// `order_mask` : numpy.ndarray(bool)
     ///     boolean mask to activate orders
     /// xi : (float, float)
     ///     factorization and renormalization variation
     /// ren1 : numpy.ndarray(float)
     ///     list of renormalization scales
     /// alphas : numpy.ndarray(float)
-    ///     list with :math:`\alpha_s(Q2)` for the process scales
+    ///     list with `alpha_s(Q2)` at the corresponding entries of `ren1`
     ///
     /// Returns
     /// -------
-    /// PyFkTable :
+    /// `PyFkTable` :
     ///     produced FK table
+    #[allow(clippy::needless_pass_by_value)]
     pub fn evolve(
         &self,
         slices: Vec<Bound<PyAny>>,
@@ -566,7 +571,7 @@ impl PyGrid {
     ///
     /// Returns
     /// -------
-    /// PyGrid :
+    /// `PyGrid` :
     ///     grid
     #[must_use]
     #[staticmethod]
@@ -643,9 +648,6 @@ impl PyGrid {
     }
 
     /// Merge with another grid.
-    ///
-    /// # Panics
-    /// TODO
     ///
     /// # Errors
     ///
@@ -737,7 +739,7 @@ impl PyGrid {
     ///
     /// Parameters
     /// ----------
-    /// pid_basis: PyPidBasis
+    /// `pid_basis`: `PyPidBasis`
     ///     PID basis of the resulting Grid
     pub fn rotate_pid_basis(&mut self, pid_basis: PyPidBasis) {
         self.grid.rotate_pid_basis(pid_basis.into());
@@ -760,21 +762,16 @@ impl PyGrid {
 
     /// Scale subgrids bin by bin.
     ///
-    /// # Panics
-    /// TODO
-    ///
     /// Parameters
     /// ----------
     /// factors : list[float]
     ///     bin-dependent factors by which to scale
+    #[allow(clippy::needless_pass_by_value)]
     pub fn scale_by_bin(&mut self, factors: Vec<f64>) {
         self.grid.scale_by_bin(&factors);
     }
 
     /// Scale subgrids by order.
-    ///
-    /// # Panics
-    /// TODO
     ///
     /// Parameters
     /// ----------
@@ -806,23 +803,22 @@ impl PyGrid {
     ///
     /// Parameters
     /// ----------
-    /// order_indices : list[int]
+    /// `order_indices` : list[int]
     ///     list of indices of orders to be removed
+    #[allow(clippy::needless_pass_by_value)]
     pub fn delete_orders(&mut self, order_indices: Vec<usize>) {
         self.grid.delete_orders(&order_indices);
     }
 
     /// Delete bins.
     ///
-    /// # Panics
-    /// TODO
-    ///
     /// Repeated bins and those exceeding the length are ignored.
     ///
     /// Parameters
     /// ----------
-    /// bin_indices : list[int]
+    /// `bin_indices` : list[int]
     ///     list of indices of bins to be removed
+    #[allow(clippy::needless_pass_by_value)]
     pub fn delete_bins(&mut self, bin_indices: Vec<usize>) {
         self.grid.delete_bins(&bin_indices);
     }
@@ -832,8 +828,9 @@ impl PyGrid {
     ///
     /// Parameters
     /// ----------
-    /// bin_indices : list[int]
+    /// `bin_indices` : list[int]
     ///     list of indices of bins to be removed
+    #[allow(clippy::needless_pass_by_value)]
     pub fn delete_channels(&mut self, channel_indices: Vec<usize>) {
         self.grid.delete_channels(&channel_indices);
     }

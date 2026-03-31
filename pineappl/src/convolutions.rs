@@ -34,9 +34,9 @@ impl<'a> ConvolutionCache<'a> {
     /// Construct a new convolution cache.
     ///
     /// - `convolutions` describes each convolution function (PDF/FF type and hadron PID).
-    /// - `xfx` provides one callback per convolution, used to evaluate `x f(x, μ^2)` for
-    ///   a given PID, `x`, and scale `μ^2`.
-    /// - `alphas` provides a callback to evaluate `μ^2`.
+    /// - `xfx` provides one callback per convolution, used to evaluate `x * f(x, Q2)` for
+    ///   a given PID, `x`, and squared scale `Q2`.
+    /// - `alphas` provides a callback given `Q2` (squared renormalization scale).
     ///
     /// The cache is filled lazily as [`Grid`] convolution is performed.
     pub fn new(
@@ -178,8 +178,9 @@ impl<'a> ConvolutionCache<'a> {
 /// A convolution cache configured for a specific [`Grid`].
 ///
 /// This is a lightweight adaptor around [`ConvolutionCache`] that precomputes the bookkeeping
-/// needed to evaluate PDF/FF factors and `α` at the scales required by a particular grid and
-/// subgrid. It is created internally by [`ConvolutionCache`] when convolving a grid.
+/// needed to evaluate PDF/FF factors and the strong coupling at the scales required by a
+/// particular grid and subgrid. It is created internally by [`ConvolutionCache`] when convolving
+/// a grid.
 pub struct GridConvCache<'a, 'b> {
     cache: &'b mut ConvolutionCache<'a>,
     perm: Vec<(usize, bool)>,
@@ -190,10 +191,11 @@ pub struct GridConvCache<'a, 'b> {
 }
 
 impl GridConvCache<'_, '_> {
-    /// Compute `αs` and convolution-function products for a given tuple of indices.
+    /// Compute `alpha_s` and convolution-function products for a given tuple of indices.
     ///
     /// The returned value is the product of all requested convolution functions evaluated at the
-    /// subgrid's `x` nodes and the appropriate scale(s), multiplied by `αs` raised to `as_order`.
+    /// subgrid's `x` nodes and the appropriate scale(s), multiplied by `alpha_s` raised to
+    /// `as_order`.
     ///
     /// # Panics
     ///
@@ -201,7 +203,7 @@ impl GridConvCache<'_, '_> {
     /// moment the implementation assumes that:
     /// - `indices[0..x_start]` correspond to scale indices (starting with a factorization-scale
     ///   dimension), and
-    /// - the remaining indices correspond to the \(x\) dimensions in the same order as `pdg_ids`.
+    /// - the remaining indices correspond to the `x` dimensions in the same order as `pdg_ids`.
     ///
     /// This restriction is tracked in the codebase (see the TODO in the implementation).
     pub fn as_fx_prod(&mut self, pdg_ids: &[i32], as_order: u8, indices: &[usize]) -> f64 {

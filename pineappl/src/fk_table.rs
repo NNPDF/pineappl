@@ -124,7 +124,8 @@ impl FkTable {
     ///
     /// # Panics
     ///
-    /// TODO
+    /// Panics if a subgrid node value is missing from the global `x` grid or if internal index
+    /// layout assumptions are violated (indicates a corrupted or inconsistent FK table).
     #[must_use]
     pub fn table(&self) -> ArrayD<f64> {
         let x_grid = self.x_grid();

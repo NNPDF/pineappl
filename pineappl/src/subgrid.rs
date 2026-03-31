@@ -8,13 +8,13 @@ use itertools::izip;
 use serde::{Deserialize, Serialize};
 use std::{iter, mem};
 
-/// TODO
+/// Compare two node values for equality up to a fixed float tolerance.
 #[must_use]
 pub fn node_value_eq(lhs: f64, rhs: f64) -> bool {
     approx_eq!(f64, lhs, rhs, ulps = 4096)
 }
 
-/// TODO
+/// Like [`node_value_eq`], taking mutable references for use with `dedup_by`.
 #[must_use]
 pub fn node_value_eq_ref_mut(lhs: &mut f64, rhs: &mut f64) -> bool {
     node_value_eq(*lhs, *rhs)
@@ -69,7 +69,7 @@ impl Subgrid for EmptySubgridV1 {
     fn optimize_nodes(&mut self) {}
 }
 
-/// TODO
+/// Dense imported subgrid backed by a [`PackedArray`] and explicit node coordinates per dimension.
 #[derive(Clone, Deserialize, Serialize)]
 pub struct ImportSubgridV1 {
     array: PackedArray<f64>,
@@ -408,12 +408,12 @@ pub enum SubgridEnum {
     InterpSubgridV1,
     /// Empty subgrid.
     EmptySubgridV1,
-    /// TODO
+    /// Imported sparse layout with arbitrary node grids per dimension.
     ImportSubgridV1,
 }
 
 impl SubgridEnum {
-    /// TODO
+    /// Merge `other` into `self`, optionally swapping two convolution dimensions.
     pub fn merge(&mut self, other: &Self, transpose: Option<(usize, usize)>) {
         if other.is_empty() {
             return;
@@ -458,7 +458,7 @@ pub struct Stats {
 /// Trait each subgrid must implement.
 #[enum_dispatch]
 pub trait Subgrid {
-    /// TODO
+    /// Node coordinates for each kinematic dimension (same order as the grid kinematics).
     fn node_values(&self) -> Vec<Vec<f64>>;
 
     /// Fill the subgrid with `weight` that is being interpolated with `interps` using the
@@ -489,7 +489,7 @@ pub trait Subgrid {
     /// Return statistics for this subgrid.
     fn stats(&self) -> Stats;
 
-    /// TODO
+    /// Try to collapse a static scale dimension into fewer nodes where possible.
     fn optimize_nodes(&mut self);
 }
 

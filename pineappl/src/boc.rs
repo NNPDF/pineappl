@@ -786,7 +786,7 @@ impl Order {
     ///
     /// # Example
     ///
-    /// In the case of Drell—Yan, there are the following orders:
+    /// In the case of Drell-Yan, there are the following orders:
     ///
     /// - exactly one leading order (LO),
     /// - two next-to-leading orders (NLO), which are
@@ -795,7 +795,7 @@ impl Order {
     /// - three next-to-next-to-leading orders (NNLO),
     ///   - the NNLO QCD,
     ///   - the NNLO EW, and finally
-    ///   - the mixed NNLO QCD—EW.
+    ///   - the mixed NNLO QCD-EW.
     ///
     /// ```rust
     /// use pineappl::boc::Order;
@@ -805,7 +805,7 @@ impl Order {
     ///     Order::new(1, 2, 0, 0, 0), //  NLO QCD    : alphas   alpha^2
     ///     Order::new(0, 3, 0, 0, 0), //  NLO  EW    :          alpha^3
     ///     Order::new(2, 2, 0, 0, 0), // NNLO QCD    : alphas^2 alpha^2
-    ///     Order::new(1, 3, 0, 0, 0), // NNLO QCD—EW : alphas   alpha^3
+    ///     Order::new(1, 3, 0, 0, 0), // NNLO QCD-EW : alphas   alpha^3
     ///     Order::new(0, 4, 0, 0, 0), // NNLO EW     :          alpha^4
     /// ];
     ///
@@ -850,11 +850,11 @@ impl Order {
     ///
     /// let orders = [
     ///     Order::new(2, 0, 0, 0, 0), //   LO QCD    : alphas^2
-    ///     Order::new(1, 1, 0, 0, 0), //   LO QCD—EW : alphas   alpha
+    ///     Order::new(1, 1, 0, 0, 0), //   LO QCD-EW : alphas   alpha
     ///     Order::new(0, 2, 0, 0, 0), //   LO  EW    :          alpha^2
     ///     Order::new(3, 0, 0, 0, 0), //  NLO QCD    : alphas^3
-    ///     Order::new(2, 1, 0, 0, 0), //  NLO QCD—EW : alphas^2 alpha
-    ///     Order::new(1, 2, 0, 0, 0), //  NLO QCD—EW : alphas   alpha^2
+    ///     Order::new(2, 1, 0, 0, 0), //  NLO QCD-EW : alphas^2 alpha
+    ///     Order::new(1, 2, 0, 0, 0), //  NLO QCD-EW : alphas   alpha^2
     ///     Order::new(0, 3, 0, 0, 0), //  NLO EW     :          alpha^3
     /// ];
     ///
@@ -1137,7 +1137,8 @@ impl Channel {
     ///
     /// # Panics
     ///
-    /// TODO
+    /// Panics if any luminosity coefficient is not comparable (for example NaN), or if the
+    /// channel has no entries (should not occur for a well-formed grid).
     #[must_use]
     pub fn factor(&self) -> (f64, Self) {
         let factor = self
@@ -1296,13 +1297,12 @@ mod tests {
 
     #[test]
     fn order_create_mask() {
-        // Drell—Yan orders
         let orders = [
             Order::new(0, 2, 0, 0, 0), //   LO        :          alpha^2
             Order::new(1, 2, 0, 0, 0), //  NLO QCD    : alphas   alpha^2
             Order::new(0, 3, 0, 0, 0), //  NLO  EW    :          alpha^3
             Order::new(2, 2, 0, 0, 0), // NNLO QCD    : alphas^2 alpha^2
-            Order::new(1, 3, 0, 0, 0), // NNLO QCD—EW : alphas   alpha^3
+            Order::new(1, 3, 0, 0, 0), // NNLO QCD-EW : alphas   alpha^3
             Order::new(0, 4, 0, 0, 0), // NNLO EW     :          alpha^4
         ];
 
@@ -1374,16 +1374,16 @@ mod tests {
         // Top-pair production orders
         let orders = [
             Order::new(2, 0, 0, 0, 0), //   LO QCD    : alphas^2
-            Order::new(1, 1, 0, 0, 0), //   LO QCD—EW : alphas   alpha
+            Order::new(1, 1, 0, 0, 0), //   LO QCD-EW : alphas   alpha
             Order::new(0, 2, 0, 0, 0), //   LO  EW    :          alpha^2
             Order::new(3, 0, 0, 0, 0), //  NLO QCD    : alphas^3
-            Order::new(2, 1, 0, 0, 0), //  NLO QCD—EW : alphas^2 alpha
-            Order::new(1, 2, 0, 0, 0), //  NLO QCD—EW : alphas   alpha^2
+            Order::new(2, 1, 0, 0, 0), //  NLO QCD-EW : alphas^2 alpha
+            Order::new(1, 2, 0, 0, 0), //  NLO QCD-EW : alphas   alpha^2
             Order::new(0, 3, 0, 0, 0), //  NLO  EW    :          alpha^3
             Order::new(4, 0, 0, 0, 0), // NNLO QCD    : alphas^4
-            Order::new(3, 1, 0, 0, 0), // NNLO QCD—EW : alphas^3 alpha
-            Order::new(2, 2, 0, 0, 0), // NNLO QCD—EW : alphas^2 alpha^2
-            Order::new(1, 3, 0, 0, 0), // NNLO QCD—EW : alphas   alpha^3
+            Order::new(3, 1, 0, 0, 0), // NNLO QCD-EW : alphas^3 alpha
+            Order::new(2, 2, 0, 0, 0), // NNLO QCD-EW : alphas^2 alpha^2
+            Order::new(1, 3, 0, 0, 0), // NNLO QCD-EW : alphas   alpha^3
             Order::new(0, 4, 0, 0, 0), // NNLO EW     :          alpha^4
         ];
 
