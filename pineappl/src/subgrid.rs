@@ -70,6 +70,15 @@ impl Subgrid for EmptySubgridV1 {
 }
 
 /// Dense imported subgrid backed by a [`PackedArray`] and explicit node coordinates per dimension.
+///
+/// This type exists mainly so you can **inject coefficient functions** produced from DIS-like codes.
+/// These are defined to be convolved with the parton density **`f`**.
+///
+/// # Parton factors: `f` versus `x * f`
+///
+/// Coefficients you store here (and the node values you attach) must match the PineAPPL definition
+/// where the hard cross section is combined with parton distributions as **`f(x)`**, **not** with
+/// **`x * f(x)`**.
 #[derive(Clone, Deserialize, Serialize)]
 pub struct ImportSubgridV1 {
     array: PackedArray<f64>,
@@ -184,7 +193,10 @@ impl Subgrid for ImportSubgridV1 {
 }
 
 impl ImportSubgridV1 {
-    /// Constructor.
+    /// Build an imported subgrid from packed coefficients and per-dimension node values.
+    ///
+    /// Intended for **external coefficient dumps** that must be folded with **`f`**; see [`ImportSubgridV1`].
+    /// Values in `array` must use the **`f` (not `x * f`)** convention.
     #[must_use]
     pub const fn new(array: PackedArray<f64>, node_values: Vec<Vec<f64>>) -> Self {
         Self { array, node_values }
@@ -408,7 +420,7 @@ pub enum SubgridEnum {
     InterpSubgridV1,
     /// Empty subgrid.
     EmptySubgridV1,
-    /// Imported sparse layout with arbitrary node grids per dimension.
+    /// Imported sparse layout for **injected coefficient tables** convolved with **`f`** (see [`ImportSubgridV1`]).
     ImportSubgridV1,
 }
 

@@ -1,4 +1,12 @@
 //! Subgrid interface.
+//!
+//! [`ImportSubgridV1`] is mainly for **injecting coefficient tables from other programs** (dumped
+//! grids, external MC output, etc.) that are **meant to be convolved with parton `f(x)`**, not for the
+//! usual event-by-event filling of a grid. Those coefficients use the **`f(x)`** convention (and the
+//! analogous fragmentation variable), **not** **`x * f(x)`**. When you convolve with LHAPDF-style
+//! callables that return **`x * f`**, the Rust library divides by `x` so the result matches. Do not
+//! store **`x * f`** in an imported subgrid or you double-count `x`. See the Rust `pineappl::convolutions`
+//! and `pineappl::subgrid::ImportSubgridV1` docs and <https://github.com/NNPDF/pineappl/issues/388>.
 
 use ndarray::{ArrayD, Dimension};
 use numpy::{IntoPyArray, PyArrayDyn, PyReadonlyArrayDyn};
@@ -6,7 +14,13 @@ use pineappl::packed_array::PackedArray;
 use pineappl::subgrid::{ImportSubgridV1, Subgrid, SubgridEnum};
 use pyo3::prelude::*;
 
-/// `PyO3` wrapper to :rustdoc:`pineappl::subgrid::ImportSubgridV1 <subgrid/struct.ImportSubgridV1.html>`.
+/// Sparse subgrid for **coefficient functions dumped from outside PineAPPL**, to be convolved with **f**.
+///
+/// Typical use: load tabulated coefficients from another code; they must be defined to fold with
+/// parton **f(x)**, not **x * f(x)**. Non-zero entries in ``array`` follow that **f** convention.
+/// :class:`~pineappl.grid.Grid` ``.convolve`` still expects LHAPDF-style callables that return
+/// ``x * f``; the core library divides by ``x`` when building the luminosity. See the submodule
+/// docstring and `issue 388 <https://github.com/NNPDF/pineappl/issues/388>`__.
 #[pyclass(name = "ImportSubgridV1")]
 #[derive(Clone)]
 #[repr(transparent)]
@@ -16,7 +30,10 @@ pub struct PyImportSubgridV1 {
 
 #[pymethods]
 impl PyImportSubgridV1 {
-    /// Constructor.
+    /// Constructor for **imported coefficient tables** (external dumps), convolved with ``f`` later.
+    ///
+    /// Stored weights must be ``f(x)``, not ``x * f(x)``, so they match :meth:`pineappl.grid.Grid.convolve`
+    /// with standard LHAPDF ``xfx`` callbacks (returning ``x * f``).
     ///
     /// # Panics
     ///
@@ -25,10 +42,9 @@ impl PyImportSubgridV1 {
     /// Parameters
     /// ----------
     /// array : numpy.ndarray(float)
-    ///     `N`-dimensional array with all weights
-    /// `node_values`: list(list(float))
-    ///     list containing the arrays of energy scales {q1, ..., qn} and momentum fractions
-    ///     {x1, ..., xn}.
+    ///     N-dimensional array of non-zero coefficients (``f`` convention: fold with ``f``, not ``x * f``).
+    /// node_values : list(list(float))
+    ///     Per-dimension node coordinates (scales, x values, etc.).
     #[new]
     #[must_use]
     #[allow(clippy::needless_pass_by_value)]
@@ -119,7 +135,13 @@ impl PySubgridEnum {
 /// Raises Errors if (sub-)module is not found.
 pub fn register(parent_module: &Bound<'_, PyModule>) -> PyResult<()> {
     let m = PyModule::new(parent_module.py(), "subgrid")?;
-    m.setattr(pyo3::intern!(m.py(), "__doc__"), "Subgrid interface.")?;
+    m.setattr(
+        pyo3::intern!(m.py(), "__doc__"),
+        "Subgrid interface.\n\n\
+         ImportSubgridV1 is for coefficient tables dumped from outside PineAPPL, to be convolved with f; \
+         array values use the f(x) convention, not x*f(x). Grid.convolve uses LHAPDF x*f callbacks \
+         (see pineappl issue 388).",
+    )?;
     pyo3::py_run!(
         parent_module.py(),
         m,

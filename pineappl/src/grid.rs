@@ -199,6 +199,12 @@ impl Grid {
     /// first factor varies the renormalization scale, the second the factorization scale. Note
     /// that for the variation to be trusted all non-zero log-grids must be contained.
     ///
+    /// Convolution callbacks in `lumi_cache` must return **`x * f`** (LHAPDF). Internally, factors
+    /// **`f`** are used so that they match subgrid data from [`InterpSubgridV1`](crate::subgrid::InterpSubgridV1)
+    /// and from [`ImportSubgridV1`](crate::subgrid::ImportSubgridV1). The latter is mainly for
+    /// **coefficient functions** dumped from outside PineAPPL that are defined to be convolved with
+    /// **`f`**; those imported values must already use the **`f`** convention. See [`crate::convolutions`].
+    ///
     /// # Panics
     ///
     /// Panics if [`ConvolutionCache::new_grid_conv_cache`] cannot match the grid convolutions to
@@ -1442,10 +1448,11 @@ impl Grid {
     /// This function integrates out one of the convolution dimensions of the grid by convolving it
     /// with the provided function `xfx`.
     ///
-    /// The `conv_idx` parameter specifies which convolution to fix. The `xfx` function provides
-    /// the values of the parton distribution function or fragmentation function for a given parton
-    /// ID, `x` value, and scale `mu2`. The `xi` parameter is a scale factor for the factorization
-    /// or fragmentation scale.
+    /// The `conv_idx` parameter specifies which convolution to fix. The `xfx` function must follow
+    /// the LHAPDF convention and return **`x * f(x, mu2)`** for the given parton ID, `x`, and squared
+    /// scale `mu2`. The implementation uses **`f`** when folding into subgrid coefficients (see
+    /// [`crate::convolutions`]). The `xi` parameter is a scale factor for the factorization or
+    /// fragmentation scale.
     ///
     /// # Special handling of fragmentation functions
     ///

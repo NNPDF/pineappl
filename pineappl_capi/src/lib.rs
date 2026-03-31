@@ -2181,6 +2181,10 @@ pub unsafe extern "C" fn pineappl_grid_subgrid_array(
 
 /// Set the subgrid of a Grid for a given bin, order, and channel.
 ///
+/// This installs an [`ImportSubgridV1`], mainly for **tabulated coefficients from another program**
+/// that must be folded with parton **`f`**. Non-zero `subgrid_array` entries must use the **`f`**
+/// convention (density or fragmentation as a function of momentum fraction), **not** **`x * f`**.
+///
 /// # Safety
 ///
 /// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,

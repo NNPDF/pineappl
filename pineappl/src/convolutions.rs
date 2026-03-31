@@ -1,4 +1,20 @@
 //! Module for everything related to convolution functions.
+//!
+//! # Convention for callbacks (`x * f`) versus imported subgrids (`f`)
+//!
+//! Convolution callbacks (the `xfx` closures passed to [`ConvolutionCache::new`]) follow the
+//! LHAPDF convention: for each parton PID, momentum fraction `x`, and squared scale `Q2`, they
+//! must return **`x * f(x, Q2)`** (PDF or FF as used by LHAPDF).
+//!
+//! When [`Grid::convolve`](crate::grid::Grid::convolve) evaluates a luminosity, it recovers the
+//! parton-level factor **`f`** by using `xfx(pid, x, Q2) / x` before multiplying stored subgrid
+//! coefficients (see [`GridConvCache::as_fx_prod`]). That matches grids built by filling
+//! ([`InterpSubgridV1`](crate::subgrid::InterpSubgridV1)) and grids built by importing
+//! ([`ImportSubgridV1`](crate::subgrid::ImportSubgridV1)). The import path is mainly for **coefficient
+//! functions** dumped from outside PineAPPL that are defined to be convolved with **`f`**; such data
+//! must already use the **`f` (not `x * f`)** convention, as in equation (2.8) of the PineAPPL paper.
+//! If you put `x * f` into an imported subgrid and also pass standard LHAPDF `xfx`, the `x` factor
+//! is applied twice. See [issue #388](https://github.com/NNPDF/pineappl/issues/388).
 
 use super::boc::Kinematics;
 use super::boc::Scales;
@@ -22,6 +38,8 @@ struct ConvCache1d<'a> {
 
 /// A cache for evaluating PDFs. Methods like [`Grid::convolve`] accept instances of this `struct`
 /// instead of the PDFs themselves.
+///
+/// Callbacks must return **`x * f`** as documented in the [module-level description](crate::convolutions).
 pub struct ConvolutionCache<'a> {
     caches: Vec<ConvCache1d<'a>>,
     alphas: &'a mut dyn FnMut(f64) -> f64,
@@ -34,8 +52,9 @@ impl<'a> ConvolutionCache<'a> {
     /// Construct a new convolution cache.
     ///
     /// - `convolutions` describes each convolution function (PDF/FF type and hadron PID).
-    /// - `xfx` provides one callback per convolution, used to evaluate `x * f(x, Q2)` for
-    ///   a given PID, `x`, and squared scale `Q2`.
+    /// - `xfx` provides one callback per convolution, used to evaluate **`x * f(x, Q2)`** (LHAPDF
+    ///   style) for a given PID, `x`, and squared scale `Q2`. Internally, convolution uses `f` via
+    ///   `xfx(...) / x`, consistent with stored grid coefficients (see module docs).
     /// - `alphas` provides a callback given `Q2` (squared renormalization scale).
     ///
     /// The cache is filled lazily as [`Grid`] convolution is performed.
@@ -206,6 +225,9 @@ impl GridConvCache<'_, '_> {
     /// - the remaining indices correspond to the `x` dimensions in the same order as `pdg_ids`.
     ///
     /// This restriction is tracked in the codebase (see the TODO in the implementation).
+    ///
+    /// Each parton factor is `xfx(pid, x, Q2) / x`, i.e. the PDF/FF **`f`** matching imported
+    /// subgrid data. Callbacks `xfx` still follow the **`x * f`** LHAPDF convention.
     pub fn as_fx_prod(&mut self, pdg_ids: &[i32], as_order: u8, indices: &[usize]) -> f64 {
         // TODO: here we assume that
         // - indices[0] is the (squared) factorization scale,

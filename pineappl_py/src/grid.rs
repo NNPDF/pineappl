@@ -188,6 +188,10 @@ impl PyGrid {
 
     /// Set a subgrid.
     ///
+    /// Typical use with :class:`pineappl.subgrid.ImportSubgridV1`: load **coefficient tables dumped
+    /// from outside PineAPPL** that are **meant to be convolved with ``f``**. Those coefficients must
+    /// use the parton ``f(x)`` convention, not ``x * f(x)``.
+    ///
     /// Parameters
     /// ----------
     /// order : int
@@ -357,6 +361,11 @@ impl PyGrid {
 
     /// Convolve the grid with as many distributions.
     ///
+    /// Each ``xfx`` callable must return ``x * f(x, Q2)`` (LHAPDF style). The library uses ``f`` when
+    /// combining with stored subgrid coefficients. Coefficients injected via
+    /// :class:`pineappl.subgrid.ImportSubgridV1` are mainly **external dumps** defined to fold with
+    /// ``f``; they must use ``f``, not ``x * f``.
+    ///
     /// # Panics
     ///
     /// Panics if Python callbacks fail, if the convolution cache cannot be matched to the grid, or
@@ -367,7 +376,7 @@ impl PyGrid {
     /// `pdg_convs` : list(PyConv)
     ///     list containing the types of convolutions and PID
     /// xfxs : list(callable)
-    ///     list of lhapdf-like callable with arguments `pid, x, Q2` returning x*pdf
+    ///     list of LHAPDF-like callables ``(pid, x, Q2) -> x * f``
     /// alphas : callable
     ///     LHAPDF-like callable with argument `Q2` returning `alpha_s(Q2)`
     /// `order_mask` : numpy.ndarray(bool)
@@ -451,8 +460,8 @@ impl PyGrid {
     /// ----------
     /// ``conv_idx``: usize
     ///     index of the convolution (zero-based)
-    /// ``xfxs`` : callable
-    ///     lhapdf-like callable with arguments `pid, x, Q2` returning x*pdf
+    /// xfx : callable
+    ///     LHAPDF-like ``(pid, x, Q2) -> x * f``
     /// ``xi``: float
     #[must_use]
     #[pyo3(signature = (conv_idx, xfx, xi = 1.0))]

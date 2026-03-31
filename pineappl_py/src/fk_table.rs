@@ -290,6 +290,10 @@ impl PyFkTable {
 
     /// Convolve the FK table with as many distributions.
     ///
+    /// ``xfx`` callables must return ``x * f`` (LHAPDF). If the underlying filling grid used
+    /// :class:`pineappl.subgrid.ImportSubgridV1` (**external coefficient dumps** meant to fold
+    /// with ``f``), those values must have been stored as ``f``, not ``x * f``.
+    ///
     /// # Panics
     ///
     /// Panics if Python PDF callbacks fail or if the underlying Rust convolution panics.
@@ -299,7 +303,7 @@ impl PyFkTable {
     /// `pdg_convs` : list(PyConv)
     ///     list containing the types of convolutions and PID
     /// xfxs : list(callable)
-    ///     list of lhapdf-like callable with arguments `pid, x, Q2` returning x*pdf
+    ///     list of LHAPDF-like callables ``(pid, x, Q2) -> x * f``
     /// `bin_indices` : numpy.ndarray(int)
     ///     A list with the indices of the corresponding bins that should be calculated. An
     ///     empty list means that all bins should be calculated.
