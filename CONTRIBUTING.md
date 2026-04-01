@@ -56,6 +56,11 @@ increasing the MSRV make sure to set it everywhere to the same value:
   data with `curl`. To make Github refresh the cached test data when running
   the CI, increase the integer `XX` in the line `key: test-data-vXX` by one.
 
+### Regression tests for Github Issues
+
+If you're writing a regression test for a Github Issue, name the test
+`issue_XXX`, where `XXX` is the Github Issue number.
+
 ## Git
 
 - When you commit, make sure the commit message is written properly. This

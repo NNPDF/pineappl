@@ -463,7 +463,7 @@ fn three_convolutions() {
 }
 
 #[test]
-fn no_channels_grid() {
+fn issue_334() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
