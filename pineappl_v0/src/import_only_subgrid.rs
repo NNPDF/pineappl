@@ -1,6 +1,5 @@
 //! TODO
 
-use super::grid::Ntuple;
 use super::sparse_array3::SparseArray3;
 use super::subgrid::{Mu2, Stats, Subgrid, SubgridEnum, SubgridIndexedIter};
 use serde::{Deserialize, Serialize};
@@ -40,23 +39,6 @@ impl ImportOnlySubgridV1 {
 }
 
 impl Subgrid for ImportOnlySubgridV1 {
-    fn convolve(
-        &self,
-        _: &[f64],
-        _: &[f64],
-        _: &[Mu2],
-        lumi: &mut dyn FnMut(usize, usize, usize) -> f64,
-    ) -> f64 {
-        self.array
-            .indexed_iter()
-            .map(|((imu2, ix1, ix2), sigma)| sigma * lumi(ix1, ix2, imu2))
-            .sum()
-    }
-
-    fn fill(&mut self, _: &Ntuple<f64>) {
-        panic!("ImportOnlySubgridV1 doesn't support the fill operation");
-    }
-
     fn mu2_grid(&self) -> Cow<'_, [Mu2]> {
         self.q2_grid
             .iter()
@@ -210,23 +192,6 @@ impl ImportOnlySubgridV2 {
 }
 
 impl Subgrid for ImportOnlySubgridV2 {
-    fn convolve(
-        &self,
-        _: &[f64],
-        _: &[f64],
-        _: &[Mu2],
-        lumi: &mut dyn FnMut(usize, usize, usize) -> f64,
-    ) -> f64 {
-        self.array
-            .indexed_iter()
-            .map(|((imu2, ix1, ix2), sigma)| sigma * lumi(ix1, ix2, imu2))
-            .sum()
-    }
-
-    fn fill(&mut self, _: &Ntuple<f64>) {
-        panic!("ImportOnlySubgridV2 doesn't support the fill operation");
-    }
-
     fn mu2_grid(&self) -> Cow<'_, [Mu2]> {
         Cow::Borrowed(&self.mu2_grid)
     }

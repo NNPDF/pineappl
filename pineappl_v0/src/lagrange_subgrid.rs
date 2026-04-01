@@ -1,12 +1,10 @@
 //! Module containing the Lagrange-interpolation subgrid.
 
-use super::convert::{f64_from_usize, usize_from_f64};
-use super::grid::Ntuple;
+use super::convert::f64_from_usize;
 use super::sparse_array3::SparseArray3;
 use super::subgrid::{
     ExtraSubgridParams, Mu2, Stats, Subgrid, SubgridEnum, SubgridIndexedIter, SubgridParams,
 };
-use arrayvec::ArrayVec;
 use ndarray::Array3;
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
@@ -43,20 +41,6 @@ fn ftau(q2: f64) -> f64 {
 
 fn fq2(tau: f64) -> f64 {
     0.0625 * tau.exp().exp()
-}
-
-fn fi(i: usize, n: usize, u: f64) -> f64 {
-    let mut factorials = 1;
-    let mut product = 1.0;
-    for z in 0..i {
-        product *= u - f64_from_usize(z);
-        factorials *= i - z;
-    }
-    for z in i + 1..=n {
-        product *= f64_from_usize(z) - u;
-        factorials *= z - i;
-    }
-    product / f64_from_usize(factorials)
 }
 
 /// Subgrid which uses Lagrange-interpolation.
@@ -129,104 +113,6 @@ impl LagrangeSubgridV1 {
 }
 
 impl Subgrid for LagrangeSubgridV1 {
-    fn convolve(
-        &self,
-        x1: &[f64],
-        x2: &[f64],
-        _: &[Mu2],
-        lumi: &mut dyn FnMut(usize, usize, usize) -> f64,
-    ) -> f64 {
-        self.grid.as_ref().map_or(0.0, |grid| {
-            grid.indexed_iter()
-                .map(|((imu2, ix1, ix2), &sigma)| {
-                    if sigma == 0.0 {
-                        0.0
-                    } else {
-                        let mut value = sigma * lumi(ix1, ix2, imu2 + self.itaumin);
-                        if self.reweight {
-                            value *= weightfun(x1[ix1]) * weightfun(x2[ix2]);
-                        }
-                        value
-                    }
-                })
-                .sum()
-        })
-    }
-
-    fn fill(&mut self, ntuple: &Ntuple<f64>) {
-        if ntuple.weight == 0.0 {
-            return;
-        }
-
-        let y1 = fy(ntuple.x1);
-        let y2 = fy(ntuple.x2);
-        let tau = ftau(ntuple.q2);
-
-        if (y2 < self.ymin)
-            || (y2 > self.ymax)
-            || (y1 < self.ymin)
-            || (y1 > self.ymax)
-            || (tau < self.taumin)
-            || (tau > self.taumax)
-        {
-            return;
-        }
-
-        let k1 = usize_from_f64((y1 - self.ymin) / self.deltay() - f64_from_usize(self.yorder / 2))
-            .min(self.ny - 1 - self.yorder);
-        let k2 = usize_from_f64((y2 - self.ymin) / self.deltay() - f64_from_usize(self.yorder / 2))
-            .min(self.ny - 1 - self.yorder);
-
-        let u_y1 = (y1 - self.gety(k1)) / self.deltay();
-        let u_y2 = (y2 - self.gety(k2)) / self.deltay();
-
-        let fi1: ArrayVec<_, 8> = (0..=self.yorder)
-            .map(|i| fi(i, self.yorder, u_y1))
-            .collect();
-        let fi2: ArrayVec<_, 8> = (0..=self.yorder)
-            .map(|i| fi(i, self.yorder, u_y2))
-            .collect();
-
-        let k3 = usize_from_f64(
-            (tau - self.taumin) / self.deltatau() - f64_from_usize(self.tauorder / 2),
-        )
-        .min(self.ntau - 1 - self.tauorder);
-
-        let u_tau = (tau - self.gettau(k3)) / self.deltatau();
-
-        let factor = if self.reweight {
-            1.0 / (weightfun(ntuple.x1) * weightfun(ntuple.x2))
-        } else {
-            1.0
-        };
-
-        let size = self.tauorder + 1;
-        let ny = self.ny;
-
-        if self.grid.is_none() {
-            self.itaumin = k3;
-            self.itaumax = k3 + size;
-        } else if k3 < self.itaumin || k3 + size > self.itaumax {
-            self.increase_tau(self.itaumin.min(k3), self.itaumax.max(k3 + size));
-        }
-
-        for i3 in 0..=self.tauorder {
-            let fi3i3 = fi(i3, self.tauorder, u_tau);
-
-            for (i1, fi1i1) in fi1.iter().enumerate() {
-                for (i2, fi2i2) in fi2.iter().enumerate() {
-                    let fillweight = factor * fi1i1 * fi2i2 * fi3i3 * ntuple.weight;
-
-                    let grid = self
-                        .grid
-                        .get_or_insert_with(|| Array3::zeros((size, ny, ny)));
-
-                    grid[[k3 + i3 - self.itaumin, k1 + i1, k2 + i2]] += fillweight;
-                }
-            }
-        }
-    }
-
     fn mu2_grid(&self) -> Cow<'_, [Mu2]> {
         (0..self.ntau)
             .map(|itau| {
@@ -495,121 +381,6 @@ impl LagrangeSubgridV2 {
 }
 
 impl Subgrid for LagrangeSubgridV2 {
-    fn convolve(
-        &self,
-        x1: &[f64],
-        x2: &[f64],
-        _: &[Mu2],
-        lumi: &mut dyn FnMut(usize, usize, usize) -> f64,
-    ) -> f64 {
-        self.grid.as_ref().map_or(0.0, |grid| {
-            grid.indexed_iter()
-                .map(|((imu2, ix1, ix2), &sigma)| {
-                    if sigma == 0.0 {
-                        0.0
-                    } else {
-                        let mut value = sigma * lumi(ix1, ix2, imu2 + self.itaumin);
-                        if self.reweight1 {
-                            value *= weightfun(x1[ix1]);
-                        }
-                        if self.reweight2 {
-                            value *= weightfun(x2[ix2]);
-                        }
-                        value
-                    }
-                })
-                .sum()
-        })
-    }
-
-    fn fill(&mut self, ntuple: &Ntuple<f64>) {
-        if ntuple.weight == 0.0 {
-            return;
-        }
-
-        let y1 = fy(ntuple.x1);
-        let y2 = fy(ntuple.x2);
-        let tau = ftau(ntuple.q2);
-
-        if self.static_q2 == 0.0 {
-            self.static_q2 = ntuple.q2;
-        } else if (self.static_q2 != -1.0) && (self.static_q2 != ntuple.q2) {
-            self.static_q2 = -1.0;
-        }
-
-        if (y2 < self.y2min)
-            || (y2 > self.y2max)
-            || (y1 < self.y1min)
-            || (y1 > self.y1max)
-            || (tau < self.taumin)
-            || (tau > self.taumax)
-        {
-            return;
-        }
-
-        let k1 =
-            usize_from_f64((y1 - self.y1min) / self.deltay1() - f64_from_usize(self.y1order / 2))
-                .min(self.ny1 - 1 - self.y1order);
-        let k2 =
-            usize_from_f64((y2 - self.y2min) / self.deltay2() - f64_from_usize(self.y2order / 2))
-                .min(self.ny2 - 1 - self.y2order);
-
-        let u_y1 = (y1 - self.gety1(k1)) / self.deltay1();
-        let u_y2 = (y2 - self.gety2(k2)) / self.deltay2();
-
-        let fi1: ArrayVec<_, 8> = (0..=self.y1order)
-            .map(|i| fi(i, self.y1order, u_y1))
-            .collect();
-        let fi2: ArrayVec<_, 8> = (0..=self.y2order)
-            .map(|i| fi(i, self.y2order, u_y2))
-            .collect();
-
-        let k3 = usize_from_f64(
-            (tau - self.taumin) / self.deltatau() - f64_from_usize(self.tauorder / 2),
-        )
-        .min(self.ntau - 1 - self.tauorder);
-
-        let u_tau = (tau - self.gettau(k3)) / self.deltatau();
-
-        let factor = 1.0
-            / (if self.reweight1 {
-                weightfun(ntuple.x1)
-            } else {
-                1.0
-            } * if self.reweight2 {
-                weightfun(ntuple.x2)
-            } else {
-                1.0
-            });
-
-        let size = self.tauorder + 1;
-        let ny1 = self.ny1;
-        let ny2 = self.ny2;
-
-        if self.grid.is_none() {
-            self.itaumin = k3;
-            self.itaumax = k3 + size;
-        } else if k3 < self.itaumin || k3 + size > self.itaumax {
-            self.increase_tau(self.itaumin.min(k3), self.itaumax.max(k3 + size));
-        }
-
-        for i3 in 0..=self.tauorder {
-            let fi3i3 = fi(i3, self.tauorder, u_tau);
-
-            for (i1, fi1i1) in fi1.iter().enumerate() {
-                for (i2, fi2i2) in fi2.iter().enumerate() {
-                    let fillweight = factor * fi1i1 * fi2i2 * fi3i3 * ntuple.weight;
-
-                    let grid = self
-                        .grid
-                        .get_or_insert_with(|| Array3::zeros((size, ny1, ny2)));
-
-                    grid[[k3 + i3 - self.itaumin, k1 + i1, k2 + i2]] += fillweight;
-                }
-            }
-        }
-    }
-
     fn mu2_grid(&self) -> Cow<'_, [Mu2]> {
         (0..self.ntau)
             .map(|itau| {
@@ -843,85 +614,6 @@ impl LagrangeSparseSubgridV1 {
 }
 
 impl Subgrid for LagrangeSparseSubgridV1 {
-    fn convolve(
-        &self,
-        x1: &[f64],
-        x2: &[f64],
-        _: &[Mu2],
-        lumi: &mut dyn FnMut(usize, usize, usize) -> f64,
-    ) -> f64 {
-        self.array
-            .indexed_iter()
-            .map(|((imu2, ix1, ix2), sigma)| {
-                let mut value = sigma * lumi(ix1, ix2, imu2);
-                if self.reweight {
-                    value *= weightfun(x1[ix1]) * weightfun(x2[ix2]);
-                }
-                value
-            })
-            .sum()
-    }
-
-    fn fill(&mut self, ntuple: &Ntuple<f64>) {
-        if ntuple.weight == 0.0 {
-            return;
-        }
-
-        let y1 = fy(ntuple.x1);
-        let y2 = fy(ntuple.x2);
-        let tau = ftau(ntuple.q2);
-
-        if (y2 < self.ymin)
-            || (y2 > self.ymax)
-            || (y1 < self.ymin)
-            || (y1 > self.ymax)
-            || (tau < self.taumin)
-            || (tau > self.taumax)
-        {
-            return;
-        }
-
-        let k1 = usize_from_f64((y1 - self.ymin) / self.deltay() - f64_from_usize(self.yorder / 2))
-            .min(self.ny - 1 - self.yorder);
-        let k2 = usize_from_f64((y2 - self.ymin) / self.deltay() - f64_from_usize(self.yorder / 2))
-            .min(self.ny - 1 - self.yorder);
-
-        let u_y1 = (y1 - self.gety(k1)) / self.deltay();
-        let u_y2 = (y2 - self.gety(k2)) / self.deltay();
-
-        let fi1: ArrayVec<_, 8> = (0..=self.yorder)
-            .map(|i| fi(i, self.yorder, u_y1))
-            .collect();
-        let fi2: ArrayVec<_, 8> = (0..=self.yorder)
-            .map(|i| fi(i, self.yorder, u_y2))
-            .collect();
-
-        let k3 = usize_from_f64(
-            (tau - self.taumin) / self.deltatau() - f64_from_usize(self.tauorder / 2),
-        )
-        .min(self.ntau - 1 - self.tauorder);
-
-        let u_tau = (tau - self.gettau(k3)) / self.deltatau();
-
-        let factor = if self.reweight {
-            1.0 / (weightfun(ntuple.x1) * weightfun(ntuple.x2))
-        } else {
-            1.0
-        };
-
-        for i3 in 0..=self.tauorder {
-            let fi3i3 = fi(i3, self.tauorder, u_tau);
-
-            for (i1, fi1i1) in fi1.iter().enumerate() {
-                for (i2, fi2i2) in fi2.iter().enumerate() {
-                    let fillweight = factor * fi1i1 * fi2i2 * fi3i3 * ntuple.weight;
-
-                    self.array[[k3 + i3, k1 + i1, k2 + i2]] += fillweight;
-                }
-            }
-        }
-    }
-
     fn mu2_grid(&self) -> Cow<'_, [Mu2]> {
         (0..self.ntau)
             .map(|itau| {

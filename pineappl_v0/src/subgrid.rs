@@ -1,7 +1,6 @@
 //! Module containing the trait `Subgrid` and supporting structs.
 
 use super::empty_subgrid::EmptySubgridV1;
-use super::grid::Ntuple;
 use super::import_only_subgrid::{ImportOnlySubgridV1, ImportOnlySubgridV2};
 use super::lagrange_subgrid::{LagrangeSparseSubgridV1, LagrangeSubgridV1, LagrangeSubgridV2};
 use super::ntuple_subgrid::NtupleSubgridV1;
@@ -76,21 +75,6 @@ pub trait Subgrid {
     /// Return a slice of values of `x2`. If the subgrid does not use a grid, this method should
     /// return an empty slice.
     fn x2_grid(&self) -> Cow<'_, [f64]>;
-
-    /// Convolute the subgrid with a luminosity function, which takes indices as arguments that
-    /// correspond to the entries given in the slices `x1`, `x2` and `mu2`.
-    fn convolve(
-        &self,
-        x1: &[f64],
-        x2: &[f64],
-        mu2: &[Mu2],
-        lumi: &mut dyn FnMut(usize, usize, usize) -> f64,
-    ) -> f64;
-
-    /// Fills the subgrid with `weight` for the parton momentum fractions `x1` and `x2`, and the
-    /// scale `q2`. Filling is currently only support where both renormalization and factorization
-    /// scale have the same value.
-    fn fill(&mut self, ntuple: &Ntuple<f64>);
 
     /// Returns true if `fill` was never called for this grid.
     fn is_empty(&self) -> bool;

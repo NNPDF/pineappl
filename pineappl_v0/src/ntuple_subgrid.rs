@@ -21,24 +21,6 @@ impl NtupleSubgridV1 {
 }
 
 impl Subgrid for NtupleSubgridV1 {
-    fn convolve(
-        &self,
-        _: &[f64],
-        _: &[f64],
-        _: &[Mu2],
-        _: &mut dyn FnMut(usize, usize, usize) -> f64,
-    ) -> f64 {
-        panic!("NtupleSubgridV1 doesn't support the convolve operation");
-    }
-
-    fn fill(&mut self, ntuple: &Ntuple<f64>) {
-        if ntuple.weight == 0.0 {
-            return;
-        }
-
-        self.ntuples.push(ntuple.clone());
-    }
-
     fn mu2_grid(&self) -> Cow<'_, [Mu2]> {
         Cow::Borrowed(&[])
     }

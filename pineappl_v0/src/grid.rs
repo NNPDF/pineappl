@@ -3,18 +3,14 @@
 use super::bin::{BinInfo, BinLimits, BinRemapper};
 use super::boc::{Channel, Order};
 use super::convolutions::Convolution;
-use super::empty_subgrid::EmptySubgridV1;
-use super::pids::{self, PidBasis};
-use super::subgrid::{Subgrid, SubgridEnum, SubgridParams};
+use super::pids::PidBasis;
+use super::subgrid::{SubgridEnum, SubgridParams};
 use bitflags::bitflags;
 use lz4_flex::frame::FrameDecoder;
 use ndarray::{Array3, ArrayView3};
 use serde::{Deserialize, Serialize, Serializer};
-use std::borrow::Cow;
 use std::collections::{BTreeMap, HashMap};
 use std::io::{self, BufRead, BufReader, Read};
-use std::mem;
-use std::ops::Range;
 use thiserror::Error;
 
 /// This structure represents a position (`x1`, `x2`, `q2`) in a `Subgrid` together with a

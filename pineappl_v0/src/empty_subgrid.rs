@@ -1,6 +1,5 @@
 //! TODO
 
-use super::grid::Ntuple;
 use super::subgrid::{Mu2, Stats, Subgrid, SubgridEnum, SubgridIndexedIter};
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
@@ -11,20 +10,6 @@ use std::iter;
 pub struct EmptySubgridV1;
 
 impl Subgrid for EmptySubgridV1 {
-    fn convolve(
-        &self,
-        _: &[f64],
-        _: &[f64],
-        _: &[Mu2],
-        _: &mut dyn FnMut(usize, usize, usize) -> f64,
-    ) -> f64 {
-        0.0
-    }
-
-    fn fill(&mut self, _: &Ntuple<f64>) {
-        panic!("EmptySubgridV1 doesn't support the fill operation");
-    }
-
     fn mu2_grid(&self) -> Cow<'_, [Mu2]> {
         Cow::Borrowed(&[])
     }
