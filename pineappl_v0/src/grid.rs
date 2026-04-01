@@ -251,18 +251,25 @@ impl Grid {
                                     .map(|s| s.parse::<i32>())
                                 {
                                     Some(Ok(pid)) => {
-                                        let condition = !self.channels().iter().all(|entry| {
-                                            entry.entry().iter().all(|&channels| match index {
-                                                1 => channels.0 == pid,
-                                                2 => channels.1 == pid,
-                                                _ => unreachable!(),
-                                            })
-                                        });
-
-                                        if condition {
-                                            Convolution::UnpolPDF(pid)
+                                        // Addresses: https://github.com/NNPDF/pineappl/issues/334
+                                        if self.channels().is_empty() && pid == 2212 {
+                                            Convolution::UnpolPDF(2212)
                                         } else {
-                                            Convolution::None
+                                            let condition = !self.channels().iter().all(|entry| {
+                                                entry.entry().iter().all(|&(a, b, _)|
+                                                    match index {
+                                                        1 => a,
+                                                        2 => b,
+                                                        _ => unreachable!()
+                                                    } == pid
+                                                )
+                                            });
+
+                                            if condition {
+                                                Convolution::UnpolPDF(pid)
+                                            } else {
+                                                Convolution::None
+                                            }
                                         }
                                     }
                                     None => Convolution::UnpolPDF(2212),
