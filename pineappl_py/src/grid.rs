@@ -689,8 +689,9 @@ impl PyGrid {
     /// Get the type(s) of convolution(s) for the current Grid.
     ///
     /// Returns
-    /// list(PyConv):
-    ///     list of convolution type with the corresponding PIDs
+    /// -------
+    /// list of `PyConv`
+    ///     One entry per convolution (type and PID).
     #[getter]
     #[must_use]
     pub fn convolutions(&self) -> Vec<PyConv> {
@@ -704,8 +705,9 @@ impl PyGrid {
     /// Get the interpolation specifications for the current grid.
     ///
     /// Returns
-    /// list(PyInterp):
-    ///     list of interpolation specifications
+    /// -------
+    /// list of `PyInterp`
+    ///     One interpolation spec per kinematic dimension.
     #[getter]
     #[must_use]
     pub fn interpolations(&mut self) -> Vec<PyInterp> {

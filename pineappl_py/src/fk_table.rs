@@ -94,8 +94,9 @@ impl PyFkTable {
     /// Get the type(s) of convolution(s) for the current FK table.
     ///
     /// Returns
-    /// list(PyConv):
-    ///     list of convolution type with the corresponding PIDs
+    /// -------
+    /// list of `PyConv`
+    ///     One entry per convolution (type and PID).
     #[getter]
     #[must_use]
     pub fn convolutions(&self) -> Vec<PyConv> {
