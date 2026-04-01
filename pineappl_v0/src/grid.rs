@@ -8,7 +8,7 @@ use super::subgrid::{SubgridEnum, SubgridParams};
 use ndarray::{Array3, ArrayView3};
 use serde::Deserialize;
 use std::collections::HashMap;
-use std::io::{self, BufRead};
+use std::io::BufRead;
 use thiserror::Error;
 
 /// This structure represents a position (`x1`, `x2`, `q2`) in a `Subgrid` together with a
@@ -32,9 +32,6 @@ pub enum GridError {
     /// Returned when failed to read a Grid.
     #[error(transparent)]
     ReadFailure(bincode::Error),
-    /// Returned while performing IO operations.
-    #[error(transparent)]
-    IoFailure(io::Error),
 }
 
 #[derive(Deserialize)]
@@ -101,26 +98,7 @@ impl Grid {
     /// # Panics
     ///
     /// Panics if the grid version is not `0`.
-    pub fn read_uncompressed(mut reader: impl BufRead) -> Result<Self, GridError> {
-        let magic_bytes: [u8; 16] = reader.fill_buf().map_err(GridError::IoFailure)?[0..16]
-            .try_into()
-            .unwrap_or_else(|_| unreachable!());
-
-        let file_version = if &magic_bytes[0..8] == b"PineAPPL" {
-            reader.consume(16);
-            u64::from_le_bytes(
-                magic_bytes[8..16]
-                    .try_into()
-                    .unwrap_or_else(|_| unreachable!()),
-            )
-        } else {
-            0
-        };
-
-        // should be guarateed not to happen, because `pineappl::grid::Grid::read` only calls this
-        // method if the file version matches
-        assert_eq!(file_version, 0);
-
+    pub fn read_uncompressed(reader: impl BufRead) -> Result<Self, GridError> {
         bincode::deserialize_from(reader).map_err(GridError::ReadFailure)
     }
 

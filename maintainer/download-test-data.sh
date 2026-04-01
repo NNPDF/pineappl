@@ -25,7 +25,6 @@ files=(
     'https://data.nnpdf.science/pineappl/test-data/DYAA_0.4.1_LagrangeSparseSubgridV1.pineappl.lz4'
     'https://data.nnpdf.science/pineappl/test-data/DYAA_0.4.1_LagrangeSubgridV1.pineappl.lz4'
     'https://data.nnpdf.science/pineappl/test-data/DYAA_0.4.1_LagrangeSubgridV2.pineappl.lz4'
-    'https://data.nnpdf.science/pineappl/test-data/DYAA_0.8.7_ImportOnlySubgridV2.pineappl.lz4'
     'https://data.nnpdf.science/pineappl/test-data/CMS_TTB_8TEV_2D_TTM_TRAP_TOT.tar'
     'https://data.nnpdf.science/pineappl/test-data/E906nlo_bin_00.pineappl.lz4'
     'https://data.nnpdf.science/pineappl/test-data/E906nlo_bin_00.tar'

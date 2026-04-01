@@ -608,20 +608,6 @@ fn lagrange_sparse_subgrid_v1() {
 }
 
 #[test]
-fn import_only_subgrid_v2() {
-    Command::cargo_bin("pineappl")
-        .unwrap()
-        .args([
-            "convolve",
-            "../test-data/DYAA_0.8.7_ImportOnlySubgridV2.pineappl.lz4",
-            "NNPDF31_nlo_as_0118_luxqed",
-        ])
-        .assert()
-        .success()
-        .stdout(DYAA_IMPORT_ONLY_SUBGRID_V2_TEST);
-}
-
-#[test]
 fn lagrange_subgrid_v1_mmv1() {
     Command::cargo_bin("pineappl")
         .unwrap()
