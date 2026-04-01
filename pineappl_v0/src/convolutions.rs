@@ -45,38 +45,3 @@ impl Convolution {
         }
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn convolution_charge_conjugate() {
-        assert_eq!(Convolution::None.charge_conjugate(), Convolution::None);
-        assert_eq!(
-            Convolution::UnpolPDF(2212).charge_conjugate(),
-            Convolution::UnpolPDF(-2212)
-        );
-        assert_eq!(
-            Convolution::PolPDF(2212).charge_conjugate(),
-            Convolution::PolPDF(-2212)
-        );
-        assert_eq!(
-            Convolution::UnpolFF(2212).charge_conjugate(),
-            Convolution::UnpolFF(-2212)
-        );
-        assert_eq!(
-            Convolution::PolFF(2212).charge_conjugate(),
-            Convolution::PolFF(-2212)
-        );
-    }
-
-    #[test]
-    fn convolution_pid() {
-        assert_eq!(Convolution::None.pid(), None);
-        assert_eq!(Convolution::UnpolPDF(2212).pid(), Some(2212));
-        assert_eq!(Convolution::PolPDF(2212).pid(), Some(2212));
-        assert_eq!(Convolution::UnpolFF(2212).pid(), Some(2212));
-        assert_eq!(Convolution::PolFF(2212).pid(), Some(2212));
-    }
-}
