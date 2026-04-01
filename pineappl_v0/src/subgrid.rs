@@ -78,27 +78,8 @@ pub trait Subgrid {
     /// Returns true if `fill` was never called for this grid.
     fn is_empty(&self) -> bool;
 
-    /// Merges `other` into this subgrid.
-    fn merge(&mut self, other: &mut SubgridEnum, transpose: bool);
-
-    /// Scale the subgrid by `factor`.
-    fn scale(&mut self, factor: f64);
-
-    /// Assumes that the initial states for this grid are the same and uses this to optimize the
-    /// grid by getting rid of almost half of the entries.
-    fn symmetrize(&mut self);
-
-    /// Returns an empty copy of the current subgrid.
-    fn clone_empty(&self) -> SubgridEnum;
-
     /// Return an iterator over all non-zero elements of the subgrid.
     fn indexed_iter(&self) -> SubgridIndexedIter<'_>;
-
-    /// Return statistics for this subgrid.
-    fn stats(&self) -> Stats;
-
-    /// Return the static (single) scale, if this subgrid has one.
-    fn static_scale(&self) -> Option<Mu2>;
 }
 
 /// Type to iterate over the non-zero contents of a subgrid. The tuple contains the indices of the
@@ -117,22 +98,6 @@ pub struct SubgridParams {
     x_max: f64,
     x_min: f64,
     x_order: usize,
-}
-
-impl Default for SubgridParams {
-    fn default() -> Self {
-        Self {
-            q2_bins: 40,
-            q2_max: 1e8,
-            q2_min: 1e2,
-            q2_order: 3,
-            reweight: true,
-            x_bins: 50,
-            x_max: 1.0,
-            x_min: 2e-7,
-            x_order: 3,
-        }
-    }
 }
 
 impl SubgridParams {

@@ -1,6 +1,6 @@
 //! TODO
 
-use super::subgrid::{Mu2, Stats, Subgrid, SubgridEnum, SubgridIndexedIter};
+use super::subgrid::{Mu2, Subgrid, SubgridIndexedIter};
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 use std::iter;
@@ -26,36 +26,7 @@ impl Subgrid for EmptySubgridV1 {
         true
     }
 
-    fn merge(&mut self, subgrid: &mut SubgridEnum, _: bool) {
-        assert!(
-            subgrid.is_empty(),
-            "EmptySubgridV1 doesn't support the merge operation for non-empty subgrids"
-        );
-    }
-
-    fn scale(&mut self, _: f64) {}
-
-    fn symmetrize(&mut self) {}
-
-    fn clone_empty(&self) -> SubgridEnum {
-        Self.into()
-    }
-
     fn indexed_iter(&self) -> SubgridIndexedIter<'_> {
         Box::new(iter::empty())
-    }
-
-    fn stats(&self) -> Stats {
-        Stats {
-            total: 0,
-            allocated: 0,
-            zeros: 0,
-            overhead: 0,
-            bytes_per_value: 0,
-        }
-    }
-
-    fn static_scale(&self) -> Option<Mu2> {
-        None
     }
 }
