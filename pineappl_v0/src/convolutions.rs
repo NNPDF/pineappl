@@ -1,7 +1,6 @@
 //! Module for everything related to luminosity functions.
 
 /// Data type that indentifies different types of convolutions.
-#[derive(Debug, Eq, PartialEq)]
 pub enum Convolution {
     // TODO: eventually get rid of this value
     /// No convolution.

@@ -2,12 +2,6 @@
 //! (`boc`).
 
 use serde::Deserialize;
-use thiserror::Error;
-
-/// Error type keeping information if [`Order::from_str`] went wrong.
-#[derive(Debug, Error, Eq, PartialEq)]
-#[error("{0}")]
-pub struct ParseOrderError(String);
 
 /// Coupling powers for each grid.
 #[derive(Deserialize)]
@@ -20,20 +14,6 @@ pub struct Order {
     pub logxir: u32,
     /// Exponent of the logarithm of the scale factor of the factorization scale.
     pub logxif: u32,
-}
-
-impl Order {
-    /// Constructor. This function mainly exists to have a way of constructing `Order` that is less
-    /// verbose.
-    #[must_use]
-    pub const fn new(alphas: u32, alpha: u32, logxir: u32, logxif: u32) -> Self {
-        Self {
-            alphas,
-            alpha,
-            logxir,
-            logxif,
-        }
-    }
 }
 
 /// This structure represents a channel. Each channel consists of a tuple containing in the
