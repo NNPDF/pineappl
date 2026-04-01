@@ -42,6 +42,7 @@ pub fn default_interps(flexible_scale: bool, convolutions: usize) -> Vec<Interp>
 
 pub fn read_uncompressed_v0(mut reader: impl BufRead) -> Result<Grid> {
     use pineappl_v0::convolutions::Convolution;
+    use pineappl_v0::pids::PidBasis as PidBasisV0;
     use pineappl_v0::subgrid::Subgrid as _;
 
     let grid = GridV0::read(&mut reader).map_err(|err| Error::Other(err.into()))?;
@@ -56,6 +57,10 @@ pub fn read_uncompressed_v0(mut reader: impl BufRead) -> Result<Grid> {
             Convolution::None => None,
         })
         .collect();
+    let pid_basis = match grid.pid_basis() {
+        PidBasisV0::Pdg => PidBasis::Pdg,
+        PidBasisV0::Evol => PidBasis::Evol,
+    };
 
     let flexible_scale_grid = grid.subgrids().iter().any(|subgrid| {
         subgrid
@@ -139,16 +144,7 @@ pub fn read_uncompressed_v0(mut reader: impl BufRead) -> Result<Grid> {
                 )
             })
             .collect(),
-        grid.key_values()
-            .and_then(|kv| kv.get("lumi_id_types"))
-            // TODO: use PidBasis::from_str
-            .map_or(PidBasis::Pdg, |lumi_id_types| {
-                match lumi_id_types.as_str() {
-                    "pdg_mc_ids" => PidBasis::Pdg,
-                    "evol" => PidBasis::Evol,
-                    _ => panic!("unknown PID basis '{lumi_id_types}'"),
-                }
-            }),
+        pid_basis,
         convolutions.clone().into_iter().flatten().collect(),
         default_interps(
             flexible_scale_grid,
