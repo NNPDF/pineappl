@@ -25,6 +25,8 @@ jobs:
 
       - name: Run check
         run: |
+          # Print environment variables to debug Python problem
+          env
           # extract the MSRV
           MSRV=$(grep '^rust-version ' Cargo.toml | cut -d= -f2- | tr -d ' "')
           # enable the MSRV
