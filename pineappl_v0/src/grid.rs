@@ -7,7 +7,6 @@ use super::empty_subgrid::EmptySubgridV1;
 use super::pids::{self, PidBasis};
 use super::subgrid::{Subgrid, SubgridEnum, SubgridParams};
 use bitflags::bitflags;
-use git_version::git_version;
 use lz4_flex::frame::FrameDecoder;
 use ndarray::{Array3, ArrayView3};
 use serde::{Deserialize, Serialize, Serializer};
@@ -108,31 +107,6 @@ struct Mmv3 {
     subgrid_template: SubgridEnum,
 }
 
-impl Default for Mmv2 {
-    fn default() -> Self {
-        Self {
-            remapper: None,
-            key_value_db: [
-                (
-                    "pineappl_gitversion".to_owned(),
-                    git_version!(
-                        args = ["--always", "--dirty", "--long", "--tags"],
-                        cargo_prefix = "cargo:",
-                        fallback = "unknown"
-                    )
-                    .to_owned(),
-                ),
-                // by default we assume there are protons in the initial state
-                ("initial_state_1".to_owned(), "2212".to_owned()),
-                ("initial_state_2".to_owned(), "2212".to_owned()),
-            ]
-            .iter()
-            .cloned()
-            .collect(),
-        }
-    }
-}
-
 // ALLOW: fixing the warning will break the file format
 #[allow(clippy::large_enum_variant)]
 #[derive(Clone, Deserialize, Serialize)]
@@ -140,17 +114,6 @@ enum MoreMembers {
     V1(Mmv1),
     V2(Mmv2),
     V3(Mmv3),
-}
-
-impl MoreMembers {
-    fn upgrade(&mut self) {
-        match self {
-            Self::V1(_) => {
-                *self = Self::V2(Mmv2::default());
-            }
-            Self::V2(_) | Self::V3(_) => {}
-        }
-    }
 }
 
 bitflags! {
@@ -207,17 +170,6 @@ impl Grid {
         PidBasis::Pdg
     }
 
-    fn pdg_channels(&self) -> Cow<'_, [Channel]> {
-        match self.pid_basis() {
-            PidBasis::Evol => self
-                .channels
-                .iter()
-                .map(|entry| Channel::translate(entry, &pids::evol_to_pdg_mc_ids))
-                .collect(),
-            PidBasis::Pdg => Cow::Borrowed(self.channels()),
-        }
-    }
-
     /// Construct a `Grid` by deserializing it from `reader`. Reading is buffered.
     ///
     /// # Errors
@@ -265,58 +217,6 @@ impl Grid {
     #[must_use]
     pub fn channels(&self) -> &[Channel] {
         &self.channels
-    }
-
-    /// Merges the bins for the corresponding range together in a single one.
-    ///
-    /// # Errors
-    ///
-    /// When the given bins are non-consecutive, an error is returned.
-    pub fn merge_bins(&mut self, bins: Range<usize>) -> Result<(), GridError> {
-        self.bin_limits
-            .merge_bins(bins.clone())
-            .map_err(GridError::MergeBinError)?;
-
-        if let Some(remapper) = self.remapper_mut() {
-            remapper
-                .merge_bins(bins.clone())
-                .map_err(GridError::MergeBinError)?;
-        }
-
-        let bin_count = self.bin_info().bins();
-        let mut old_subgrids = mem::replace(
-            &mut self.subgrids,
-            Array3::from_shape_simple_fn(
-                (self.orders.len(), bin_count, self.channels.len()),
-                || EmptySubgridV1.into(),
-            ),
-        );
-
-        for ((order, bin, channel), subgrid) in old_subgrids.indexed_iter_mut() {
-            if subgrid.is_empty() {
-                continue;
-            }
-
-            if bins.contains(&bin) {
-                let new_subgrid = &mut self.subgrids[[order, bins.start, channel]];
-
-                if new_subgrid.is_empty() {
-                    mem::swap(new_subgrid, subgrid);
-                } else {
-                    new_subgrid.merge(subgrid, false);
-                }
-            } else {
-                let new_bin = if bin > bins.start {
-                    bin - (bins.end - bins.start) + 1
-                } else {
-                    bin
-                };
-
-                mem::swap(&mut self.subgrids[[order, new_bin, channel]], subgrid);
-            }
-        }
-
-        Ok(())
     }
 
     /// Return a vector containing the type of convolutions performed with this grid.
@@ -426,11 +326,6 @@ impl Grid {
     #[must_use]
     pub const fn bin_info(&self) -> BinInfo<'_> {
         BinInfo::new(&self.bin_limits, self.remapper())
-    }
-
-    /// Upgrades the internal data structures to their latest versions.
-    pub fn upgrade(&mut self) {
-        self.more_members.upgrade();
     }
 
     /// Returns a map with key-value pairs, if there are any stored in this grid.
