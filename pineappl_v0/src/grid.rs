@@ -310,14 +310,6 @@ impl Grid {
         }
     }
 
-    fn remapper_mut(&mut self) -> Option<&mut BinRemapper> {
-        match &mut self.more_members {
-            MoreMembers::V1(_) => None,
-            MoreMembers::V2(mmv2) => mmv2.remapper.as_mut(),
-            MoreMembers::V3(mmv3) => mmv3.remapper.as_mut(),
-        }
-    }
-
     /// Returns all information about the bins in this grid.
     #[must_use]
     pub const fn bin_info(&self) -> BinInfo<'_> {
