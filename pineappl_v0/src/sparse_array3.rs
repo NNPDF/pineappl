@@ -23,7 +23,7 @@ pub struct IndexedIter<'a, T> {
     dimensions: (usize, usize, usize),
 }
 
-impl<'a, T: Copy + Default + PartialEq> Iterator for IndexedIter<'a, T> {
+impl<T: Copy + Default + PartialEq> Iterator for IndexedIter<'_, T> {
     type Item = ((usize, usize, usize), T);
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -107,7 +107,7 @@ impl<'a, T: Copy + Default + PartialEq> Iterator for IndexedIter<'a, T> {
 impl<T: Clone + Default + PartialEq> SparseArray3<T> {
     /// Returns `true` if the array contains no element.
     #[must_use]
-    pub fn is_empty(&self) -> bool {
+    pub const fn is_empty(&self) -> bool {
         self.entries.is_empty()
     }
 

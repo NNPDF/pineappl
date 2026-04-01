@@ -36,7 +36,7 @@ impl<'a> BinInfo<'a> {
 
     /// Returns the number of bins.
     #[must_use]
-    pub fn bins(&self) -> usize {
+    pub const fn bins(&self) -> usize {
         self.limits.bins()
     }
 
@@ -81,7 +81,7 @@ impl<'a> BinInfo<'a> {
 impl BinRemapper {
     /// Return the number of dimensions.
     #[must_use]
-    pub fn dimensions(&self) -> usize {
+    pub const fn dimensions(&self) -> usize {
         self.limits.len() / self.normalizations.len()
     }
 
@@ -101,7 +101,7 @@ impl BinRemapper {
 impl BinLimits {
     /// Returns the number of bins.
     #[must_use]
-    pub fn bins(&self) -> usize {
+    pub const fn bins(&self) -> usize {
         match &self.0 {
             Limits::Equal { bins, .. } => *bins,
             Limits::Unequal { limits } => limits.len() - 1,

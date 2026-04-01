@@ -78,13 +78,13 @@ impl Grid {
     /// Return by which convention the particle IDs are encoded.
     #[must_use]
     pub fn pid_basis(&self) -> PidBasis {
-        if let Some(key_values) = self.key_values() {
-            if let Some(lumi_id_types) = key_values.get("lumi_id_types") {
-                match lumi_id_types.as_str() {
-                    "pdg_mc_ids" => return PidBasis::Pdg,
-                    "evol" => return PidBasis::Evol,
-                    _ => unimplemented!("unknown particle ID convention {lumi_id_types}"),
-                }
+        if let Some(key_values) = self.key_values()
+            && let Some(lumi_id_types) = key_values.get("lumi_id_types")
+        {
+            match lumi_id_types.as_str() {
+                "pdg_mc_ids" => return PidBasis::Pdg,
+                "evol" => return PidBasis::Evol,
+                _ => unimplemented!("unknown particle ID convention {lumi_id_types}"),
             }
         }
 
