@@ -3,7 +3,7 @@
 [![Documentation](https://docs.rs/pineappl/badge.svg)](https://docs.rs/pineappl)
 [![crates.io](https://img.shields.io/crates/v/pineappl.svg)](https://crates.io/crates/pineappl)
 
-# PineAPPL
+# PineAPPL v0
 
-PineAPPL is a library for recording and storing predictions for high-energy
-physics observables independently of their parton distribution functions.
+This crate reads PineAPPL files written by PineAPPL v0.x and is used by the
+main `pineappl` crate.
