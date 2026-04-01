@@ -45,7 +45,7 @@ pub fn read_uncompressed_v0(mut reader: impl BufRead) -> Result<Grid> {
     use pineappl_v0::pids::PidBasis as PidBasisV0;
     use pineappl_v0::subgrid::Subgrid as _;
 
-    let grid = GridV0::read(&mut reader).map_err(|err| Error::Other(err.into()))?;
+    let grid = GridV0::read_uncompressed(&mut reader).map_err(|err| Error::Other(err.into()))?;
     let convolutions: Vec<_> = grid
         .convolutions()
         .into_iter()

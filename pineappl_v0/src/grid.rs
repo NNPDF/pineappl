@@ -6,11 +6,10 @@ use super::convolutions::Convolution;
 use super::pids::PidBasis;
 use super::subgrid::{SubgridEnum, SubgridParams};
 use bitflags::bitflags;
-use lz4_flex::frame::FrameDecoder;
 use ndarray::{Array3, ArrayView3};
 use serde::{Deserialize, Serialize, Serializer};
 use std::collections::{BTreeMap, HashMap};
-use std::io::{self, BufRead, BufReader, Read};
+use std::io::{self, BufRead};
 use thiserror::Error;
 
 /// This structure represents a position (`x1`, `x2`, `q2`) in a `Subgrid` together with a
@@ -166,24 +165,12 @@ impl Grid {
         PidBasis::Pdg
     }
 
-    /// Construct a `Grid` by deserializing it from `reader`. Reading is buffered.
+    /// Construct a `Grid` by deserializing it from `reader`.
     ///
     /// # Errors
     ///
     /// If reading from the compressed or uncompressed stream fails an error is returned.
-    pub fn read(reader: impl Read) -> Result<Self, GridError> {
-        let mut reader = BufReader::new(reader);
-        let buffer = reader.fill_buf().map_err(GridError::IoFailure)?;
-        let magic_bytes: [u8; 4] = buffer[0..4].try_into().unwrap_or_else(|_| unreachable!());
-
-        if u32::from_le_bytes(magic_bytes) == 0x18_4D_22_04 {
-            Self::read_uncompressed(FrameDecoder::new(reader))
-        } else {
-            Self::read_uncompressed(reader)
-        }
-    }
-
-    fn read_uncompressed(mut reader: impl BufRead) -> Result<Self, GridError> {
+    pub fn read_uncompressed(mut reader: impl BufRead) -> Result<Self, GridError> {
         let magic_bytes: [u8; 16] = reader.fill_buf().map_err(GridError::IoFailure)?[0..16]
             .try_into()
             .unwrap_or_else(|_| unreachable!());

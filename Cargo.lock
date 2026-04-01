@@ -1025,7 +1025,6 @@ dependencies = [
  "enum_dispatch",
  "float-cmp",
  "itertools",
- "lz4_flex",
  "ndarray",
  "rustc-hash 1.1.0",
  "serde",

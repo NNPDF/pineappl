@@ -22,7 +22,6 @@ bitflags = "2.4.2"
 enum_dispatch = "0.3.7"
 float-cmp = { default-features = false, version = "0.9.0" }
 itertools = "0.10.1"
-lz4_flex = "0.11.6"
 ndarray = { features = ["serde"], version = "0.15.4" }
 rustc-hash = "1.1.0"
 serde = { features = ["derive"], version = "1.0.130" }
