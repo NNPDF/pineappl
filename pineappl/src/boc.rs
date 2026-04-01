@@ -786,7 +786,7 @@ impl Order {
     ///
     /// # Example
     ///
-    /// In the case of Drell-Yan, there are the following orders:
+    /// In the case of Drell—Yan, there are the following orders:
     ///
     /// - exactly one leading order (LO),
     /// - two next-to-leading orders (NLO), which are
@@ -1297,6 +1297,7 @@ mod tests {
 
     #[test]
     fn order_create_mask() {
+        // Drell—Yan orders
         let orders = [
             Order::new(0, 2, 0, 0, 0), //   LO        :          alpha^2
             Order::new(1, 2, 0, 0, 0), //  NLO QCD    : alphas   alpha^2
