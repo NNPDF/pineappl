@@ -5,17 +5,16 @@ use super::boc::{Channel, Order};
 use super::convolutions::Convolution;
 use super::pids::PidBasis;
 use super::subgrid::{SubgridEnum, SubgridParams};
-use bitflags::bitflags;
 use ndarray::{Array3, ArrayView3};
-use serde::{Deserialize, Serialize, Serializer};
-use std::collections::{BTreeMap, HashMap};
+use serde::Deserialize;
+use std::collections::HashMap;
 use std::io::{self, BufRead};
 use thiserror::Error;
 
 /// This structure represents a position (`x1`, `x2`, `q2`) in a `Subgrid` together with a
 /// corresponding `weight`. The type `W` can either be a `f64` or `()`, which is used when multiple
 /// weights should be signaled.
-#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+#[derive(Deserialize)]
 pub struct Ntuple<W> {
     /// Momentum fraction of the first parton.
     pub x1: f64,
@@ -30,120 +29,48 @@ pub struct Ntuple<W> {
 /// Error returned when merging two grids fails.
 #[derive(Debug, Error)]
 pub enum GridError {
-    /// Returned when trying to merge two `Grid` objects with incompatible bin limits.
-    #[error(transparent)]
-    InvalidBinLimits(super::bin::MergeBinError),
-    /// Returned if the number of bins in the grid and in the remapper do not agree.
-    #[error("the remapper has {remapper_bins} bins, but the grid has {grid_bins}")]
-    BinNumberMismatch {
-        /// Number of bins in the grid.
-        grid_bins: usize,
-        /// Number of bins in the remapper.
-        remapper_bins: usize,
-    },
-    /// Returned when it was tried to merge bins that are non-consecutive.
-    #[error(transparent)]
-    MergeBinError(super::bin::MergeBinError),
-    /// Returned when trying to construct a `Grid` using an unknown subgrid type.
-    #[error("tried constructing a Grid with unknown Subgrid type `{0}`")]
-    UnknownSubgridType(String),
     /// Returned when failed to read a Grid.
     #[error(transparent)]
     ReadFailure(bincode::Error),
-    /// Returned when failed to write a Grid.
-    #[error(transparent)]
-    WriteFailure(bincode::Error),
     /// Returned while performing IO operations.
     #[error(transparent)]
     IoFailure(io::Error),
-    /// Returned when trying to read a `PineAPPL` file with file format version that is not
-    /// supported.
-    #[error("the file version is {file_version}, but supported is only {supported_version}")]
-    FileVersionMismatch {
-        /// File format version of the file read.
-        file_version: u64,
-        /// Maximum supported file format version for this library.
-        supported_version: u64,
-    },
-    /// Returned from [`Grid::evolve`] if the evolution failed.
-    #[error("failed to evolve grid: {0}")]
-    EvolutionFailure(String),
-    /// Errors that do no originate from this crate itself.
-    #[error(transparent)]
-    Other(#[from] anyhow::Error),
 }
 
-#[derive(Clone, Deserialize, Serialize)]
+#[derive(Deserialize)]
 struct Mmv1;
 
-#[derive(Clone, Deserialize, Serialize)]
+#[derive(Deserialize)]
 struct Mmv2 {
     remapper: Option<BinRemapper>,
     key_value_db: HashMap<String, String>,
 }
 
-fn ordered_map_serialize<S, K: Ord + Serialize, V: Serialize>(
-    value: &HashMap<K, V>,
-    serializer: S,
-) -> Result<S::Ok, S::Error>
-where
-    S: Serializer,
-{
-    let ordered: BTreeMap<_, _> = value.iter().collect();
-    ordered.serialize(serializer)
-}
-
-#[derive(Clone, Deserialize, Serialize)]
+#[derive(Deserialize)]
 struct Mmv3 {
     remapper: Option<BinRemapper>,
-    // order the HashMap before serializing it to make the output stable
-    #[serde(serialize_with = "ordered_map_serialize")]
     key_value_db: HashMap<String, String>,
-    subgrid_template: SubgridEnum,
+    _subgrid_template: SubgridEnum,
 }
 
 // ALLOW: fixing the warning will break the file format
 #[allow(clippy::large_enum_variant)]
-#[derive(Clone, Deserialize, Serialize)]
+#[derive(Deserialize)]
 enum MoreMembers {
     V1(Mmv1),
     V2(Mmv2),
     V3(Mmv3),
 }
 
-bitflags! {
-    /// Bitflags for optimizing a [`Grid`]. See [`Grid::optimize_using`].
-    #[derive(Clone, Copy)]
-    #[repr(transparent)]
-    pub struct GridOptFlags: u32 {
-        /// Change the [`Subgrid`] type to optimize storage effeciency.
-        const OPTIMIZE_SUBGRID_TYPE = 0b1;
-        /// Recognize whether a subgrid was filled with events with a static scale and if this is
-        /// the case, optimize it by undoing the interpolation in the scale. This flag requires
-        /// [`Self::OPTIMIZE_SUBGRID_TYPE`] to be active.
-        const STATIC_SCALE_DETECTION = 0b10;
-        /// If two channels differ by transposition of the two initial states and the functions
-        /// this grid is convolved with are the same for both initial states, this will merge one
-        /// channel into the other, with the correct transpositions.
-        const SYMMETRIZE_CHANNELS = 0b100;
-        /// Remove all orders ([`Grid::orders`]), which do not contain any non-zero subgrids.
-        const STRIP_EMPTY_ORDERS = 0b1000;
-        /// Merge the subgrids of channels which have the same definition.
-        const MERGE_SAME_CHANNELS = 0b10000;
-        /// Remove all channels ([`Grid::channels`]), which do not contain any non-zero subgrids.
-        const STRIP_EMPTY_CHANNELS = 0b10_0000;
-    }
-}
-
 /// Main data structure of `PineAPPL`. This structure contains a `Subgrid` for each `LumiEntry`,
 /// bin, and coupling order it was created with.
-#[derive(Clone, Deserialize, Serialize)]
+#[derive(Deserialize)]
 pub struct Grid {
     subgrids: Array3<SubgridEnum>,
     channels: Vec<Channel>,
     bin_limits: BinLimits,
     orders: Vec<Order>,
-    subgrid_params: SubgridParams,
+    _subgrid_params: SubgridParams,
     more_members: MoreMembers,
 }
 
@@ -170,6 +97,10 @@ impl Grid {
     /// # Errors
     ///
     /// If reading from the compressed or uncompressed stream fails an error is returned.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the grid version is not `0`.
     pub fn read_uncompressed(mut reader: impl BufRead) -> Result<Self, GridError> {
         let magic_bytes: [u8; 16] = reader.fill_buf().map_err(GridError::IoFailure)?[0..16]
             .try_into()
@@ -186,12 +117,9 @@ impl Grid {
             0
         };
 
-        if file_version != 0 {
-            return Err(GridError::FileVersionMismatch {
-                file_version,
-                supported_version: 0,
-            });
-        }
+        // should be guarateed not to happen, because `pineappl::grid::Grid::read` only calls this
+        // method if the file version matches
+        assert_eq!(file_version, 0);
 
         bincode::deserialize_from(reader).map_err(GridError::ReadFailure)
     }

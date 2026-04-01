@@ -2,21 +2,13 @@
 
 use super::grid::Ntuple;
 use super::subgrid::{Mu2, Subgrid, SubgridIndexedIter};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use std::borrow::Cow;
 
 /// Structure holding a grid with an n-tuple as the storage method for weights.
-#[derive(Clone, Default, Deserialize, Serialize)]
+#[derive(Deserialize)]
 pub struct NtupleSubgridV1 {
     ntuples: Vec<Ntuple<f64>>,
-}
-
-impl NtupleSubgridV1 {
-    /// Constructor.
-    #[must_use]
-    pub const fn new() -> Self {
-        Self { ntuples: vec![] }
-    }
 }
 
 impl Subgrid for NtupleSubgridV1 {

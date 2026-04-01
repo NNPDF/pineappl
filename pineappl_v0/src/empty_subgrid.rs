@@ -1,12 +1,12 @@
 //! TODO
 
 use super::subgrid::{Mu2, Subgrid, SubgridIndexedIter};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use std::borrow::Cow;
 use std::iter;
 
 /// A subgrid type that is always empty.
-#[derive(Clone, Default, Deserialize, Serialize)]
+#[derive(Deserialize)]
 pub struct EmptySubgridV1;
 
 impl Subgrid for EmptySubgridV1 {

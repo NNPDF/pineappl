@@ -1,108 +1,30 @@
 //! Module that contains helpers for binning observables
 
 use super::convert::f64_from_usize;
-use itertools::Itertools;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use std::f64;
-use std::ops::Range;
-use thiserror::Error;
 
-#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+#[derive(Deserialize)]
 enum Limits {
     Equal { left: f64, right: f64, bins: usize },
     Unequal { limits: Vec<f64> },
 }
 
-/// Error type which is returned when two `BinLimits` objects are merged which are not
-/// connected/non-consecutive.
-#[derive(Debug, Error)]
-pub enum MergeBinError {
-    /// Returned when two `BinLimits` objects `a` and `b` were tried to be merged using
-    /// `a.merge(b)`, but when the right-most limit of `a` does not match the left-most limit of
-    /// `b`.
-    #[error("can not merge bins which end at {lhs} with bins that start at {rhs}")]
-    NonConsecutiveBins {
-        /// right-most limit of the `BinLimits` object that is being merged into.
-        lhs: f64,
-        /// left-most limit of the `BinLimits` object that is being merged.
-        rhs: f64,
-    },
-
-    /// Returned by [`BinRemapper::merge_bins`] whenever it can not merge bins.
-    #[error("can not merge bins with indices {0:?}")]
-    NonConsecutiveRange(Range<usize>),
-
-    /// Returned by [`BinLimits::merge_bins`] whenever the range is outside the available bins.
-    #[error("tried to merge bins with indices {range:?}, but there are only {bins} bins")]
-    InvalidRange {
-        /// Range given to [`BinLimits::merge_bins`].
-        range: Range<usize>,
-        /// Number of bins.
-        bins: usize,
-    },
-
-    /// Returned by [`BinRemapper::merge`] whenever the dimensions of two `BinRemapper` are not the
-    /// same.
-    #[error("tried to merge bins with different dimensions {lhs} and {rhs}")]
-    IncompatibleDimensions {
-        /// Dimension of the bins of the first `BinRemapper`.
-        lhs: usize,
-        /// Dimension of the bins of the second `BinRemapper`.
-        rhs: usize,
-    },
-}
-
 /// Structure representing bin limits.
-#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+#[derive(Deserialize)]
 pub struct BinLimits(Limits);
 
-/// Error type that is returned by the constructor of `BinRemapper`.
-#[derive(Debug, Error)]
-pub enum BinRemapperNewError {
-    /// Returned if the lengths of the normalization and limits vectors do not allow to determine a
-    /// well-defined number of dimensions.
-    #[error("could not determine the dimensions from a normalization vector with length {normalizations_len} and limits vector with length {limits_len}")]
-    DimensionUnknown {
-        /// Length of the normalization vector.
-        normalizations_len: usize,
-        /// Length of the limits vector.
-        limits_len: usize,
-    },
-    /// Returned if bins overlap.
-    #[error("the bin limits for the bins with indices {} overlap with other bins", overlaps.iter().map(ToString::to_string).join(","))]
-    OverlappingBins {
-        /// Indices of the bins that overlap with other bins.
-        overlaps: Vec<usize>,
-    },
-}
-
 /// Structure for remapping bin limits.
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Deserialize)]
 pub struct BinRemapper {
     normalizations: Vec<f64>,
     limits: Vec<(f64, f64)>,
 }
 
 /// Captures all information about the bins in a grid.
-#[derive(Debug)]
 pub struct BinInfo<'a> {
     limits: &'a BinLimits,
     remapper: Option<&'a BinRemapper>,
-}
-
-/// Error type returned by [`BinRemapper::from_str`]
-#[derive(Debug, Error)]
-pub enum ParseBinRemapperError {
-    /// An error that occured while parsing the string in [`BinRemapper::from_str`].
-    #[error("{0}")]
-    Error(String),
-    /// An error that occured while constructing the remapper with [`BinRemapper::new`].
-    #[error("{source}")]
-    BinRemapperNewError {
-        // TODO: enable #[backtrace] whenever the feature is stable
-        /// The error returned by [`BinRemapper::new`].
-        source: BinRemapperNewError,
-    },
 }
 
 impl<'a> BinInfo<'a> {
@@ -156,12 +78,6 @@ impl<'a> BinInfo<'a> {
     }
 }
 
-impl PartialEq<BinInfo<'_>> for BinInfo<'_> {
-    fn eq(&self, other: &BinInfo) -> bool {
-        (self.limits() == other.limits()) && (self.normalizations() == other.normalizations())
-    }
-}
-
 impl BinRemapper {
     /// Return the number of dimensions.
     #[must_use]
@@ -179,12 +95,6 @@ impl BinRemapper {
     #[must_use]
     pub fn normalizations(&self) -> &[f64] {
         &self.normalizations
-    }
-}
-
-impl PartialEq<Self> for BinRemapper {
-    fn eq(&self, other: &Self) -> bool {
-        (self.limits == other.limits) && (self.normalizations == other.normalizations)
     }
 }
 

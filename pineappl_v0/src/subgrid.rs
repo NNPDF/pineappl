@@ -5,12 +5,12 @@ use super::import_only_subgrid::{ImportOnlySubgridV1, ImportOnlySubgridV2};
 use super::lagrange_subgrid::{LagrangeSparseSubgridV1, LagrangeSubgridV1, LagrangeSubgridV2};
 use super::ntuple_subgrid::NtupleSubgridV1;
 use enum_dispatch::enum_dispatch;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use std::borrow::Cow;
 
 /// Enum which lists all possible `Subgrid` variants possible.
 #[enum_dispatch(Subgrid)]
-#[derive(Clone, Deserialize, Serialize)]
+#[derive(Deserialize)]
 pub enum SubgridEnum {
     // WARNING: never change the order or content of this enum, only add to the end of it
     /// Lagrange-interpolation subgrid.
@@ -31,32 +31,12 @@ pub enum SubgridEnum {
 }
 
 /// Structure denoting renormalization and factorization scale values.
-#[derive(Debug, Deserialize, Clone, PartialEq, PartialOrd, Serialize)]
+#[derive(Deserialize, Clone)]
 pub struct Mu2 {
     /// The (squared) renormalization scale value.
     pub ren: f64,
     /// The (squared) factorization scale value.
     pub fac: f64,
-}
-
-/// Size-related statistics for a subgrid.
-#[derive(Debug, Eq, PartialEq)]
-pub struct Stats {
-    /// Number of possible total entries for a subgrid. This number is the product of the lengths
-    /// of the slices returned by [`Subgrid::mu2_grid`], [`Subgrid::x1_grid`] and
-    /// [`Subgrid::x2_grid`].
-    pub total: usize,
-    /// Number of allocated entries for a subgrid. This number is always smaller or equal than
-    /// [`Self::total`].
-    pub allocated: usize,
-    /// Number of allocated zero entries for a subgrid. This number is always smaller or equal than
-    /// [`Self::allocated`] and contributes to [`Self::overhead`].
-    pub zeros: usize,
-    /// The overhead of a [`Subgrid`] is the size of internal data not used to store grid values.
-    pub overhead: usize,
-    /// This value multiplied with any other member of this struct gives an approximate size in
-    /// bytes.
-    pub bytes_per_value: usize,
 }
 
 /// Trait each subgrid must implement.
@@ -87,207 +67,15 @@ pub trait Subgrid {
 pub type SubgridIndexedIter<'a> = Box<dyn Iterator<Item = ((usize, usize, usize), f64)> + 'a>;
 
 /// Subgrid creation parameters for subgrids that perform interpolation.
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Deserialize)]
 pub struct SubgridParams {
-    q2_bins: usize,
-    q2_max: f64,
-    q2_min: f64,
-    q2_order: usize,
-    reweight: bool,
-    x_bins: usize,
-    x_max: f64,
-    x_min: f64,
-    x_order: usize,
-}
-
-impl SubgridParams {
-    /// Returns the number of bins for the $Q^2$ axis.
-    #[must_use]
-    pub const fn q2_bins(&self) -> usize {
-        self.q2_bins
-    }
-
-    /// Returns the upper limit of the $Q^2$ axis.
-    #[must_use]
-    pub const fn q2_max(&self) -> f64 {
-        self.q2_max
-    }
-
-    /// Returns the lower limit of the $Q^2$ axis.
-    #[must_use]
-    pub const fn q2_min(&self) -> f64 {
-        self.q2_min
-    }
-
-    /// Returns the interpolation order for the $Q^2$ axis.
-    #[must_use]
-    pub const fn q2_order(&self) -> usize {
-        self.q2_order
-    }
-
-    /// Returns whether reweighting is enabled or not.
-    #[must_use]
-    pub const fn reweight(&self) -> bool {
-        self.reweight
-    }
-
-    /// Sets the number of bins for the $Q^2$ axis.
-    pub fn set_q2_bins(&mut self, q2_bins: usize) {
-        self.q2_bins = q2_bins;
-    }
-
-    /// Sets the upper limit of the $Q^2$ axis.
-    pub fn set_q2_max(&mut self, q2_max: f64) {
-        self.q2_max = q2_max;
-    }
-
-    /// Sets the lower limit of the $Q^2$ axis.
-    pub fn set_q2_min(&mut self, q2_min: f64) {
-        self.q2_min = q2_min;
-    }
-
-    /// Sets the interpolation order for the $Q^2$ axis.
-    pub fn set_q2_order(&mut self, q2_order: usize) {
-        self.q2_order = q2_order;
-    }
-
-    /// Sets the reweighting parameter.
-    pub fn set_reweight(&mut self, reweight: bool) {
-        self.reweight = reweight;
-    }
-
-    /// Sets the number of bins for the $x$ axes.
-    pub fn set_x_bins(&mut self, x_bins: usize) {
-        self.x_bins = x_bins;
-    }
-
-    /// Sets the upper limit of the $x$ axes.
-    pub fn set_x_max(&mut self, x_max: f64) {
-        self.x_max = x_max;
-    }
-
-    /// Sets the lower limit of the $x$ axes.
-    pub fn set_x_min(&mut self, x_min: f64) {
-        self.x_min = x_min;
-    }
-
-    /// Sets the interpolation order for the $x$ axes.
-    pub fn set_x_order(&mut self, x_order: usize) {
-        self.x_order = x_order;
-    }
-
-    /// Returns the number of bins for the $x$ axes.
-    #[must_use]
-    pub const fn x_bins(&self) -> usize {
-        self.x_bins
-    }
-
-    /// Returns the upper limit of the $x$ axes.
-    #[must_use]
-    pub const fn x_max(&self) -> f64 {
-        self.x_max
-    }
-
-    /// Returns the lower limit of the $x$ axes.
-    #[must_use]
-    pub const fn x_min(&self) -> f64 {
-        self.x_min
-    }
-
-    /// Returns the interpolation order for the $x$ axes.
-    #[must_use]
-    pub const fn x_order(&self) -> usize {
-        self.x_order
-    }
-}
-
-/// Extra grid creation parameters when the limits for `x1` and `x2` are different.
-#[derive(Deserialize, Serialize)]
-pub struct ExtraSubgridParams {
-    reweight2: bool,
-    x2_bins: usize,
-    x2_max: f64,
-    x2_min: f64,
-    x2_order: usize,
-}
-
-impl Default for ExtraSubgridParams {
-    fn default() -> Self {
-        Self {
-            reweight2: true,
-            x2_bins: 50,
-            x2_max: 1.0,
-            x2_min: 2e-7,
-            x2_order: 3,
-        }
-    }
-}
-
-impl From<&SubgridParams> for ExtraSubgridParams {
-    fn from(subgrid_params: &SubgridParams) -> Self {
-        Self {
-            reweight2: subgrid_params.reweight(),
-            x2_bins: subgrid_params.x_bins(),
-            x2_max: subgrid_params.x_max(),
-            x2_min: subgrid_params.x_min(),
-            x2_order: subgrid_params.x_order(),
-        }
-    }
-}
-
-impl ExtraSubgridParams {
-    /// Returns whether reweighting is enabled for the `x2` axis or not.
-    #[must_use]
-    pub const fn reweight2(&self) -> bool {
-        self.reweight2
-    }
-
-    /// Sets the reweighting parameter for the `x2` axis.
-    pub fn set_reweight2(&mut self, reweight2: bool) {
-        self.reweight2 = reweight2;
-    }
-
-    /// Sets the number of bins for the `x2` axes.
-    pub fn set_x2_bins(&mut self, x_bins: usize) {
-        self.x2_bins = x_bins;
-    }
-
-    /// Sets the upper limit of the `x2` axes.
-    pub fn set_x2_max(&mut self, x_max: f64) {
-        self.x2_max = x_max;
-    }
-
-    /// Sets the lower limit of the `x2` axes.
-    pub fn set_x2_min(&mut self, x_min: f64) {
-        self.x2_min = x_min;
-    }
-
-    /// Sets the interpolation order for the `x2` axes.
-    pub fn set_x2_order(&mut self, x_order: usize) {
-        self.x2_order = x_order;
-    }
-
-    /// Returns the number of bins for the `x2` axes.
-    #[must_use]
-    pub const fn x2_bins(&self) -> usize {
-        self.x2_bins
-    }
-
-    /// Returns the upper limit of the `x2` axes.
-    #[must_use]
-    pub const fn x2_max(&self) -> f64 {
-        self.x2_max
-    }
-
-    /// Returns the lower limit of the `x2` axes.
-    #[must_use]
-    pub const fn x2_min(&self) -> f64 {
-        self.x2_min
-    }
-
-    /// Returns the interpolation order for the `x2` axes.
-    #[must_use]
-    pub const fn x2_order(&self) -> usize {
-        self.x2_order
-    }
+    _q2_bins: usize,
+    _q2_max: f64,
+    _q2_min: f64,
+    _q2_order: usize,
+    _reweight: bool,
+    _x_bins: usize,
+    _x_max: f64,
+    _x_min: f64,
+    _x_order: usize,
 }

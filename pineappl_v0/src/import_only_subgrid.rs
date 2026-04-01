@@ -2,39 +2,16 @@
 
 use super::sparse_array3::SparseArray3;
 use super::subgrid::{Mu2, Subgrid, SubgridIndexedIter};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use std::borrow::Cow;
 
 /// TODO
-#[derive(Clone, Deserialize, Serialize)]
+#[derive(Deserialize)]
 pub struct ImportOnlySubgridV1 {
     array: SparseArray3<f64>,
     q2_grid: Vec<f64>,
     x1_grid: Vec<f64>,
     x2_grid: Vec<f64>,
-}
-
-impl ImportOnlySubgridV1 {
-    /// Constructor.
-    #[must_use]
-    pub fn new(
-        array: SparseArray3<f64>,
-        q2_grid: Vec<f64>,
-        x1_grid: Vec<f64>,
-        x2_grid: Vec<f64>,
-    ) -> Self {
-        Self {
-            array,
-            q2_grid,
-            x1_grid,
-            x2_grid,
-        }
-    }
-
-    /// Return the array containing the numerical values of the grid.
-    pub fn array_mut(&mut self) -> &mut SparseArray3<f64> {
-        &mut self.array
-    }
 }
 
 impl Subgrid for ImportOnlySubgridV1 {
@@ -64,35 +41,12 @@ impl Subgrid for ImportOnlySubgridV1 {
 }
 
 /// TODO
-#[derive(Clone, Deserialize, Serialize)]
+#[derive(Deserialize)]
 pub struct ImportOnlySubgridV2 {
     array: SparseArray3<f64>,
     mu2_grid: Vec<Mu2>,
     x1_grid: Vec<f64>,
     x2_grid: Vec<f64>,
-}
-
-impl ImportOnlySubgridV2 {
-    /// Constructor.
-    #[must_use]
-    pub fn new(
-        array: SparseArray3<f64>,
-        mu2_grid: Vec<Mu2>,
-        x1_grid: Vec<f64>,
-        x2_grid: Vec<f64>,
-    ) -> Self {
-        Self {
-            array,
-            mu2_grid,
-            x1_grid,
-            x2_grid,
-        }
-    }
-
-    /// Return the array containing the numerical values of the grid.
-    pub fn array_mut(&mut self) -> &mut SparseArray3<f64> {
-        &mut self.array
-    }
 }
 
 impl Subgrid for ImportOnlySubgridV2 {

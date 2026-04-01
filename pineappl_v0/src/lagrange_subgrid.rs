@@ -2,9 +2,9 @@
 
 use super::convert::f64_from_usize;
 use super::sparse_array3::SparseArray3;
-use super::subgrid::{ExtraSubgridParams, Mu2, Subgrid, SubgridIndexedIter, SubgridParams};
+use super::subgrid::{Mu2, Subgrid, SubgridIndexedIter};
 use ndarray::Array3;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use std::borrow::Cow;
 use std::iter;
 
@@ -28,28 +28,20 @@ fn fx(y: f64) -> f64 {
     unreachable!();
 }
 
-fn fy(x: f64) -> f64 {
-    (1.0 - x).mul_add(5.0, -x.ln())
-}
-
-fn ftau(q2: f64) -> f64 {
-    (q2 / 0.0625).ln().ln()
-}
-
 fn fq2(tau: f64) -> f64 {
     0.0625 * tau.exp().exp()
 }
 
 /// Subgrid which uses Lagrange-interpolation.
-#[derive(Clone, Deserialize, Serialize)]
+#[derive(Deserialize)]
 pub struct LagrangeSubgridV1 {
     grid: Option<Array3<f64>>,
     ntau: usize,
     ny: usize,
-    yorder: usize,
-    tauorder: usize,
+    _yorder: usize,
+    _tauorder: usize,
     itaumin: usize,
-    itaumax: usize,
+    _itaumax: usize,
     reweight: bool,
     ymin: f64,
     ymax: f64,
@@ -58,25 +50,6 @@ pub struct LagrangeSubgridV1 {
 }
 
 impl LagrangeSubgridV1 {
-    /// Constructor.
-    #[must_use]
-    pub fn new(subgrid_params: &SubgridParams) -> Self {
-        Self {
-            grid: None,
-            ntau: subgrid_params.q2_bins(),
-            ny: subgrid_params.x_bins(),
-            yorder: subgrid_params.x_order(),
-            tauorder: subgrid_params.q2_order(),
-            itaumin: 0,
-            itaumax: 0,
-            reweight: subgrid_params.reweight(),
-            ymin: fy(subgrid_params.x_max()),
-            ymax: fy(subgrid_params.x_min()),
-            taumin: ftau(subgrid_params.q2_min()),
-            taumax: ftau(subgrid_params.q2_max()),
-        }
-    }
-
     fn deltay(&self) -> f64 {
         (self.ymax - self.ymin) / f64_from_usize(self.ny - 1)
     }
@@ -140,17 +113,17 @@ impl Subgrid for LagrangeSubgridV1 {
 }
 
 /// Subgrid which uses Lagrange-interpolation.
-#[derive(Clone, Deserialize, Serialize)]
+#[derive(Deserialize)]
 pub struct LagrangeSubgridV2 {
     grid: Option<Array3<f64>>,
     ntau: usize,
     ny1: usize,
     ny2: usize,
-    y1order: usize,
-    y2order: usize,
-    tauorder: usize,
+    _y1order: usize,
+    _y2order: usize,
+    _tauorder: usize,
     itaumin: usize,
-    itaumax: usize,
+    _itaumax: usize,
     reweight1: bool,
     reweight2: bool,
     y1min: f64,
@@ -159,35 +132,10 @@ pub struct LagrangeSubgridV2 {
     y2max: f64,
     taumin: f64,
     taumax: f64,
-    pub(crate) static_q2: f64,
+    pub(crate) _static_q2: f64,
 }
 
 impl LagrangeSubgridV2 {
-    /// Constructor.
-    #[must_use]
-    pub fn new(subgrid_params: &SubgridParams, extra_params: &ExtraSubgridParams) -> Self {
-        Self {
-            grid: None,
-            ntau: subgrid_params.q2_bins(),
-            ny1: subgrid_params.x_bins(),
-            ny2: extra_params.x2_bins(),
-            y1order: subgrid_params.x_order(),
-            y2order: extra_params.x2_order(),
-            tauorder: subgrid_params.q2_order(),
-            itaumin: 0,
-            itaumax: 0,
-            reweight1: subgrid_params.reweight(),
-            reweight2: extra_params.reweight2(),
-            y1min: fy(subgrid_params.x_max()),
-            y1max: fy(subgrid_params.x_min()),
-            y2min: fy(extra_params.x2_max()),
-            y2max: fy(extra_params.x2_min()),
-            taumin: ftau(subgrid_params.q2_min()),
-            taumax: ftau(subgrid_params.q2_max()),
-            static_q2: 0.0,
-        }
-    }
-
     fn deltay1(&self) -> f64 {
         (self.y1max - self.y1min) / f64_from_usize(self.ny1 - 1)
     }
@@ -279,13 +227,13 @@ impl Subgrid for LagrangeSubgridV2 {
 
 /// Subgrid which uses Lagrange-interpolation, but also stores its contents in a space-efficient
 /// structure.
-#[derive(Clone, Deserialize, Serialize)]
+#[derive(Deserialize)]
 pub struct LagrangeSparseSubgridV1 {
     array: SparseArray3<f64>,
     ntau: usize,
     ny: usize,
-    yorder: usize,
-    tauorder: usize,
+    _yorder: usize,
+    _tauorder: usize,
     reweight: bool,
     ymin: f64,
     ymax: f64,
@@ -294,27 +242,6 @@ pub struct LagrangeSparseSubgridV1 {
 }
 
 impl LagrangeSparseSubgridV1 {
-    /// Constructor.
-    #[must_use]
-    pub fn new(subgrid_params: &SubgridParams) -> Self {
-        Self {
-            array: SparseArray3::new(
-                subgrid_params.q2_bins(),
-                subgrid_params.x_bins(),
-                subgrid_params.x_bins(),
-            ),
-            ntau: subgrid_params.q2_bins(),
-            ny: subgrid_params.x_bins(),
-            yorder: subgrid_params.x_order(),
-            tauorder: subgrid_params.q2_order(),
-            reweight: subgrid_params.reweight(),
-            ymin: fy(subgrid_params.x_max()),
-            ymax: fy(subgrid_params.x_min()),
-            taumin: ftau(subgrid_params.q2_min()),
-            taumax: ftau(subgrid_params.q2_max()),
-        }
-    }
-
     fn deltay(&self) -> f64 {
         (self.ymax - self.ymin) / f64_from_usize(self.ny - 1)
     }
@@ -366,25 +293,5 @@ impl Subgrid for LagrangeSparseSubgridV1 {
                     },
             )
         }))
-    }
-}
-
-impl From<&LagrangeSubgridV1> for LagrangeSparseSubgridV1 {
-    fn from(subgrid: &LagrangeSubgridV1) -> Self {
-        Self {
-            array: subgrid.grid.as_ref().map_or_else(
-                || SparseArray3::new(subgrid.ntau, subgrid.ny, subgrid.ny),
-                |grid| SparseArray3::from_ndarray(grid.view(), subgrid.itaumin, subgrid.ntau),
-            ),
-            ntau: subgrid.ntau,
-            ny: subgrid.ny,
-            yorder: subgrid.yorder,
-            tauorder: subgrid.tauorder,
-            reweight: subgrid.reweight,
-            ymin: subgrid.ymin,
-            ymax: subgrid.ymax,
-            taumin: subgrid.taumin,
-            taumax: subgrid.taumax,
-        }
     }
 }
