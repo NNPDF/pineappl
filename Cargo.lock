@@ -487,9 +487,6 @@ name = "float-cmp"
 version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "98de4bbd547a563b716d8dfa9aad1cb19bfab00f4fa09a6a4ed21dbcf44ce9c4"
-dependencies = [
- "num-traits",
-]
 
 [[package]]
 name = "form_urlencoded"
@@ -714,20 +711,11 @@ checksum = "b5e6163cb8c49088c2c36f57875e58ccd8c87c7427f7fbd50ea6710b2f3f2e8f"
 
 [[package]]
 name = "lz4_flex"
-version = "0.9.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1a8cbbb2831780bc3b9c15a41f5b49222ef756b6730a95f3decfdd15903eb5a3"
-dependencies = [
- "twox-hash 1.6.3",
-]
-
-[[package]]
-name = "lz4_flex"
 version = "0.11.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "373f5eceeeab7925e0c1098212f2fbc4d416adec9d35051a6ab251e824c1854a"
 dependencies = [
- "twox-hash 2.1.2",
+ "twox-hash",
 ]
 
 [[package]]
@@ -932,27 +920,6 @@ dependencies = [
 
 [[package]]
 name = "pineappl"
-version = "0.8.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5041fcf611eb0c41f1f6562b498fabdd1319c8d4572fd137ac244ca4e73d999c"
-dependencies = [
- "anyhow",
- "arrayvec",
- "bincode",
- "bitflags 2.4.2",
- "enum_dispatch",
- "float-cmp",
- "git-version",
- "itertools",
- "lz4_flex 0.9.5",
- "ndarray",
- "rustc-hash 1.1.0",
- "serde",
- "thiserror",
-]
-
-[[package]]
-name = "pineappl"
 version = "1.3.3"
 dependencies = [
  "anyhow",
@@ -963,11 +930,11 @@ dependencies = [
  "float-cmp",
  "git-version",
  "itertools",
- "lz4_flex 0.11.6",
+ "lz4_flex",
  "managed-lhapdf",
  "ndarray",
  "num-complex",
- "pineappl 0.8.3",
+ "pineappl_v0",
  "rand",
  "rand_pcg",
  "rayon",
@@ -993,7 +960,7 @@ version = "1.3.3"
 dependencies = [
  "itertools",
  "ndarray",
- "pineappl 1.3.3",
+ "pineappl",
 ]
 
 [[package]]
@@ -1012,11 +979,11 @@ dependencies = [
  "float-cmp",
  "git-version",
  "itertools",
- "lz4_flex 0.11.6",
+ "lz4_flex",
  "managed-lhapdf",
  "ndarray",
  "ndarray-npy",
- "pineappl 1.3.3",
+ "pineappl",
  "pineappl_applgrid",
  "pineappl_fastnlo",
  "predicates",
@@ -1044,8 +1011,19 @@ dependencies = [
  "itertools",
  "ndarray",
  "numpy",
- "pineappl 1.3.3",
+ "pineappl",
  "pyo3",
+]
+
+[[package]]
+name = "pineappl_v0"
+version = "1.3.3"
+dependencies = [
+ "bincode",
+ "enum_dispatch",
+ "ndarray",
+ "serde",
+ "thiserror",
 ]
 
 [[package]]
@@ -1449,12 +1427,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3c5e1a9a646d36c3599cd173a41282daf47c44583ad367b8e6837255952e5c67"
 
 [[package]]
-name = "static_assertions"
-version = "1.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a2eb9349b6444b326872e140eb1cf5e7c522154d69e7a0ffb0fb81c06b37543f"
-
-[[package]]
 name = "strsim"
 version = "0.11.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1584,16 +1556,6 @@ dependencies = [
  "serde_spanned",
  "toml_datetime",
  "winnow",
-]
-
-[[package]]
-name = "twox-hash"
-version = "1.6.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "97fee6b57c6a41524a810daee9286c02d7752c4253064d0b05472833a438f675"
-dependencies = [
- "cfg-if",
- "static_assertions",
 ]
 
 [[package]]

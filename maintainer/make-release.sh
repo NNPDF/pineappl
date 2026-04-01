@@ -70,6 +70,7 @@ for crate in . ${crates[@]}; do
         -e "s:^\(pineappl_applgrid = .*\)version = \".*\":\1version = \"=${version}\":" \
         -e "s:^\(pineappl_cli = .*\)version = \".*\":\1version = \"=${version}\":" \
         -e "s:^\(pineappl_fastnlo = .*\)version = \".*\":\1version = \"=${version}\":" \
+        -e "s:^\(pineappl_v0 = .*\)version = \".*\":\1version = \"=${version}\":" \
         ${crate}/Cargo.toml
     git add ${crate}/Cargo.toml
 done
