@@ -3,7 +3,6 @@ name: Rust
 on:
   push:
     branches-ignore:
-      - pineappl-v0
       - pycli
       - bump-pyo3-version
       - update-wheels-actions
