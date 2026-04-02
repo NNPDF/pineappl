@@ -44,7 +44,7 @@ mod tests {
 
     #[test]
     fn empty_subgrid_v1_x2_grid() {
-        assert!(EmptySubgridV1.x1_grid().is_empty());
+        assert!(EmptySubgridV1.x2_grid().is_empty());
     }
 
     #[test]
