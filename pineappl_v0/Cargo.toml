@@ -16,8 +16,8 @@ version.workspace = true
 workspace = true
 
 [dependencies]
-bincode = "1.3.3"
-enum_dispatch = "0.3.7"
-ndarray = { features = ["serde"], version = "0.15.4" }
-serde = { features = ["derive"], version = "1.0.130" }
-thiserror = "1.0.30"
+bincode.workspace = true
+enum_dispatch.workspace = true
+ndarray = { features = ["serde"], workspace = true }
+serde.workspace = true
+thiserror.workspace = true
