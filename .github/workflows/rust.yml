@@ -3,7 +3,6 @@ name: Rust
 on:
   push:
     branches-ignore:
-      - downgrade-msrv
       - pycli
       - bump-pyo3-version
       - update-wheels-actions

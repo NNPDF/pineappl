@@ -3,7 +3,6 @@ name: Python
 on:
   push:
     branches-ignore:
-      - downgrade-msrv
       - pycli
       - update-wheels-actions
       - update-wheels-actions-2
