@@ -2,23 +2,6 @@
 
 set -euo pipefail
 
-crates=(
-    pineappl
-    pineappl_applgrid
-    pineappl_fastnlo
-    pineappl_capi
-    pineappl_cli
-    pineappl_py
-    xtask
-)
-
-features=(
-    applgrid
-    evolve
-    fastnlo
-    fktable
-)
-
 main=master
 this_branch=$(git rev-parse --abbrev-ref HEAD)
 
@@ -62,27 +45,21 @@ if [[ ${prerelease} == "" ]]; then
     git add CHANGELOG.md
 fi
 
-# the '.' is needed because we also need to modify the workspace
-for crate in . ${crates[@]}; do
-    sed -i \
-        -e "s:^version = \".*\":version = \"${version}\":" \
-        -e "s:^\(pineappl = .*\)version = \".*\":\1version = \"=${version}\":" \
-        -e "s:^\(pineappl_applgrid = .*\)version = \".*\":\1version = \"=${version}\":" \
-        -e "s:^\(pineappl_cli = .*\)version = \".*\":\1version = \"=${version}\":" \
-        -e "s:^\(pineappl_fastnlo = .*\)version = \".*\":\1version = \"=${version}\":" \
-        -e "s:^\(pineappl_v0 = .*\)version = \".*\":\1version = \"=${version}\":" \
-        ${crate}/Cargo.toml
-    git add ${crate}/Cargo.toml
-done
+# all dependencies are now in the workspace `Cargo.toml` file
+sed -i \
+    -e "s:^version = \".*\":version = \"${version}\":" \
+    -e "s:^\(pineappl = .*\)version = \".*\":\1version = \"=${version}\":" \
+    -e "s:^\(pineappl_applgrid = .*\)version = \".*\":\1version = \"=${version}\":" \
+    -e "s:^\(pineappl_cli = .*\)version = \".*\":\1version = \"=${version}\":" \
+    -e "s:^\(pineappl_fastnlo = .*\)version = \".*\":\1version = \"=${version}\":" \
+    -e "s:^\(pineappl_v0 = .*\)version = \".*\":\1version = \"=${version}\":" \
+    Cargo.toml
+git add Cargo.toml
 
 echo ">>> Updating Cargo.lock ..."
 
-for crate in "${crates[@]}"; do
-    # convert packages in the lockfile that correspond to files in this
-    # repository to PKGIDs - important because we may depend on crate with
-    # different version multiple times
-    cargo pkgid path+file://$(cd "${crate}" && pwd)
-done | xargs printf " -p %s" | xargs cargo update
+cargo update --workspace
+
 git add Cargo.lock
 
 echo ">>> Commiting and pushing changes ..."
