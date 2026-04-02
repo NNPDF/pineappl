@@ -361,8 +361,8 @@ pub fn interpolate(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use float_cmp::assert_approx_eq;
     use float_cmp::Ulps;
+    use float_cmp::assert_approx_eq;
 
     #[test]
     fn interpolate_two_points() {

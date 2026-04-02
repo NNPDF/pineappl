@@ -347,7 +347,9 @@ impl<T: Clone + Copy + Default + PartialEq> IndexMut<usize> for PackedArray<T> {
 
                 // If the new element is within `threshold_distance` of the *next* group, we merge
                 // the next group into this group.
-                if let Some(start_index_next) = self.start_indices.get(point) && raveled_index + threshold_distance >= *start_index_next {
+                if let Some(start_index_next) = self.start_indices.get(point)
+                    && raveled_index + threshold_distance >= *start_index_next
+                {
                     let distance_next = start_index_next - raveled_index;
 
                     // Increase the length of this group
@@ -370,7 +372,9 @@ impl<T: Clone + Copy + Default + PartialEq> IndexMut<usize> for PackedArray<T> {
 
         // Case 2a: the new element can be merged into the next group. No `self.lengths.remove` and
         // `self.start_indices.remove` here, since we are not merging two groups.
-        if let Some(start_index_next) = self.start_indices.get(point) && raveled_index + threshold_distance >= *start_index_next {
+        if let Some(start_index_next) = self.start_indices.get(point)
+            && raveled_index + threshold_distance >= *start_index_next
+        {
             let distance = start_index_next - raveled_index;
 
             self.start_indices[point] = raveled_index;
@@ -459,7 +463,9 @@ impl<T: Clone + Copy + Default + PartialEq> IndexMut<&[usize]> for PackedArray<T
 
                 // If the new element is within `threshold_distance` of the *next* group, we merge
                 // the next group into this group.
-                if let Some(start_index_next) = self.start_indices.get(point) && raveled_index + threshold_distance >= *start_index_next {
+                if let Some(start_index_next) = self.start_indices.get(point)
+                    && raveled_index + threshold_distance >= *start_index_next
+                {
                     let distance_next = start_index_next - raveled_index;
 
                     // Increase the length of this group
@@ -482,7 +488,9 @@ impl<T: Clone + Copy + Default + PartialEq> IndexMut<&[usize]> for PackedArray<T
 
         // Case 2a: the new element can be merged into the next group. No `self.lengths.remove` and
         // `self.start_indices.remove` here, since we are not merging two groups.
-        if let Some(start_index_next) = self.start_indices.get(point) && raveled_index + threshold_distance >= *start_index_next {
+        if let Some(start_index_next) = self.start_indices.get(point)
+            && raveled_index + threshold_distance >= *start_index_next
+        {
             let distance = start_index_next - raveled_index;
 
             self.start_indices[point] = raveled_index;

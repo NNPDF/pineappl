@@ -1,12 +1,12 @@
 use super::GlobalConfiguration;
-use anyhow::{anyhow, bail, Context, Error, Result};
+use anyhow::{Context, Error, Result, anyhow, bail};
 use itertools::Itertools;
 use lhapdf::{Pdf, PdfSet};
 use pineappl::boc::{ScaleFuncForm, Scales};
 use pineappl::convolutions::{Conv, ConvType, ConvolutionCache};
 use pineappl::grid::Grid;
-use prettytable::format::{FormatBuilder, LinePosition, LineSeparator};
 use prettytable::Table;
+use prettytable::format::{FormatBuilder, LinePosition, LineSeparator};
 use std::fs::{File, OpenOptions};
 use std::iter;
 use std::ops::RangeInclusive;

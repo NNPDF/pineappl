@@ -18,7 +18,7 @@ use float_cmp::approx_eq;
 use git_version::git_version;
 use itertools::Itertools;
 use lz4_flex::frame::{FrameDecoder, FrameEncoder};
-use ndarray::{s, Array2, Array3, ArrayView3, ArrayViewMut3, Axis, CowArray, Dimension, Ix4, Zip};
+use ndarray::{Array2, Array3, ArrayView3, ArrayViewMut3, Axis, CowArray, Dimension, Ix4, Zip, s};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::io::{BufRead, BufReader, BufWriter, Read, Write};
@@ -108,7 +108,10 @@ impl Grid {
                 .find_map(|(pids, _)| (pids.len() != convolutions.len()).then_some(pids.len()));
 
             if let Some(pids_len) = offending_entry {
-                panic!("channel #{channel_idx} has wrong number of PIDs: expected {}, found {pids_len}", convolutions.len());
+                panic!(
+                    "channel #{channel_idx} has wrong number of PIDs: expected {}, found {pids_len}",
+                    convolutions.len()
+                );
             }
         }
 
@@ -1502,7 +1505,9 @@ impl Grid {
         new_interps.remove(kin_pos);
 
         for kin in &mut new_kinematics {
-            if let Kinematics::X(i) = kin && *i > conv_idx {
+            if let Kinematics::X(i) = kin
+                && *i > conv_idx
+            {
                 *i -= 1;
             }
         }
@@ -1544,7 +1549,10 @@ impl Grid {
 
                     if conv_to_fix.conv_type().is_ff() {
                         new_o.logxia = 0;
-                    } else if let Some(other_conv_idx) = other_conv_idx_opt && conv_to_fix.conv_type().is_pdf() && self.convolutions[other_conv_idx].conv_type().is_ff() {
+                    } else if let Some(other_conv_idx) = other_conv_idx_opt
+                        && conv_to_fix.conv_type().is_pdf()
+                        && self.convolutions[other_conv_idx].conv_type().is_ff()
+                    {
                         new_o.logxif = 0;
                     }
 

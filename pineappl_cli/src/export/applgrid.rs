@@ -1,8 +1,8 @@
-use anyhow::{bail, Result};
-use cxx::{let_cxx_string, UniquePtr};
+use anyhow::{Result, bail};
+use cxx::{UniquePtr, let_cxx_string};
 use float_cmp::approx_eq;
 use lhapdf::Pdf;
-use ndarray::{s, Axis};
+use ndarray::{Axis, s};
 use pineappl::boc::{Channel, Kinematics, Order};
 use pineappl::grid::Grid;
 use pineappl::interpolation::{Interp, InterpMeth, Map, ReweightMeth};

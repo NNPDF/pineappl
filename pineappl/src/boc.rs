@@ -7,7 +7,7 @@
 use super::convert;
 use super::error::{Error, Result};
 use float_cmp::approx_eq;
-use itertools::{izip, Itertools};
+use itertools::{Itertools, izip};
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 use std::cmp::Ordering;
@@ -527,7 +527,9 @@ impl FromStr for BinsWithFillLimits {
             .collect();
         let mut remaps = remaps?;
 
-        if let Some(first) = remaps.first() && first.len() != 1 {
+        if let Some(first) = remaps.first()
+            && first.len() != 1
+        {
             return Err(Error::General(
                 "'|' syntax not meaningful for first dimension".to_owned(),
             ));
@@ -1354,67 +1356,99 @@ mod tests {
 
         assert_eq!(
             Order::create_mask(&orders, 0, 0, false),
-            [false, false, false, false, false, false, false, false, false, false, false, false]
+            [
+                false, false, false, false, false, false, false, false, false, false, false, false
+            ]
         );
         assert_eq!(
             Order::create_mask(&orders, 0, 1, false),
-            [false, false, true, false, false, false, false, false, false, false, false, false]
+            [
+                false, false, true, false, false, false, false, false, false, false, false, false
+            ]
         );
         assert_eq!(
             Order::create_mask(&orders, 0, 2, false),
-            [false, false, true, false, false, false, true, false, false, false, false, false]
+            [
+                false, false, true, false, false, false, true, false, false, false, false, false
+            ]
         );
         assert_eq!(
             Order::create_mask(&orders, 0, 3, false),
-            [false, false, true, false, false, false, true, false, false, false, false, true]
+            [
+                false, false, true, false, false, false, true, false, false, false, false, true
+            ]
         );
         assert_eq!(
             Order::create_mask(&orders, 1, 0, false),
-            [true, false, false, false, false, false, false, false, false, false, false, false]
+            [
+                true, false, false, false, false, false, false, false, false, false, false, false
+            ]
         );
         assert_eq!(
             Order::create_mask(&orders, 1, 1, false),
-            [true, true, true, false, false, false, false, false, false, false, false, false]
+            [
+                true, true, true, false, false, false, false, false, false, false, false, false
+            ]
         );
         assert_eq!(
             Order::create_mask(&orders, 1, 2, false),
-            [true, true, true, false, false, false, true, false, false, false, false, false]
+            [
+                true, true, true, false, false, false, true, false, false, false, false, false
+            ]
         );
         assert_eq!(
             Order::create_mask(&orders, 1, 3, false),
-            [true, true, true, false, false, false, true, false, false, false, false, true]
+            [
+                true, true, true, false, false, false, true, false, false, false, false, true
+            ]
         );
         assert_eq!(
             Order::create_mask(&orders, 2, 0, false),
-            [true, false, false, true, false, false, false, false, false, false, false, false]
+            [
+                true, false, false, true, false, false, false, false, false, false, false, false
+            ]
         );
         assert_eq!(
             Order::create_mask(&orders, 2, 1, false),
-            [true, true, true, true, false, false, false, false, false, false, false, false]
+            [
+                true, true, true, true, false, false, false, false, false, false, false, false
+            ]
         );
         assert_eq!(
             Order::create_mask(&orders, 2, 2, false),
-            [true, true, true, true, true, true, true, false, false, false, false, false]
+            [
+                true, true, true, true, true, true, true, false, false, false, false, false
+            ]
         );
         assert_eq!(
             Order::create_mask(&orders, 2, 3, false),
-            [true, true, true, true, true, true, true, false, false, false, false, true]
+            [
+                true, true, true, true, true, true, true, false, false, false, false, true
+            ]
         );
         assert_eq!(
             Order::create_mask(&orders, 3, 0, false),
-            [true, false, false, true, false, false, false, true, false, false, false, false]
+            [
+                true, false, false, true, false, false, false, true, false, false, false, false
+            ]
         );
         assert_eq!(
             Order::create_mask(&orders, 3, 1, false),
-            [true, true, true, true, false, false, false, true, false, false, false, false]
+            [
+                true, true, true, true, false, false, false, true, false, false, false, false
+            ]
         );
         assert_eq!(
             Order::create_mask(&orders, 3, 2, false),
-            [true, true, true, true, true, true, true, true, false, false, false, false]
+            [
+                true, true, true, true, true, true, true, true, false, false, false, false
+            ]
         );
         assert_eq!(
             Order::create_mask(&orders, 3, 3, false),
-            [true, true, true, true, true, true, true, true, true, true, true, true]
+            [
+                true, true, true, true, true, true, true, true, true, true, true, true
+            ]
         );
     }
 

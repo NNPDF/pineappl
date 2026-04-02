@@ -1,7 +1,7 @@
 #![allow(missing_docs)]
 
 use assert_cmd::Command;
-use assert_fs::{fixture::FileWriteStr, NamedTempFile};
+use assert_fs::{NamedTempFile, fixture::FileWriteStr};
 
 const HELP_STR: &str = "Write a grid modified by various operations
 

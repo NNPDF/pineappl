@@ -1,8 +1,8 @@
 use super::helpers::{self, ConvFuns, ConvoluteMode};
 use super::{GlobalConfiguration, Subcommand};
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
 use clap::{Parser, ValueHint};
-use prettytable::{cell, Row};
+use prettytable::{Row, cell};
 use std::collections::HashSet;
 use std::path::PathBuf;
 use std::process::ExitCode;

@@ -121,7 +121,7 @@ pub mod ffi {
             _: bool,
         ) -> UniquePtr<igrid>;
         fn make_empty_grid(_: &[f64], _: &str, _: i32, _: i32, _: &str, _: &str)
-            -> UniquePtr<grid>;
+        -> UniquePtr<grid>;
         fn make_lumi_pdf(_: &str, _: &[i32]) -> UniquePtr<lumi_pdf>;
 
         fn grid_combine(_: &grid) -> Vec<i32>;

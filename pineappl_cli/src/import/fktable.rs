@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Context, Result};
+use anyhow::{Context, Result, anyhow};
 use flate2::read::GzDecoder;
 use ndarray::s;
 use pineappl::boc::{BinsWithFillLimits, Kinematics, Order, ScaleFuncForm, Scales};
@@ -338,7 +338,9 @@ pub fn convert_fktable(input: &Path) -> Result<Grid> {
         let file = entry.unwrap();
         let path = file.header().path().unwrap();
 
-        if let Some(extension) = path.extension() && extension == "dat" {
+        if let Some(extension) = path.extension()
+            && extension == "dat"
+        {
             return read_fktable(BufReader::new(file));
         }
     }

@@ -469,7 +469,9 @@ pub fn pdg_mc_ids_to_evol(tuples: &[(i32, f64)]) -> Option<i32> {
         .filter(|&(_, factor)| factor != 0.0)
         .collect();
 
-    if let &[(pid, factor)] = non_zero.as_slice() && approx_eq!(f64, factor, 1.0, ulps = 4) {
+    if let &[(pid, factor)] = non_zero.as_slice()
+        && approx_eq!(f64, factor, 1.0, ulps = 4)
+    {
         return Some(pid);
     }
 

@@ -55,7 +55,7 @@
 //!
 //! [translation tables]: https://github.com/eqrion/cbindgen/blob/master/docs.md#std-types
 
-use itertools::{izip, Itertools};
+use itertools::{Itertools, izip};
 use ndarray::{Array4, CowArray};
 use pineappl::boc::{Bin, BinsWithFillLimits, Channel, Kinematics, Order, ScaleFuncForm, Scales};
 use pineappl::convolutions::{Conv, ConvType, ConvolutionCache};
@@ -143,7 +143,9 @@ fn grid_interpolation_params(key_vals: Option<&KeyVal>) -> Vec<InterpMain> {
             q2_order = usize::try_from(*value).unwrap();
         }
 
-        if let Some(value) = keyval.bools.get("reweight") && !value {
+        if let Some(value) = keyval.bools.get("reweight")
+            && !value
+        {
             reweight = ReweightMeth::NoReweight;
         }
 
@@ -1875,7 +1877,11 @@ pub unsafe extern "C" fn pineappl_grid_metadata(
     let grid = unsafe { &*grid };
     let key = unsafe { CStr::from_ptr(key) }.to_string_lossy();
 
-    grid.metadata().get(key.as_ref()).map_or(std::ptr::null_mut(), |value| CString::new(value.as_str()).unwrap().into_raw())
+    grid.metadata()
+        .get(key.as_ref())
+        .map_or(std::ptr::null_mut(), |value| {
+            CString::new(value.as_str()).unwrap().into_raw()
+        })
 }
 
 /// Sets an internal key-value pair for the grid.

@@ -41,37 +41,45 @@ mod tests {
 
     #[test]
     fn ntuple_subgrid_v1_mu2_grid() {
-        assert!(NtupleSubgridV1 {
-            ntuples: Vec::new()
-        }
-        .mu2_grid()
-        .is_empty());
+        assert!(
+            NtupleSubgridV1 {
+                ntuples: Vec::new()
+            }
+            .mu2_grid()
+            .is_empty()
+        );
     }
 
     #[test]
     fn ntuple_subgrid_v1_x1_grid() {
-        assert!(NtupleSubgridV1 {
-            ntuples: Vec::new()
-        }
-        .x1_grid()
-        .is_empty());
+        assert!(
+            NtupleSubgridV1 {
+                ntuples: Vec::new()
+            }
+            .x1_grid()
+            .is_empty()
+        );
     }
 
     #[test]
     fn ntuple_subgrid_v1_x2_grid() {
-        assert!(NtupleSubgridV1 {
-            ntuples: Vec::new()
-        }
-        .x2_grid()
-        .is_empty());
+        assert!(
+            NtupleSubgridV1 {
+                ntuples: Vec::new()
+            }
+            .x2_grid()
+            .is_empty()
+        );
     }
 
     #[test]
     fn ntuple_subgrid_v1_is_empty() {
-        assert!(NtupleSubgridV1 {
-            ntuples: Vec::new()
-        }
-        .is_empty());
+        assert!(
+            NtupleSubgridV1 {
+                ntuples: Vec::new()
+            }
+            .is_empty()
+        );
     }
 
     #[test]
