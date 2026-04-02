@@ -543,7 +543,6 @@ impl FromStr for BinsWithFillLimits {
                         return Err(Error::General("empty repetition with '|'".to_owned()));
                     }
 
-
                     // UNWRAP: `i` and `i - 1` must be disjoint
                     let [lhs, rhs] = vec.get_disjoint_mut([i, i - 1]).unwrap();
                     lhs.clone_from(rhs);
