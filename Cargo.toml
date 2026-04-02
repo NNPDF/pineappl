@@ -13,6 +13,7 @@ default-members = [
     "pineappl",
     "pineappl_capi",
     "pineappl_cli",
+    "pineappl_v0",
 ]
 resolver = "2"
 

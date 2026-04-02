@@ -27,17 +27,6 @@ pub struct Channel {
 
 impl Channel {
     /// Returns a tuple representation of this entry.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use pineappl_v0::channel;
-    /// use pineappl_v0::boc::Channel;
-    ///
-    /// let entry = channel![4, 4, 1.0; 2, 2, 1.0];
-    ///
-    /// assert_eq!(entry.entry(), [(2, 2, 1.0), (4, 4, 1.0)]);
-    /// ```
     #[must_use]
     pub fn entry(&self) -> &[(i32, i32, f64)] {
         &self.entry

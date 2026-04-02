@@ -30,3 +30,25 @@ impl Subgrid for EmptySubgridV1 {
         Box::new(iter::empty())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // the following three methods aren't called if the subgrid is empty
+
+    #[test]
+    fn empty_subgrid_v1_x1_grid() {
+        assert!(EmptySubgridV1.x1_grid().is_empty());
+    }
+
+    #[test]
+    fn empty_subgrid_v1_x2_grid() {
+        assert!(EmptySubgridV1.x1_grid().is_empty());
+    }
+
+    #[test]
+    fn empty_subgrid_v1_indexed_iter() {
+        assert!(EmptySubgridV1.indexed_iter().collect::<Vec<_>>().is_empty());
+    }
+}

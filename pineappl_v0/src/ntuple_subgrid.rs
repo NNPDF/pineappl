@@ -32,3 +32,54 @@ impl Subgrid for NtupleSubgridV1 {
         panic!("NtupleSubgridV1 doesn't support the indexed_iter operation");
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // this subgrid type is now useless, but we have to keep it to keep backwards compatibility
+
+    #[test]
+    fn ntuple_subgrid_v1_mu2_grid() {
+        assert!(NtupleSubgridV1 {
+            ntuples: Vec::new()
+        }
+        .mu2_grid()
+        .is_empty());
+    }
+
+    #[test]
+    fn ntuple_subgrid_v1_x1_grid() {
+        assert!(NtupleSubgridV1 {
+            ntuples: Vec::new()
+        }
+        .x1_grid()
+        .is_empty());
+    }
+
+    #[test]
+    fn ntuple_subgrid_v1_x2_grid() {
+        assert!(NtupleSubgridV1 {
+            ntuples: Vec::new()
+        }
+        .x2_grid()
+        .is_empty());
+    }
+
+    #[test]
+    fn ntuple_subgrid_v1_is_empty() {
+        assert!(NtupleSubgridV1 {
+            ntuples: Vec::new()
+        }
+        .is_empty());
+    }
+
+    #[test]
+    #[should_panic(expected = "NtupleSubgridV1 doesn't support the indexed_iter operation")]
+    fn ntuple_subgrid_v1_indexed_iter() {
+        let _ = NtupleSubgridV1 {
+            ntuples: Vec::new(),
+        }
+        .indexed_iter();
+    }
+}
