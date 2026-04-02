@@ -143,10 +143,8 @@ fn grid_interpolation_params(key_vals: Option<&KeyVal>) -> Vec<InterpMain> {
             q2_order = usize::try_from(*value).unwrap();
         }
 
-        if let Some(value) = keyval.bools.get("reweight") {
-            if !value {
-                reweight = ReweightMeth::NoReweight;
-            }
+        if let Some(value) = keyval.bools.get("reweight") && !value {
+            reweight = ReweightMeth::NoReweight;
         }
 
         if let Some(value) = keyval.ints.get("x_bins").or_else(|| keyval.ints.get("nx")) {
@@ -259,7 +257,7 @@ pub struct Lumi(Vec<Channel>);
 /// this function is not safe to call.
 #[unsafe(no_mangle)]
 #[must_use]
-pub unsafe extern "C" fn pineappl_grid_bin_count(grid: *const Grid) -> usize {
+pub const unsafe extern "C" fn pineappl_grid_bin_count(grid: *const Grid) -> usize {
     let grid = unsafe { &*grid };
 
     grid.bwfl().len()
@@ -1236,7 +1234,7 @@ pub unsafe extern "C" fn pineappl_lumi_combinations(lumi: *const Lumi, entry: us
 /// `pineappl_grid_lumi`.
 #[deprecated(since = "1.0.0", note = "use `pineappl_channels_count` instead")]
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn pineappl_lumi_count(lumi: *const Lumi) -> usize {
+pub const unsafe extern "C" fn pineappl_lumi_count(lumi: *const Lumi) -> usize {
     let lumi = unsafe { &*lumi };
 
     lumi.0.len()
@@ -1593,7 +1591,7 @@ pub unsafe extern "C" fn pineappl_grid_channels(grid: *const Grid) -> Box<Channe
 /// The parameter `channels` must point to a valid `Lumi` object created by `pineappl_channels_new` or
 /// `pineappl_grid_channels`.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn pineappl_channels_count(channels: *const Channels) -> usize {
+pub const unsafe extern "C" fn pineappl_channels_count(channels: *const Channels) -> usize {
     let Channels { channels, .. } = unsafe { &*channels };
 
     channels.len()
@@ -1877,11 +1875,7 @@ pub unsafe extern "C" fn pineappl_grid_metadata(
     let grid = unsafe { &*grid };
     let key = unsafe { CStr::from_ptr(key) }.to_string_lossy();
 
-    if let Some(value) = grid.metadata().get(key.as_ref()) {
-        CString::new(value.as_str()).unwrap().into_raw()
-    } else {
-        std::ptr::null_mut()
-    }
+    grid.metadata().get(key.as_ref()).map_or(std::ptr::null_mut(), |value| CString::new(value.as_str()).unwrap().into_raw())
 }
 
 /// Sets an internal key-value pair for the grid.

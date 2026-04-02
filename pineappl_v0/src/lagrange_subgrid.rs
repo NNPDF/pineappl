@@ -9,6 +9,8 @@ use std::borrow::Cow;
 use std::iter;
 
 fn weightfun(x: f64) -> f64 {
+    // we rely on the following expression to be exactly as it is
+    #[allow(clippy::suboptimal_flops)]
     (x.sqrt() / (1.0 - 0.99 * x)).powi(3)
 }
 
@@ -17,10 +19,14 @@ fn fx(y: f64) -> f64 {
 
     for _ in 0..100 {
         let x = (-yp).exp();
+        // we rely on the following expression to be exactly as it is
+        #[allow(clippy::suboptimal_flops)]
         let delta = y - yp - 5.0 * (1.0 - x);
         if (delta).abs() < 1e-12 {
             return x;
         }
+        // we rely on the following expression to be exactly as it is
+        #[allow(clippy::suboptimal_flops)]
         let deriv = -1.0 - 5.0 * x;
         yp -= delta / deriv;
     }

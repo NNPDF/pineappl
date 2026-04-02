@@ -32,17 +32,21 @@ impl FromStr for ConvFuns {
             .split(',')
             .map(|fun| {
                 // `fun` may contain an arbitrary number of '+' characters
-                let (name, typ) = if let Some(name) = fun.strip_suffix("+p") {
-                    (name, ConvType::PolPDF)
-                } else if let Some(name) = fun.strip_suffix("+f") {
-                    (name, ConvType::UnpolFF)
-                } else if let Some(name) =
-                    fun.strip_suffix("+pf").or_else(|| fun.strip_suffix("+fp"))
-                {
-                    (name, ConvType::PolFF)
-                } else {
-                    (fun, ConvType::UnpolPDF)
-                };
+                let (name, typ) = fun.strip_suffix("+p").map_or_else(
+                    || {
+                        fun.strip_suffix("+f").map_or_else(
+                            || {
+                                fun.strip_suffix("+pf")
+                                    .or_else(|| fun.strip_suffix("+fp"))
+                                    .map_or((fun, ConvType::UnpolPDF), |name| {
+                                        (name, ConvType::PolFF)
+                                    })
+                            },
+                            |name| (name, ConvType::UnpolFF),
+                        )
+                    },
+                    |name| (name, ConvType::PolPDF),
+                );
                 let (name, mem) = name.split_once('/').map_or((name, None), |(name, mem)| {
                     (
                         name,
@@ -328,7 +332,7 @@ pub fn convolve_scales(
             let bin_count = grid.bwfl().len();
 
             // calculating the asymmetry for a subset of bins doesn't work
-            assert!((bins.is_empty() || (bins.len() == bin_count)) && (bin_count % 2 == 0));
+            assert!((bins.is_empty() || (bins.len() == bin_count)) && bin_count.is_multiple_of(2));
 
             results
                 .iter()
@@ -352,7 +356,7 @@ pub fn convolve_scales(
                         .into_iter()
                         .enumerate()
                         .filter(|(index, _)| bins.is_empty() || bins.contains(index))
-                        .flat_map(|(_, norm)| iter::repeat(norm).take(scales.len())),
+                        .flat_map(|(_, norm)| iter::repeat_n(norm, scales.len())),
                 )
                 .for_each(|(value, norm)| *value *= norm);
 

@@ -243,7 +243,7 @@ impl Bin {
 
     /// TODO
     #[must_use]
-    pub fn dimensions(&self) -> usize {
+    pub const fn dimensions(&self) -> usize {
         self.limits.len()
     }
 
@@ -377,7 +377,7 @@ impl BinsWithFillLimits {
 
     /// TODO
     #[must_use]
-    pub fn len(&self) -> usize {
+    pub const fn len(&self) -> usize {
         self.bins.len()
     }
 
@@ -527,12 +527,10 @@ impl FromStr for BinsWithFillLimits {
             .collect();
         let mut remaps = remaps?;
 
-        if let Some(first) = remaps.first() {
-            if first.len() != 1 {
-                return Err(Error::General(
-                    "'|' syntax not meaningful for first dimension".to_owned(),
-                ));
-            }
+        if let Some(first) = remaps.first() && first.len() != 1 {
+            return Err(Error::General(
+                "'|' syntax not meaningful for first dimension".to_owned(),
+            ));
         }
 
         // go over `remaps` again, and repeat previous entries as requested with the `|` syntax
@@ -543,11 +541,10 @@ impl FromStr for BinsWithFillLimits {
                         return Err(Error::General("empty repetition with '|'".to_owned()));
                     }
 
-                    vec[i] = vec[i - 1].clone();
 
-                    // // MSRV 1.86: replace the previous line with the following
-                    // let [lhs, rhs] = vec.get_disjoint_mut([i, i - 1]).unwrap();
-                    // lhs.clone_from(rhs);
+                    // UNWRAP: `i` and `i - 1` must be disjoint
+                    let [lhs, rhs] = vec.get_disjoint_mut([i, i - 1]).unwrap();
+                    lhs.clone_from(rhs);
                 }
             }
         }

@@ -49,16 +49,14 @@ fn convert_into_grid(
     scales: usize,
     discard_non_matching_scales: bool,
 ) -> Result<(&'static str, Vec<f64>, usize, Vec<bool>)> {
-    if let Some(extension) = output.extension() {
-        if extension == "appl" || extension == "root" {
-            return convert_into_applgrid(
-                output,
-                grid,
-                conv_funs,
-                scales,
-                discard_non_matching_scales,
-            );
-        }
+    if let Some(extension) = output.extension() && (extension == "appl" || extension == "root") {
+        return convert_into_applgrid(
+            output,
+            grid,
+            conv_funs,
+            scales,
+            discard_non_matching_scales,
+        );
     }
 
     Err(anyhow!("could not detect file format"))
