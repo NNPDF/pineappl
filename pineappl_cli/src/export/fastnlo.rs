@@ -1,18 +1,15 @@
 use anyhow::{Result, bail};
-use cxx::UniquePtr;
 use float_cmp::assert_approx_eq;
-use lhapdf::Pdf;
 use pineappl::boc::Order;
 use pineappl::grid::Grid;
-use pineappl_fastnlo::ffi::{self, fastNLOLHAPDF};
+use pineappl_fastnlo::ffi;
 use std::path::Path;
-use std::pin::Pin;
 
 pub fn convert_into_fastnlo(
     grid: &Grid,
     output: &Path,
     _discard_non_matching_scales: bool,
-) -> Result<(UniquePtr<fastNLOLHAPDF>, Vec<bool>)> {
+) -> Result<Vec<bool>> {
     let bwfl = grid.bwfl();
     let dim = bwfl.dimensions();
 
@@ -108,12 +105,5 @@ pub fn convert_into_fastnlo(
 
     ffi::WriteTable(fastnlo.pin_mut(), &output);
 
-    todo!()
-}
-
-pub fn convolve_fastnlo(_grid: Pin<&mut fastNLOLHAPDF>, conv_funs: &mut [Pdf]) -> Vec<f64> {
-    // TODO: add support for convolving an fastNLO table with two functions
-    assert_eq!(conv_funs.len(), 1);
-
-    todo!()
+    Ok(order_mask)
 }
