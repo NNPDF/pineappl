@@ -108,7 +108,9 @@ fn convert_into_grid(
         }
     }
 
-    Err(anyhow!("could not detect file format"))
+    Err(anyhow!(
+        "file extension must be one of: .appl, .root, .tab or .tab.gz"
+    ))
 }
 
 /// Converts PineAPPL grids to APPLgrid/fastNLO files.
