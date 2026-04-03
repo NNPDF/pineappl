@@ -6,7 +6,7 @@ use clap::{Parser, ValueHint};
 use itertools::Itertools;
 use pineappl::boc::Channel;
 use pineappl::grid::Grid;
-use rayon::{prelude::*, ThreadPoolBuilder};
+use rayon::{ThreadPoolBuilder, prelude::*};
 use std::fmt::Write;
 use std::num::NonZeroUsize;
 use std::ops::Range;
@@ -446,15 +446,15 @@ impl Subcommand for Opts {
         let mut output = self.input.clone();
 
         // remove ".lz4" and ".pineappl" extension
-        if let Some(x) = output.extension() {
-            if x == "lz4" {
-                output = Path::new(output.file_stem().unwrap()).to_path_buf();
-            }
+        if let Some(x) = output.extension()
+            && x == "lz4"
+        {
+            output = Path::new(output.file_stem().unwrap()).to_path_buf();
         }
-        if let Some(x) = output.extension() {
-            if x == "pineappl" {
-                output = Path::new(output.file_stem().unwrap()).to_path_buf();
-            }
+        if let Some(x) = output.extension()
+            && x == "pineappl"
+        {
+            output = Path::new(output.file_stem().unwrap()).to_path_buf();
         }
 
         let xaxis = format!("x{}", grid.bwfl().dimensions());

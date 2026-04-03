@@ -1,7 +1,7 @@
 #![allow(missing_docs)]
 
 use assert_cmd::Command;
-use assert_fs::{fixture::FileWriteStr, NamedTempFile};
+use assert_fs::{NamedTempFile, fixture::FileWriteStr};
 
 const HELP_STR: &str = "Write a grid modified by various operations
 
@@ -19,6 +19,7 @@ Options:
       --delete-orders <O1-O2,...>       Delete orders with the specified indices
       --delete-key <KEY>                Delete an internal key-value pair
       --div-bin-norm-dims <DIM1,...>    Divide each bin normalizations by the bin lengths for the given dimensions
+      --fix-convolution <IDX:CONV_FUN>  Fix one of the convolutions with a PDF set
       --merge-bins <BIN1-BIN2,...>      Merge specific bins together
       --merge-channel-factors[=<ON>]    Merge channel factors into the grid [possible values: true, false]
       --mul-bin-norm <NORM>             Multiply all bin normalizations with the given factor
@@ -444,6 +445,17 @@ const DELETE_ORDERS_STR: &str = "o      order
 1 O(as^1 a^2 lf^1)
 ";
 
+const THREE_CONVOLUTIONS_STR: &str = "b                  pT                  dsig/dpT (pol)
+                 [GeV]                    [pb/GeV]   
+-+-----------------+------------------+--------------
+0 5.108395099639893  6.045444965362549    2.2605116e3
+1 6.045444965362549  6.982494831085205    1.0361301e3
+2 6.982494831085205  7.992245197296143    4.8947508e2
+3 7.992245197296143  8.960753917694092    2.4023939e2
+4 8.960753917694092  9.929026126861572    1.2464463e2
+5 9.929026126861572 11.660773754119873    5.2680349e1
+";
+
 #[test]
 fn help() {
     Command::cargo_bin("pineappl")
@@ -663,6 +675,23 @@ fn optimize() {
             "write",
             "--optimize",
             "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
+            output.path().to_str().unwrap(),
+        ])
+        .assert()
+        .success()
+        .stdout("");
+}
+
+#[test]
+fn optimize_newton_convergence() {
+    let output = NamedTempFile::new("optimized.pineappl.lz4").unwrap();
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "write",
+            "--optimize",
+            "../test-data/test_newton_convergence.pineappl.lz4",
             output.path().to_str().unwrap(),
         ])
         .assert()
@@ -1137,4 +1166,32 @@ fn delete_orders() {
         .assert()
         .success()
         .stdout(DELETE_ORDERS_STR);
+}
+
+#[test]
+fn fix_convolution() {
+    let output = NamedTempFile::new("fix_convolution.pineappl.lz4").unwrap();
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "write",
+            "--fix-convolution=2:MAPFF10NLOPIsum",
+            "../test-data/SIHP-PP-POLARIZED-STAR-NLO.pineappl.lz4",
+            output.path().to_str().unwrap(),
+        ])
+        .assert()
+        .success()
+        .stdout("");
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "convolve",
+            output.path().to_str().unwrap(),
+            "NNPDFpol11_100+p",
+        ])
+        .assert()
+        .success()
+        .stdout(THREE_CONVOLUTIONS_STR);
 }

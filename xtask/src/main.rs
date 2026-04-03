@@ -1,3 +1,7 @@
+// this crate will not be published and thus doesn't need doc strings
+#![allow(missing_docs)]
+#![allow(clippy::missing_errors_doc)]
+
 use anyhow::Result;
 use clap::Parser;
 use enum_dispatch::enum_dispatch;

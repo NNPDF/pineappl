@@ -8,6 +8,7 @@ authors = [
 description = "Python bindings to PineAPPL"
 name = "pineappl_py"
 readme = "README.md"
+publish = false
 
 categories.workspace = true
 edition.workspace = true
@@ -28,8 +29,8 @@ name = "pineappl"
 crate-type = ["cdylib"]
 
 [dependencies]
-itertools = "0.10.1"
-ndarray = "0.15.4"
-numpy = "0.26.0"
-pineappl = { path = "../pineappl", version = "=1.2.0" }
-pyo3 = { features = ["extension-module"], version = "0.26.0" }
+itertools.workspace = true
+ndarray.workspace = true
+numpy.workspace = true
+pineappl.workspace = true
+pyo3.workspace = true

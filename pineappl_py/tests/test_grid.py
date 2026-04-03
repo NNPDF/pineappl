@@ -376,7 +376,10 @@ class TestGrid:
                 xfxs=[pdf.polarized_pdf],  # Requires ONE single PDF
                 alphas=pdf.alphasQ,
             )
-        assert "couldn't match Conv { conv_type: UnpolPDF, pid: 2212 } with a convolution function from cache [Conv { conv_type: PolPDF, pid: 2212 }]" == str(err_func.value)
+        assert (
+            "couldn't match Conv { conv_type: UnpolPDF, pid: 2212 } with a convolution function from cache [Conv { conv_type: PolPDF, pid: 2212 }]"
+            == str(err_func.value)
+        )
 
     @pytest.mark.parametrize("params,expected", TESTING_SPECS)
     def test_toy_convolution(self, fake_grids, params, expected):
@@ -566,6 +569,117 @@ class TestGrid:
             ),
             expected_results,
         )
+
+    def test_fix_convolution(
+        self,
+        pdf,
+        download_objects,
+        gridname: str = "SIHP-PP-POLARIZED-STAR-NLO.pineappl.lz4",
+    ):
+        expected_results = [
+            -3.90292729e09,
+            +3.43682719e11,
+            -3.58390524e10,
+            -4.66855347e10,
+            -2.15171695e09,
+            +1.57010877e10,
+        ]  # Numbers computed using `v1.0.0a2`
+
+        grid = download_objects(f"{gridname}")
+        g = Grid.read(grid)
+
+        # Fix the convolution for Fragmentation Function part
+        fix_g_conv = g.fix_convolution(conv_idx=2, xfx=pdf.ff_set)
+
+        np.testing.assert_allclose(
+            fix_g_conv.convolve(
+                pdg_convs=fix_g_conv.convolutions,
+                xfxs=[pdf.polarized_pdf, pdf.polarized_pdf, pdf.ff_set],
+                alphas=pdf.alphasQ,
+            ),
+            expected_results,
+        )
+
+    def test_fix_convolution_dis(self, fake_grids, pdf):
+        channels = [Channel([([i], 0.1)]) for i in range(-5, 5)]
+
+        g = fake_grids.grid_with_generic_convolution(
+            nb_convolutions=1,
+            channels=channels,
+            orders=ORDERS,
+            convolutions=[CONVOBJECT],
+        )
+
+        with pytest.raises(BaseException) as err_func:
+            g.fix_convolution(conv_idx=0, xfx=pdf.unpolarized_pdf)
+        assert "cannot fix the last convolution" in str(err_func.value)
+
+    def test_fix_convolution_wrong_index(self, fake_grids, pdf):
+        channels = [Channel([([i, -i], 0.1)]) for i in range(-5, 5)]
+
+        g = fake_grids.grid_with_generic_convolution(
+            nb_convolutions=2,
+            channels=channels,
+            orders=ORDERS,
+            convolutions=[CONVOBJECT, CONVOBJECT],
+        )
+
+        with pytest.raises(BaseException) as err_func:
+            g.fix_convolution(conv_idx=4, xfx=pdf.unpolarized_pdf)
+        assert "convolution index 4 out of bounds (max: 1)" in str(err_func.value)
+
+    def test_fix_convolution_logxia(self, fake_grids, pdf):
+        rndgen = Generator(PCG64(seed=1234))
+        binning = [1e-2, 1e-1, 0.5, 1]
+
+        channels = [Channel([([i, -i, i], 0.1)]) for i in range(-5, 5)]
+        orders = [
+            Order(1, 0, 0, 0, 0),
+            Order(2, 0, 0, 0, 0),  # should be combined with the next order
+            Order(2, 0, 0, 0, 1),
+            Order(2, 0, 1, 1, 1),  # creates a new order with `logxia` removed
+        ]
+
+        convbools = [(False, False), (False, False), (False, True)]
+        hpids = [2212, 2212, 211]
+        convtypes = [ConvType(polarized=p, time_like=t) for p, t in convbools]
+        convolutions = [
+            Conv(convolution_types=c, pid=p) for c, p in zip(convtypes, hpids)
+        ]
+
+        g = fake_grids.grid_with_generic_convolution(
+            nb_convolutions=len(convolutions),
+            channels=channels,
+            orders=orders,
+            convolutions=convolutions,
+            bins=binning,
+        )
+
+        # Fill with non-empty subgrids
+        _q2grid = np.geomspace(1e3, 1e5, 5)
+        _xgrid = np.geomspace(1e-5, 1, 4)
+        comb_nodes = [_q2grid] + [_xgrid for _ in convolutions]
+        ntuples = [np.array(list(kins)) for kins in itertools.product(*comb_nodes)]
+        obs = [rndgen.uniform(binning[0], binning[-1]) for _ in ntuples]
+        for pto in range(len(orders)):
+            for channel_id in range(len(channels)):
+                g.fill_array(
+                    order=pto,
+                    observables=obs,
+                    channel=channel_id,
+                    ntuples=ntuples,
+                    weights=np.repeat(1, len(obs)),
+                )
+
+        # Fix the Fragmentation Function
+        g_fix = g.fix_convolution(conv_idx=2, xfx=pdf.ff_set)
+        orders_fix = g_fix.orders()
+
+        # Check that the orders have been merged
+        assert len(orders_fix) == 3
+        assert orders_fix[0].as_tuple() == (1, 0, 0, 0, 0)
+        assert orders_fix[1].as_tuple() == (2, 0, 0, 0, 0)
+        assert orders_fix[2].as_tuple() == (2, 0, 1, 1, 0)
 
     def test_many_convolutions(self, fake_grids, pdf, nb_convolutions: int = 3):
         """Test for fun many convolutions."""

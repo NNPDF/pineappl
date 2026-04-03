@@ -14,6 +14,7 @@ PROGRAMS = \
 	convolve-grid-deprecated \
 	convolve-grid \
 	get-subgrids \
+	set-subgrids \
 	evolve-grid \
 	evolve-grid-identity \
 	deprecated \
@@ -22,7 +23,8 @@ PROGRAMS = \
 	display-orders \
 	display-orders-deprecated \
 	merge-grids \
-	modify-grid
+	modify-grid \
+	fix-convolution
 
 all: $(PROGRAMS)
 
@@ -47,10 +49,16 @@ convolve-grid-deprecated: convolve-grid-deprecated.cpp
 convolve-grid: convolve-grid.cpp
 	$(CXX) $(CXXFLAGS) $< $(LHAPDF_DEPS) $(PINEAPPL_DEPS) -o $@
 
+fix-convolution: fix-convolution.cpp
+	$(CXX) $(CXXFLAGS) $< $(LHAPDF_DEPS) $(PINEAPPL_DEPS) -o $@
+
 deprecated: deprecated.cpp
 	$(CXX) $(CXXFLAGS) $< $(LHAPDF_DEPS) $(PINEAPPL_DEPS) -o $@
 
 get-subgrids: get-subgrids.cpp
+	$(CXX) $(CXXFLAGS) $< $(PINEAPPL_DEPS) -o $@
+
+set-subgrids: set-subgrids.cpp
 	$(CXX) $(CXXFLAGS) $< $(PINEAPPL_DEPS) -o $@
 
 evolve-grid: evolve-grid.cpp

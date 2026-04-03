@@ -65,6 +65,7 @@ fn main() {
         .file("src/fastnlo.cpp")
         .include(fnlo_include_path.trim())
         .includes(lhapdf_include_paths)
+        // TODO: find a way to compile with the same standard that fastNLO was compiled with
         .std("c++17")
         .compile("fnlo-bridge");
 

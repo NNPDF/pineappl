@@ -173,6 +173,37 @@ int main() {
 
     pineappl_grid_write(grid, "advanced-filling.pineappl.lz4");
 
+    //-----------------------------------------------------------------------//
+    
+    // Remove the bins for which the convolution is zero.
+    std::vector<uintptr_t> zero_indices;
+    zero_indices.reserve(dxsec.size());
+    for (size_t i = 0; i < dxsec.size(); ++i) {
+        if (dxsec[i] == 0.0) {
+           zero_indices.push_back(static_cast<uintptr_t>(i));
+        }
+    }
+    pineappl_grid_delete_bins(grid, zero_indices.data(), zero_indices.size());
+
+    std::vector<double> dxsec_no_zeros(pineappl_grid_bin_count(grid));
+    pineappl_grid_convolve(grid, xfx, alphas, pdf_states, pdf.get(), order_mask, channel_mask,
+        nullptr, 1, mmu_scales.data(), dxsec_no_zeros.data());
+
+    // Print table header
+    std::cout << " " << std::endl;
+    std::cout << std::setw(10) << "bin left"
+              << std::setw(12) << "bin right"
+              << std::setw(15) << "dsig/dx" << std::endl;
+    std::cout << std::string(37, '-') << std::endl;
+
+    // Loop through bins and print results
+    for (size_t i = 0; i < dxsec_no_zeros.size(); ++i) {
+        std::cout << std::setw(10) << bins[i]
+                  << std::setw(12) << bins[i + 1]
+                  << std::setw(15) << std::scientific << std::setprecision(3) << dxsec_no_zeros[i]
+                  << std::endl;
+    }
+
     // release memory
     pineappl_grid_delete(grid);
 }

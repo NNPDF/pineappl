@@ -1,12 +1,12 @@
 use super::GlobalConfiguration;
-use anyhow::{anyhow, bail, Context, Error, Result};
+use anyhow::{Context, Error, Result, anyhow, bail};
 use itertools::Itertools;
 use lhapdf::{Pdf, PdfSet};
 use pineappl::boc::{ScaleFuncForm, Scales};
 use pineappl::convolutions::{Conv, ConvType, ConvolutionCache};
 use pineappl::grid::Grid;
-use prettytable::format::{FormatBuilder, LinePosition, LineSeparator};
 use prettytable::Table;
+use prettytable::format::{FormatBuilder, LinePosition, LineSeparator};
 use std::fs::{File, OpenOptions};
 use std::iter;
 use std::ops::RangeInclusive;
@@ -26,11 +26,27 @@ impl FromStr for ConvFuns {
     type Err = Error;
 
     fn from_str(arg: &str) -> std::result::Result<Self, Self::Err> {
+        // split from the left, as '=' characters are allowed in labels but not in names
         let (names, label) = arg.split_once('=').unwrap_or((arg, arg));
         let (lhapdf_names, members, conv_types) = names
             .split(',')
             .map(|fun| {
-                let (name, typ) = fun.split_once('+').unwrap_or((fun, ""));
+                // `fun` may contain an arbitrary number of '+' characters
+                let (name, typ) = fun.strip_suffix("+p").map_or_else(
+                    || {
+                        fun.strip_suffix("+f").map_or_else(
+                            || {
+                                fun.strip_suffix("+pf")
+                                    .or_else(|| fun.strip_suffix("+fp"))
+                                    .map_or((fun, ConvType::UnpolPDF), |name| {
+                                        (name, ConvType::PolFF)
+                                    })
+                            },
+                            |name| (name, ConvType::UnpolFF),
+                        )
+                    },
+                    |name| (name, ConvType::PolPDF),
+                );
                 let (name, mem) = name.split_once('/').map_or((name, None), |(name, mem)| {
                     (
                         name,
@@ -42,13 +58,6 @@ impl FromStr for ConvFuns {
                     )
                 });
                 let name = name.to_owned();
-                let typ = match typ {
-                    "" => ConvType::UnpolPDF,
-                    "p" => ConvType::PolPDF,
-                    "f" => ConvType::UnpolFF,
-                    "pf" | "fp" => ConvType::PolFF,
-                    _ => bail!("unknown convolution type '{typ}'"),
-                };
                 Ok::<_, Error>((name, mem, typ))
             })
             .collect::<Result<Vec<(_, _, _)>, _>>()?
@@ -323,7 +332,7 @@ pub fn convolve_scales(
             let bin_count = grid.bwfl().len();
 
             // calculating the asymmetry for a subset of bins doesn't work
-            assert!((bins.is_empty() || (bins.len() == bin_count)) && (bin_count % 2 == 0));
+            assert!((bins.is_empty() || (bins.len() == bin_count)) && bin_count.is_multiple_of(2));
 
             results
                 .iter()
@@ -346,8 +355,8 @@ pub fn convolve_scales(
                         .normalizations()
                         .into_iter()
                         .enumerate()
-                        .filter(|(index, _)| (bins.is_empty() || bins.contains(index)))
-                        .flat_map(|(_, norm)| iter::repeat(norm).take(scales.len())),
+                        .filter(|(index, _)| bins.is_empty() || bins.contains(index))
+                        .flat_map(|(_, norm)| iter::repeat_n(norm, scales.len())),
                 )
                 .for_each(|(value, norm)| *value *= norm);
 
@@ -516,6 +525,32 @@ mod test {
                     ConvType::UnpolPDF
                 ],
                 label: "X".to_owned()
+            }
+        );
+    }
+
+    #[test]
+    fn issue_386() {
+        // names may contain the character '+', which must not be confused with the convolution
+        // function types
+        assert_eq!(
+            "D0+Dpm+f=blub".parse::<ConvFuns>().unwrap(),
+            ConvFuns {
+                lhapdf_names: vec!["D0+Dpm".to_owned()],
+                members: vec![None],
+                conv_types: vec![ConvType::UnpolFF],
+                label: "blub".to_owned()
+            }
+        );
+
+        // even unpolarized PDFs may contain '+' characters
+        assert_eq!(
+            "D0+Dpm=blub++".parse::<ConvFuns>().unwrap(),
+            ConvFuns {
+                lhapdf_names: vec!["D0+Dpm".to_owned()],
+                members: vec![None],
+                conv_types: vec![ConvType::UnpolPDF],
+                label: "blub++".to_owned()
             }
         );
     }

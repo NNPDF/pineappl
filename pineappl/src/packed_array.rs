@@ -37,7 +37,7 @@ impl<T: Copy + Default + PartialEq> PackedArray<T> {
 
     /// Returns `true` if the array contains no element.
     #[must_use]
-    pub fn is_empty(&self) -> bool {
+    pub const fn is_empty(&self) -> bool {
         self.entries.is_empty()
     }
 
@@ -57,7 +57,7 @@ impl<T: Copy + Default + PartialEq> PackedArray<T> {
     /// Returns the overhead of storing the `start_indices` and the `lengths` of the groups, in
     /// units of `f64`.
     #[must_use]
-    pub fn overhead(&self) -> usize {
+    pub const fn overhead(&self) -> usize {
         ((self.start_indices.len() + self.lengths.len()) * mem::size_of::<usize>())
             / mem::size_of::<f64>()
     }
@@ -145,7 +145,7 @@ impl<T: Copy + Default + PartialEq> PackedArray<T> {
 
         for ((i, j, k), &entry) in array
             .indexed_iter()
-            .filter(|(_, &entry)| entry != Default::default())
+            .filter(|&(_, &entry)| entry != Default::default())
         {
             result[[i + xstart, j, k]] = entry;
         }
@@ -161,7 +161,7 @@ impl<T: Copy + Default + PartialEq> From<ArrayViewD<'_, T>> for PackedArray<T> {
         for (i, &entry) in array
             .iter()
             .enumerate()
-            .filter(|(_, &entry)| entry != Default::default())
+            .filter(|&(_, &entry)| entry != Default::default())
         {
             result[i] = entry;
         }
@@ -342,28 +342,28 @@ impl<T: Clone + Copy + Default + PartialEq> IndexMut<usize> for PackedArray<T> {
                 // and inserting the necessary number of default elements.
                 self.entries.splice(
                     point_entries..point_entries,
-                    iter::repeat(Default::default()).take(distance),
+                    iter::repeat_n(Default::default(), distance),
                 );
 
                 // If the new element is within `threshold_distance` of the *next* group, we merge
                 // the next group into this group.
-                if let Some(start_index_next) = self.start_indices.get(point) {
-                    if raveled_index + threshold_distance >= *start_index_next {
-                        let distance_next = start_index_next - raveled_index;
+                if let Some(start_index_next) = self.start_indices.get(point)
+                    && raveled_index + threshold_distance >= *start_index_next
+                {
+                    let distance_next = start_index_next - raveled_index;
 
-                        // Increase the length of this group
-                        self.lengths[point - 1] += distance_next - 1 + self.lengths[point];
-                        // and remove the next group. we don't have to manipulate `self.entries`,
-                        // since the grouping of the elements is handled only by
-                        // `self.start_indices` and `self.lengths`
-                        self.lengths.remove(point);
-                        self.start_indices.remove(point);
-                        // Insert the default elements between the groups.
-                        self.entries.splice(
-                            point_entries..point_entries,
-                            iter::repeat(Default::default()).take(distance_next - 1),
-                        );
-                    }
+                    // Increase the length of this group
+                    self.lengths[point - 1] += distance_next - 1 + self.lengths[point];
+                    // and remove the next group. we don't have to manipulate `self.entries`,
+                    // since the grouping of the elements is handled only by
+                    // `self.start_indices` and `self.lengths`
+                    self.lengths.remove(point);
+                    self.start_indices.remove(point);
+                    // Insert the default elements between the groups.
+                    self.entries.splice(
+                        point_entries..point_entries,
+                        iter::repeat_n(Default::default(), distance_next - 1),
+                    );
                 }
 
                 return &mut self.entries[point_entries - 1 + distance];
@@ -372,18 +372,18 @@ impl<T: Clone + Copy + Default + PartialEq> IndexMut<usize> for PackedArray<T> {
 
         // Case 2a: the new element can be merged into the next group. No `self.lengths.remove` and
         // `self.start_indices.remove` here, since we are not merging two groups.
-        if let Some(start_index_next) = self.start_indices.get(point) {
-            if raveled_index + threshold_distance >= *start_index_next {
-                let distance = start_index_next - raveled_index;
+        if let Some(start_index_next) = self.start_indices.get(point)
+            && raveled_index + threshold_distance >= *start_index_next
+        {
+            let distance = start_index_next - raveled_index;
 
-                self.start_indices[point] = raveled_index;
-                self.lengths[point] += distance;
-                self.entries.splice(
-                    point_entries..point_entries,
-                    iter::repeat(Default::default()).take(distance),
-                );
-                return &mut self.entries[point_entries];
-            }
+            self.start_indices[point] = raveled_index;
+            self.lengths[point] += distance;
+            self.entries.splice(
+                point_entries..point_entries,
+                iter::repeat_n(Default::default(), distance),
+            );
+            return &mut self.entries[point_entries];
         }
 
         // Case 2b: we insert a new group of length 1
@@ -458,28 +458,28 @@ impl<T: Clone + Copy + Default + PartialEq> IndexMut<&[usize]> for PackedArray<T
                 // and inserting the necessary number of default elements.
                 self.entries.splice(
                     point_entries..point_entries,
-                    iter::repeat(Default::default()).take(distance),
+                    iter::repeat_n(Default::default(), distance),
                 );
 
                 // If the new element is within `threshold_distance` of the *next* group, we merge
                 // the next group into this group.
-                if let Some(start_index_next) = self.start_indices.get(point) {
-                    if raveled_index + threshold_distance >= *start_index_next {
-                        let distance_next = start_index_next - raveled_index;
+                if let Some(start_index_next) = self.start_indices.get(point)
+                    && raveled_index + threshold_distance >= *start_index_next
+                {
+                    let distance_next = start_index_next - raveled_index;
 
-                        // Increase the length of this group
-                        self.lengths[point - 1] += distance_next - 1 + self.lengths[point];
-                        // and remove the next group. we don't have to manipulate `self.entries`,
-                        // since the grouping of the elements is handled only by
-                        // `self.start_indices` and `self.lengths`
-                        self.lengths.remove(point);
-                        self.start_indices.remove(point);
-                        // Insert the default elements between the groups.
-                        self.entries.splice(
-                            point_entries..point_entries,
-                            iter::repeat(Default::default()).take(distance_next - 1),
-                        );
-                    }
+                    // Increase the length of this group
+                    self.lengths[point - 1] += distance_next - 1 + self.lengths[point];
+                    // and remove the next group. we don't have to manipulate `self.entries`,
+                    // since the grouping of the elements is handled only by
+                    // `self.start_indices` and `self.lengths`
+                    self.lengths.remove(point);
+                    self.start_indices.remove(point);
+                    // Insert the default elements between the groups.
+                    self.entries.splice(
+                        point_entries..point_entries,
+                        iter::repeat_n(Default::default(), distance_next - 1),
+                    );
                 }
 
                 return &mut self.entries[point_entries - 1 + distance];
@@ -488,18 +488,18 @@ impl<T: Clone + Copy + Default + PartialEq> IndexMut<&[usize]> for PackedArray<T
 
         // Case 2a: the new element can be merged into the next group. No `self.lengths.remove` and
         // `self.start_indices.remove` here, since we are not merging two groups.
-        if let Some(start_index_next) = self.start_indices.get(point) {
-            if raveled_index + threshold_distance >= *start_index_next {
-                let distance = start_index_next - raveled_index;
+        if let Some(start_index_next) = self.start_indices.get(point)
+            && raveled_index + threshold_distance >= *start_index_next
+        {
+            let distance = start_index_next - raveled_index;
 
-                self.start_indices[point] = raveled_index;
-                self.lengths[point] += distance;
-                self.entries.splice(
-                    point_entries..point_entries,
-                    iter::repeat(Default::default()).take(distance),
-                );
-                return &mut self.entries[point_entries];
-            }
+            self.start_indices[point] = raveled_index;
+            self.lengths[point] += distance;
+            self.entries.splice(
+                point_entries..point_entries,
+                iter::repeat_n(Default::default(), distance),
+            );
+            return &mut self.entries[point_entries];
         }
 
         // Case 2b: we insert a new group of length 1

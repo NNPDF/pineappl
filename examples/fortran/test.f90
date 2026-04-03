@@ -247,6 +247,13 @@ program test_pineappl
 
     call pineappl_grid_set_key_value(grid, "set_key_value", "set_key_value: success")
 
+    call pineappl_grid_set_metadata(grid, "set_metadata", "set_metadata: success")
+
+    if (pineappl_grid_metadata(grid, "set_metadata") /= "set_metadata: success") then
+        write(*, *) "pineappl_grid_metadata(): '", pineappl_grid_metadata(grid, "set_metadata"), "'"
+        error stop "error: pineappl_grid_metadata"
+    end if
+
     ! NOTE: At this point we have the bins: [0, 1, 2, 3]
     call pineappl_grid_set_remapper(grid, 2, [1.0_dp, 1.0_dp, 1.0_dp], &
         [0.0_dp, 1.0_dp, 10.0_dp, 11.0_dp, 1.0_dp, 3.0_dp, 11.0_dp, 13.0_dp, 15.0_dp, 20.0_dp])

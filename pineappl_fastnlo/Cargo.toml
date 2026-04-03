@@ -16,12 +16,12 @@ version.workspace = true
 workspace = true
 
 [dependencies]
-cxx = { version = "1.0.65" }
-thiserror = "1.0.30"
+cxx.workspace = true
+thiserror.workspace = true
 
 [build-dependencies]
-cxx-build = { version = "1.0.65" }
-pkg-config = "0.3"
+cxx-build.workspace = true
+pkg-config.workspace = true
 
 [features]
 static = []

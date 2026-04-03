@@ -6,7 +6,7 @@ use super::error::{Error, Result};
 use super::grid::{Grid, GridOptFlags};
 use super::pids::{OptRules, PidBasis};
 use super::subgrid::{self, EmptySubgridV1, Subgrid};
-use ndarray::{s, ArrayD};
+use ndarray::{ArrayD, s};
 use std::collections::BTreeMap;
 use std::fmt::{self, Display, Formatter};
 use std::iter;
@@ -129,7 +129,7 @@ impl FkTable {
         let x_grid = self.x_grid();
 
         let mut dim = vec![self.grid.bwfl().len(), self.grid.channels().len()];
-        dim.extend(iter::repeat(x_grid.len()).take(self.grid.convolutions().len()));
+        dim.extend(iter::repeat_n(x_grid.len(), self.grid.convolutions().len()));
         let mut idx = vec![0; dim.len()];
         let mut result = ArrayD::zeros(dim);
 
@@ -222,7 +222,7 @@ impl FkTable {
     }
 
     /// Return the metadata of this FK-table.
-    pub fn metadata_mut(&mut self) -> &mut BTreeMap<String, String> {
+    pub const fn metadata_mut(&mut self) -> &mut BTreeMap<String, String> {
         self.grid.metadata_mut()
     }
 

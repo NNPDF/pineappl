@@ -224,6 +224,66 @@ const NO_CHANNELS_GRID_STR: &str =
 19   5   5                      0.9                      0.9 0.0000000e0
 ";
 
+const DYAA_SUBGRID_TEST: &str = "b    x1        diff    
+     []         []     
+--+---+---+------------
+ 0   0 0.1 5.4419693e-1
+ 1 0.1 0.2 5.2673830e-1
+ 2 0.2 0.3 5.5475101e-1
+ 3 0.3 0.4 4.9474835e-1
+ 4 0.4 0.5 4.6130464e-1
+ 5 0.5 0.6 4.8110532e-1
+ 6 0.6 0.7 4.7523978e-1
+ 7 0.7 0.8 4.4445878e-1
+ 8 0.8 0.9 4.2463353e-1
+ 9 0.9   1 3.6203960e-1
+10   1 1.1 3.3418502e-1
+11 1.1 1.2 3.1297586e-1
+12 1.2 1.3 2.5858171e-1
+13 1.3 1.4 2.3601039e-1
+14 1.4 1.5 2.1117966e-1
+15 1.5 1.6 1.8150553e-1
+16 1.6 1.7 1.4598356e-1
+17 1.7 1.8 1.1183116e-1
+18 1.8 1.9 8.9304076e-2
+19 1.9   2 6.8197346e-2
+20   2 2.1 5.0815965e-2
+21 2.1 2.2 3.4465399e-2
+22 2.2 2.3 1.9973225e-2
+23 2.3 2.4 8.0989654e-3
+";
+
+// TODO: why is this not the same as `DYAA_SUBGRID_V1_TEST`? Probably a bug in pineappl-0.4.1,
+// which was used to generate the grid
+const DYAA_SUBGRID_V1_TEST: &str = "b    x1        diff    
+     []         []     
+--+---+---+------------
+ 0   0 0.1 4.9421101e-1
+ 1 0.1 0.2 5.3414733e-1
+ 2 0.2 0.3 5.6047777e-1
+ 3 0.3 0.4 4.9305119e-1
+ 4 0.4 0.5 5.0444226e-1
+ 5 0.5 0.6 4.8764547e-1
+ 6 0.6 0.7 4.8822586e-1
+ 7 0.7 0.8 4.3253468e-1
+ 8 0.8 0.9 4.5631914e-1
+ 9 0.9   1 4.4101667e-1
+10   1 1.1 3.7012152e-1
+11 1.1 1.2 3.2686684e-1
+12 1.2 1.3 2.8788858e-1
+13 1.3 1.4 2.5158100e-1
+14 1.4 1.5 1.9924476e-1
+15 1.5 1.6 1.6493339e-1
+16 1.6 1.7 1.5437771e-1
+17 1.7 1.8 1.2129587e-1
+18 1.8 1.9 9.4075605e-2
+19 1.9   2 6.2396273e-2
+20   2 2.1 4.9049203e-2
+21 2.1 2.2 3.5005153e-2
+22 2.2 2.3 2.0221966e-2
+23 2.3 2.4 5.9587519e-3
+";
+
 #[test]
 fn help() {
     Command::cargo_bin("pineappl")
@@ -463,7 +523,7 @@ fn three_convolutions() {
 }
 
 #[test]
-fn no_channels_grid() {
+fn issue_334() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
@@ -474,4 +534,60 @@ fn no_channels_grid() {
         .assert()
         .success()
         .stdout(NO_CHANNELS_GRID_STR);
+}
+
+#[test]
+fn lagrange_subgrid_v1() {
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "convolve",
+            "../test-data/DYAA_0.4.1_LagrangeSubgridV1.pineappl.lz4",
+            "NNPDF31_nlo_as_0118_luxqed",
+        ])
+        .assert()
+        .success()
+        .stdout(DYAA_SUBGRID_V1_TEST);
+}
+
+#[test]
+fn lagrange_subgrid_v2() {
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "convolve",
+            "../test-data/DYAA_0.4.1_LagrangeSubgridV2.pineappl.lz4",
+            "NNPDF31_nlo_as_0118_luxqed",
+        ])
+        .assert()
+        .success()
+        .stdout(DYAA_SUBGRID_TEST);
+}
+
+#[test]
+fn lagrange_sparse_subgrid_v1() {
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "convolve",
+            "../test-data/DYAA_0.4.1_LagrangeSparseSubgridV1.pineappl.lz4",
+            "NNPDF31_nlo_as_0118_luxqed",
+        ])
+        .assert()
+        .success()
+        .stdout(DYAA_SUBGRID_TEST);
+}
+
+#[test]
+fn lagrange_subgrid_v1_mmv1() {
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "convolve",
+            "../test-data/DYAA_0.3.0_LagrangeSubgridV1.pineappl.lz4",
+            "NNPDF31_nlo_as_0118_luxqed",
+        ])
+        .assert()
+        .success()
+        .stdout(DYAA_SUBGRID_TEST);
 }

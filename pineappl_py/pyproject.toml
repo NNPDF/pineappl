@@ -9,7 +9,7 @@ name = "pineappl"
 # Python version that we support
 requires-python = ">=3.7"
 classifiers = [
-  "Development Status :: 4 - Beta",
+  "Development Status :: 5 - Production/Stable",
   "Intended Audience :: Science/Research",
   "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
   "Natural Language :: English",
@@ -21,7 +21,7 @@ classifiers = [
   "Topic :: Scientific/Engineering :: Physics",
 ]
 dependencies = ["numpy>=1.16.0"]
-dynamic = ["version"]
+dynamic = ["version", "description", "readme", "authors", "license", "keywords"]
 
 [project.optional-dependencies]
 cli = ["pineappl-cli"]
@@ -35,7 +35,7 @@ docs = [
 test = ["pytest", "pytest-cov"]
 
 [project.urls]
-homepage = "https://nnpdf.github.io/pineappl/"
+homepage = "https://nnpdf.github.io/pineappl/docs/"
 documentation = "https://pineappl.readthedocs.io/"
 changelog = "https://nnpdf.github.io/pineappl/CHANGELOG.html"
 

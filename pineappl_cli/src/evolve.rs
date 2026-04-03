@@ -1,6 +1,6 @@
 use super::helpers::{self, ConvFuns, ConvoluteMode};
 use super::{GlobalConfiguration, Subcommand};
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use clap::{Parser, ValueHint};
 use lhapdf::Pdf;
 use pineappl::fk_table::FkTable;
@@ -10,11 +10,11 @@ use std::process::ExitCode;
 
 #[cfg(feature = "evolve")]
 mod eko {
-    use anyhow::{anyhow, Result};
-    use base64::alphabet::URL_SAFE;
-    use base64::engine::general_purpose::PAD;
-    use base64::engine::GeneralPurpose;
+    use anyhow::{Result, anyhow};
     use base64::Engine;
+    use base64::alphabet::URL_SAFE;
+    use base64::engine::GeneralPurpose;
+    use base64::engine::general_purpose::PAD;
     use either::Either;
     use lz4_flex::frame::FrameDecoder;
     use ndarray::iter::AxisIter;

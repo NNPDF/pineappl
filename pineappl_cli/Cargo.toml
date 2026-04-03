@@ -16,33 +16,33 @@ version.workspace = true
 workspace = true
 
 [dependencies]
-anyhow = "1.0.48"
-base64 = { optional = true, version = "0.22.1" }
-clap = { features = ["derive"], version = "4.5.28" }
-cxx = { optional = true, version = "1.0.65" }
-either = { features = ["serde"], optional = true, version = "1.8.0" }
-enum_dispatch = "0.3.7"
-flate2 = { optional = true, version = "1.0.22" }
-float-cmp = "0.9.0"
-git-version = "0.3.5"
-itertools = "0.10.1"
-lhapdf = { package = "managed-lhapdf", version = "0.3.4" }
-lz4_flex = { optional = true, version = "0.9.2" }
-ndarray = "0.15.4"
-ndarray-npy = { optional = true, version = "0.8.1" }
-pineappl = { path = "../pineappl", version = "=1.2.0" }
-pineappl_applgrid = { optional = true, path = "../pineappl_applgrid", version = "=1.2.0" }
-pineappl_fastnlo = { optional = true, path = "../pineappl_fastnlo", version = "=1.2.0" }
-prettytable-rs = { default-features = false, features = ["win_crlf"], version = "0.10.0" }
-rayon = "1.5.1"
-serde = { features = ["derive"], optional = true, version = "1.0.130" }
-serde_yaml = { optional = true, version = "0.9.13" }
-tar = { optional = true, version = "0.4.38" }
+anyhow.workspace = true
+base64 = { optional = true, workspace = true }
+clap = { features = ["derive"], workspace = true }
+cxx = { optional = true, workspace = true }
+either = { optional = true, workspace = true }
+enum_dispatch.workspace = true
+flate2 = { optional = true, workspace = true }
+float-cmp.workspace = true
+git-version.workspace = true
+itertools.workspace = true
+lhapdf.workspace = true
+lz4_flex = { optional = true, workspace = true }
+ndarray.workspace = true
+ndarray-npy = { optional = true, workspace = true }
+pineappl.workspace = true
+pineappl_applgrid = { optional = true, workspace = true }
+pineappl_fastnlo = { optional = true, workspace = true }
+prettytable-rs.workspace = true
+rayon.workspace = true
+serde = { optional = true, workspace = true }
+serde_yaml = { optional = true, workspace = true }
+tar = { optional = true, workspace = true }
 
 [dev-dependencies]
-assert_cmd = "2.0.2"
-assert_fs = "1.0.6"
-predicates = "3.1.0"
+assert_cmd.workspace = true
+assert_fs.workspace = true
+predicates.workspace = true
 
 [[bin]]
 name = "pineappl"

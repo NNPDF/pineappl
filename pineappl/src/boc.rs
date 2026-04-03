@@ -7,30 +7,36 @@
 use super::convert;
 use super::error::{Error, Result};
 use float_cmp::approx_eq;
-use itertools::{izip, Itertools};
+use itertools::{Itertools, izip};
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 use std::cmp::Ordering;
 use std::ops::Range;
 use std::str::FromStr;
 
-/// TODO
+/// Defines kinematic variables stored in each subgrid of a [`Grid`]. A grid with two convolutions
+/// will need exactly two `X`-type kinematic variables, specifically `X(0)` and `X(1)` for the
+/// first and second convolutions, respectively. Furthermore, at least one `Scale`-type kinematics
+/// is needed to denote factorization, renormalization and/or fragmentation scales. More scales
+/// can be used to make the three scales have functionally different forms.
 #[repr(C)]
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub enum Kinematics {
-    /// TODO
+    /// Denotes a scale-type kinematic variable.
     Scale(usize),
-    /// TODO
+    /// Denotes a x-type kinematic variable.
     X(usize),
 }
 
-/// TODO
+/// Defines how the factorization, renormalization and fragmentation scale are calculated from the
+/// available kinematic scales. A `ScaleFuncForm::Scale(0)` means that the corresponding scale will
+/// be calculated from the kinematic variable given as `Kinematics::Scale(0)`.
 #[repr(C)]
 #[derive(Clone, Deserialize, Eq, PartialEq, Serialize)]
 pub enum ScaleFuncForm {
-    /// TODO
+    /// The corresponding scale will not be used.
     NoScale,
-    /// TODO
+    /// Calculates the corresponding scale as the numerical value given `Kinematics::Scale(0)`.
     Scale(usize),
     /// TODO
     QuadraticSum(usize, usize),
@@ -162,14 +168,15 @@ impl ScaleFuncForm {
     }
 }
 
-/// TODO
+/// Instances of this type define how the renormalization, factorization and fragmentation scales
+/// are calculated.
 #[derive(Clone, Deserialize, Eq, PartialEq, Serialize)]
 pub struct Scales {
-    /// TODO
+    /// The renormalization scale used by the strong coupling.
     pub ren: ScaleFuncForm,
-    /// TODO
+    /// The factorization scale used by parton distribution functions.
     pub fac: ScaleFuncForm,
-    /// TODO
+    /// The fragmentation scale used by fragmentation functions.
     pub frg: ScaleFuncForm,
 }
 
@@ -236,7 +243,7 @@ impl Bin {
 
     /// TODO
     #[must_use]
-    pub fn dimensions(&self) -> usize {
+    pub const fn dimensions(&self) -> usize {
         self.limits.len()
     }
 
@@ -370,7 +377,7 @@ impl BinsWithFillLimits {
 
     /// TODO
     #[must_use]
-    pub fn len(&self) -> usize {
+    pub const fn len(&self) -> usize {
         self.bins.len()
     }
 
@@ -520,12 +527,12 @@ impl FromStr for BinsWithFillLimits {
             .collect();
         let mut remaps = remaps?;
 
-        if let Some(first) = remaps.first() {
-            if first.len() != 1 {
-                return Err(Error::General(
-                    "'|' syntax not meaningful for first dimension".to_owned(),
-                ));
-            }
+        if let Some(first) = remaps.first()
+            && first.len() != 1
+        {
+            return Err(Error::General(
+                "'|' syntax not meaningful for first dimension".to_owned(),
+            ));
         }
 
         // go over `remaps` again, and repeat previous entries as requested with the `|` syntax
@@ -536,11 +543,9 @@ impl FromStr for BinsWithFillLimits {
                         return Err(Error::General("empty repetition with '|'".to_owned()));
                     }
 
-                    vec[i] = vec[i - 1].clone();
-
-                    // // MSRV 1.86: replace the previous line with the following
-                    // let [lhs, rhs] = vec.get_disjoint_mut([i, i - 1]).unwrap();
-                    // lhs.clone_from(rhs);
+                    // UNWRAP: `i` and `i - 1` must be disjoint
+                    let [lhs, rhs] = vec.get_disjoint_mut([i, i - 1]).unwrap();
+                    lhs.clone_from(rhs);
                 }
             }
         }
@@ -1350,67 +1355,99 @@ mod tests {
 
         assert_eq!(
             Order::create_mask(&orders, 0, 0, false),
-            [false, false, false, false, false, false, false, false, false, false, false, false]
+            [
+                false, false, false, false, false, false, false, false, false, false, false, false
+            ]
         );
         assert_eq!(
             Order::create_mask(&orders, 0, 1, false),
-            [false, false, true, false, false, false, false, false, false, false, false, false]
+            [
+                false, false, true, false, false, false, false, false, false, false, false, false
+            ]
         );
         assert_eq!(
             Order::create_mask(&orders, 0, 2, false),
-            [false, false, true, false, false, false, true, false, false, false, false, false]
+            [
+                false, false, true, false, false, false, true, false, false, false, false, false
+            ]
         );
         assert_eq!(
             Order::create_mask(&orders, 0, 3, false),
-            [false, false, true, false, false, false, true, false, false, false, false, true]
+            [
+                false, false, true, false, false, false, true, false, false, false, false, true
+            ]
         );
         assert_eq!(
             Order::create_mask(&orders, 1, 0, false),
-            [true, false, false, false, false, false, false, false, false, false, false, false]
+            [
+                true, false, false, false, false, false, false, false, false, false, false, false
+            ]
         );
         assert_eq!(
             Order::create_mask(&orders, 1, 1, false),
-            [true, true, true, false, false, false, false, false, false, false, false, false]
+            [
+                true, true, true, false, false, false, false, false, false, false, false, false
+            ]
         );
         assert_eq!(
             Order::create_mask(&orders, 1, 2, false),
-            [true, true, true, false, false, false, true, false, false, false, false, false]
+            [
+                true, true, true, false, false, false, true, false, false, false, false, false
+            ]
         );
         assert_eq!(
             Order::create_mask(&orders, 1, 3, false),
-            [true, true, true, false, false, false, true, false, false, false, false, true]
+            [
+                true, true, true, false, false, false, true, false, false, false, false, true
+            ]
         );
         assert_eq!(
             Order::create_mask(&orders, 2, 0, false),
-            [true, false, false, true, false, false, false, false, false, false, false, false]
+            [
+                true, false, false, true, false, false, false, false, false, false, false, false
+            ]
         );
         assert_eq!(
             Order::create_mask(&orders, 2, 1, false),
-            [true, true, true, true, false, false, false, false, false, false, false, false]
+            [
+                true, true, true, true, false, false, false, false, false, false, false, false
+            ]
         );
         assert_eq!(
             Order::create_mask(&orders, 2, 2, false),
-            [true, true, true, true, true, true, true, false, false, false, false, false]
+            [
+                true, true, true, true, true, true, true, false, false, false, false, false
+            ]
         );
         assert_eq!(
             Order::create_mask(&orders, 2, 3, false),
-            [true, true, true, true, true, true, true, false, false, false, false, true]
+            [
+                true, true, true, true, true, true, true, false, false, false, false, true
+            ]
         );
         assert_eq!(
             Order::create_mask(&orders, 3, 0, false),
-            [true, false, false, true, false, false, false, true, false, false, false, false]
+            [
+                true, false, false, true, false, false, false, true, false, false, false, false
+            ]
         );
         assert_eq!(
             Order::create_mask(&orders, 3, 1, false),
-            [true, true, true, true, false, false, false, true, false, false, false, false]
+            [
+                true, true, true, true, false, false, false, true, false, false, false, false
+            ]
         );
         assert_eq!(
             Order::create_mask(&orders, 3, 2, false),
-            [true, true, true, true, true, true, true, true, false, false, false, false]
+            [
+                true, true, true, true, true, true, true, true, false, false, false, false
+            ]
         );
         assert_eq!(
             Order::create_mask(&orders, 3, 3, false),
-            [true, true, true, true, true, true, true, true, true, true, true, true]
+            [
+                true, true, true, true, true, true, true, true, true, true, true, true
+            ]
         );
     }
 

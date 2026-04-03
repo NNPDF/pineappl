@@ -7,6 +7,68 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+Starting with this version, PineAPPL has an official logo!
+
+### Added
+
+- added an actual implementation of `pineappl_grid_metadata` and
+  `pineappl_grid_set_metadata` in the APIs
+
+### Fixed
+
+- fixed a bug in the Newton's convergence method by raising the maximum number
+  of iteration
+- fixed a bug in the implementation of `pineappl_channels_add` of the Fortran
+  API
+- Improve detection of convolution function in the CLI
+
+### Changed
+
+- raised MSRV to 1.94.0
+- raised Rust edition to 2024
+- instead of depending on a previous version of the PineAPPL crate, a new crate
+  `pineappl_v0` is now responsible for loading files with file version `v0`
+
+## [1.3.3] - 01/03/2026
+
+## Added
+
+- added support for the Python 3.14 on macOS (ARM64/x86)
+
+## Removed
+
+- removed support for the following Python versions due to unresolved issue in
+  maturin action on Windows (x86): Python 3.7, 3.8, 3.9
+
+## [1.3.2] - 21/02/2026
+
+Note: due to bugs in the workflow file this release does not have have Python
+wheels uploaded to PyPI.
+
+## [1.3.1] - 21/02/2026
+
+Note: due to bugs in the workflow file this release does not have have Python
+wheels uploaded to PyPI.
+
+### Added
+
+- added `pineappl_grid_set_subgrid` and `pineappl_grid_set_bwfl` methods to
+  the C-API to allow dumping coefficient functions directly as subgrids.
+- added a `fix_convolution` method to integrate out one of the convolution
+  dimensions in a grid by convolving it with a non-perturbative function
+
+## [1.3.0] - 06/12/2025
+
+### Added
+
+- added a `pineappl_grid_delete_bins` method to the C-API
+
+### Fixed
+
+- fixed bugs in stopping condition of the Newton iteration method
+- fixed a bug in comparing `interpolation::Interp` objects when one of the
+  boundaries is `NaN`
+
 ## [1.2.0] - 22/08/2025
 
 ### Added
@@ -811,7 +873,11 @@ the old file format can still be read with this new version.
 
 - first release
 
-[Unreleased]: https://github.com/NNPDF/pineappl/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/NNPDF/pineappl/compare/v1.3.3...HEAD
+[1.3.3]: https://github.com/NNPDF/pineappl/compare/v1.3.2...v1.3.3
+[1.3.2]: https://github.com/NNPDF/pineappl/compare/v1.3.1...v1.3.2
+[1.3.1]: https://github.com/NNPDF/pineappl/compare/v1.3.0...v1.3.1
+[1.3.0]: https://github.com/NNPDF/pineappl/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/NNPDF/pineappl/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/NNPDF/pineappl/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/NNPDF/pineappl/compare/v0.8.2...v1.0.0
