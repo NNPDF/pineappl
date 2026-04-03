@@ -10,7 +10,7 @@ use std::pin::Pin;
 
 pub fn convert_into_fastnlo(
     grid: &Grid,
-    _output: &Path,
+    output: &Path,
     _discard_non_matching_scales: bool,
 ) -> Result<(UniquePtr<fastNLOLHAPDF>, Vec<bool>)> {
     let bwfl = grid.bwfl();
@@ -84,7 +84,7 @@ pub fn convert_into_fastnlo(
     //    .enumerate()
     //{}
 
-    let _fastnlo = ffi::make_fastnlo_create(
+    let mut fastnlo = ffi::make_fastnlo_create(
         // UNWRAP: negative numbers and overflow should not happen
         lo_alphas.try_into().unwrap(),
         &left_bin_limits,
@@ -100,6 +100,13 @@ pub fn convert_into_fastnlo(
         &convolutions,
         &channels,
     );
+
+    let output = output
+        .to_str()
+        // TODO: decide what to do in case of an error
+        .unwrap();
+
+    ffi::WriteTable(fastnlo.pin_mut(), &output);
 
     todo!()
 }

@@ -74,6 +74,8 @@ double GetSigmaTilde(
     int
 );
 
+void WriteTable(fastNLOCreate& table, rust::Str filename);
+
 std::size_t GetNx(fastNLOCoeffAddFlex const& coeffs, std::size_t);
 
 fastNLOCoeffAddBase const& downcast_coeff_add_fix_to_base(fastNLOCoeffAddFix const& coeffs);

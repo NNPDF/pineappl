@@ -174,6 +174,8 @@ pub mod ffi {
             _: i32,
         ) -> f64;
 
+        fn WriteTable(_: Pin<&mut fastNLOCreate>, _: &str);
+
         fn downcast_coeff_add_fix_to_base(_: &fastNLOCoeffAddFix) -> &fastNLOCoeffAddBase;
         fn downcast_coeff_add_flex_to_base(_: &fastNLOCoeffAddFlex) -> &fastNLOCoeffAddBase;
         fn downcast_lhapdf_to_reader(_: &fastNLOLHAPDF) -> &fastNLOReader;

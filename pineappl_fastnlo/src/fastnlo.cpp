@@ -295,6 +295,11 @@ double GetSigmaTilde(
     return coeffs.GetSigmaTildes().at(mu)->at(obs).at(ix).at(is1).at(is2).at(subproc);
 }
 
+void WriteTable(fastNLOCreate& table, rust::Str filename)
+{
+    table.WriteTable(static_cast <std::string> (filename));
+}
+
 std::size_t GetNx(fastNLOCoeffAddFlex const& coeffs, std::size_t obs)
 {
     return coeffs.GetSigmaTildes().at(0)->at(obs).size();
