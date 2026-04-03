@@ -199,9 +199,9 @@ std::unique_ptr<fastNLOCreate> make_fastnlo_create(
         // TODO: don't know the meaning of this field
         limits.push_back(-1.0);
         // left bin limit
-        limits.push_back(bin_limits.at(0).at(2 * bin + 0));
+        limits.push_back(bin_limits.at(0).at(bin));
         // right bin limit
-        limits.push_back(bin_limits.at(0).at(2 * bin + 1));
+        limits.push_back(bin_limits.at(0).at(bin + 1));
 
         wconst.Binning.push_back(limits);
     }
