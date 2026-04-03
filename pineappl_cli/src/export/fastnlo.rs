@@ -1,4 +1,4 @@
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
 use cxx::UniquePtr;
 use float_cmp::assert_approx_eq;
 use lhapdf::Pdf;
