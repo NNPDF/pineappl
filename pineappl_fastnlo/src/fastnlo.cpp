@@ -144,6 +144,11 @@ void make_fastnlo_create(
         for (std::size_t j = 0; j != channels.at(i).size(); ++j) {
             auto const first = channels.at(i).at(j).first;
             auto const second = channels.at(i).at(j).second;
+
+            // TODO: has the gluon id `0`?
+            assert( first >= -6 && first <= 6 );
+            assert( second >= -6 && first <= 6 );
+
             entries.at(j) = std::make_pair(first, second);
         }
         linear_combinations.at(i) = entries;
