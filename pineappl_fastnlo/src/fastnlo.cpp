@@ -66,7 +66,7 @@ std::unique_ptr<fastNLOLHAPDF> make_fastnlo_lhapdf_with_name_file_set(
     return std::unique_ptr<fastNLOLHAPDF>(new fastNLOLHAPDF(arg0, arg1, PDFSet));
 }
 
-std::unique_ptr<fastNLOCreate> make_fastnlo_create(
+void make_fastnlo_create(
     int alphas_lo,
     rust::Slice<rust::Vec<double> const> left_bin_limits,
     rust::Slice<rust::Vec<double> const> right_bin_limits,
@@ -75,7 +75,8 @@ std::unique_ptr<fastNLOCreate> make_fastnlo_create(
     int nlo_channels,
     int nnlo_channels,
     rust::Slice<int const> convolutions,
-    rust::Slice<rust::Vec<pair_int_int> const> channels
+    rust::Slice<rust::Vec<pair_int_int> const> channels,
+    rust::Str filename
 ) {
     assert(left_bin_limits.size() == right_bin_limits.size());
     auto const bins = left_bin_limits.size();
@@ -187,6 +188,12 @@ std::unique_ptr<fastNLOCreate> make_fastnlo_create(
     sconst.X_NNodeCounting = "NodesPerBin";
     sconst.Mu1_NNodeCounting = "NodesPerBin";
     sconst.Mu2_NNodeCounting = "NodesPerBin";
+    sconst.OutputFilename = static_cast <std::string> (filename);
+
+    // TODO: implement compression. Since fastNLO adds '.gz' to the filename for us, we must always
+    // omit the suffix
+    assert( sconst.OutputFilename.substr(sconst.OutputFilename.size() - 3, 3) != ".gz" );
+    sconst.OutputCompression = false;
 
     fastNLO::WarmupConstants wconst(sconst);
 
@@ -216,7 +223,8 @@ std::unique_ptr<fastNLOCreate> make_fastnlo_create(
     }
     // wconst.headerValues = ;
 
-    return std::unique_ptr<fastNLOCreate>(new fastNLOCreate(gconst, pconst, sconst, wconst));
+    fastNLOCreate table(gconst, pconst, sconst, wconst);
+    table.WriteTable();
 }
 
 rust::Vec<double> GetCrossSection(fastNLOReader& reader, bool lNorm)
@@ -281,11 +289,6 @@ double GetSigmaTilde(
     int subproc
 ) {
     return coeffs.GetSigmaTildes().at(mu)->at(obs).at(ix).at(is1).at(is2).at(subproc);
-}
-
-void WriteTable(fastNLOCreate& table, rust::Str filename)
-{
-    table.WriteTable(static_cast <std::string> (filename));
 }
 
 std::size_t GetNx(fastNLOCoeffAddFlex const& coeffs, std::size_t obs)

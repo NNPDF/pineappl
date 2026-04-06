@@ -22,7 +22,7 @@ std::unique_ptr<fastNLOLHAPDF> make_fastnlo_lhapdf_with_name_file_set(
     int PDFSet
 );
 
-std::unique_ptr<fastNLOCreate> make_fastnlo_create(
+void make_fastnlo_create(
     int alphas_lo,
     rust::Slice<rust::Vec<double> const> left_bin_limits,
     rust::Slice<rust::Vec<double> const> right_bin_limits,
@@ -31,7 +31,8 @@ std::unique_ptr<fastNLOCreate> make_fastnlo_create(
     int nlo_channels,
     int nnlo_channels,
     rust::Slice<int const> convolutions,
-    rust::Slice<rust::Vec<pair_int_int> const> channels
+    rust::Slice<rust::Vec<pair_int_int> const> channels,
+    rust::Str filename
 );
 
 rust::Vec<double> CalcPDFLinearCombination(
@@ -73,8 +74,6 @@ double GetSigmaTilde(
     std::size_t,
     int
 );
-
-void WriteTable(fastNLOCreate& table, rust::Str filename);
 
 std::size_t GetNx(fastNLOCoeffAddFlex const& coeffs, std::size_t);
 

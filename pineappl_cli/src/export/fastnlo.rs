@@ -81,7 +81,7 @@ pub fn convert_into_fastnlo(
     //    .enumerate()
     //{}
 
-    let mut fastnlo = ffi::make_fastnlo_create(
+    ffi::make_fastnlo_create(
         // UNWRAP: negative numbers and overflow should not happen
         lo_alphas.try_into().unwrap(),
         &left_bin_limits,
@@ -96,14 +96,11 @@ pub fn convert_into_fastnlo(
         channels.len().try_into().unwrap(),
         &convolutions,
         &channels,
+        &output
+            .to_str()
+            // TODO: decide what to do in case of an error
+            .unwrap(),
     );
-
-    let output = output
-        .to_str()
-        // TODO: decide what to do in case of an error
-        .unwrap();
-
-    ffi::WriteTable(fastnlo.pin_mut(), &output);
 
     Ok(order_mask)
 }

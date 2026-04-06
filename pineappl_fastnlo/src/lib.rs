@@ -135,12 +135,6 @@ pub mod ffi {
     }
 
     unsafe extern "C++" {
-        include!("fastnlotk/fastNLOCreate.h");
-
-        type fastNLOCreate;
-    }
-
-    unsafe extern "C++" {
         include!("pineappl_fastnlo/src/fastnlo.hpp");
 
         fn CalcPDFLinearCombination(
@@ -174,8 +168,6 @@ pub mod ffi {
             _: i32,
         ) -> f64;
 
-        fn WriteTable(_: Pin<&mut fastNLOCreate>, _: &str);
-
         fn downcast_coeff_add_fix_to_base(_: &fastNLOCoeffAddFix) -> &fastNLOCoeffAddBase;
         fn downcast_coeff_add_flex_to_base(_: &fastNLOCoeffAddFlex) -> &fastNLOCoeffAddBase;
         fn downcast_lhapdf_to_reader(_: &fastNLOLHAPDF) -> &fastNLOReader;
@@ -208,7 +200,8 @@ pub mod ffi {
             nnlo_channels: i32,
             convolutions: &[i32],
             channels: &[Vec<pair_int_int>],
-        ) -> UniquePtr<fastNLOCreate>;
+            filename: &str,
+        );
     }
 }
 
