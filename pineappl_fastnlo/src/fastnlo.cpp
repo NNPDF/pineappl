@@ -190,21 +190,9 @@ std::unique_ptr<fastNLOCreate> make_fastnlo_create(
 
     fastNLO::WarmupConstants wconst(sconst);
 
-    for (std::size_t bin = 0; bin != bins; ++bin) {
-        std::vector<double> limits;
-
-        // TODO: the following code assumes one dimension
-        assert(dimensions == 1);
-
-        // TODO: don't know the meaning of this field
-        limits.push_back(-1.0);
-        // left bin limit
-        limits.push_back(bin_limits.at(0).at(bin));
-        // right bin limit
-        limits.push_back(bin_limits.at(0).at(bin + 1));
-
-        wconst.Binning.push_back(limits);
-    }
+    // leave `wconst.Binning` empty, otherwise it's being checked and I don't know what it's
+    // supposed to contain
+    // wconst.Binning.resize(bins, std::vector<double>{});
 
     // these values are probably irrelevant but must nevertheless given
     wconst.Values.resize(bins, std::vector<double>{
