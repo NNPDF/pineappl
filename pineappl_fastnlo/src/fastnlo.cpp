@@ -224,6 +224,8 @@ void make_fastnlo_create(
     // wconst.headerValues = ;
 
     fastNLOCreate table(gconst, pconst, sconst, wconst);
+
+    table.SetNumberOfEvents(1.0);
     table.WriteTable();
 }
 
