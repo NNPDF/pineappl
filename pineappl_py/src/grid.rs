@@ -532,7 +532,7 @@ impl PyGrid {
                         // create lazy iterators from Python object
                         subslice.try_iter().unwrap().map(|item| {
                             let item = item.unwrap();
-                            let op_tuple = item.downcast::<PyTuple>().unwrap();
+                            let op_tuple = item.cast::<PyTuple>().unwrap();
                             let info: PyOperatorSliceInfo =
                                 op_tuple.get_item(0).unwrap().extract().unwrap();
                             let op: PyReadonlyArray4<f64> =

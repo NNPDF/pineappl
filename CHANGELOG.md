@@ -28,6 +28,7 @@ Starting with this version, PineAPPL has an official logo!
 - raised Rust edition to 2024
 - instead of depending on a previous version of the PineAPPL crate, a new crate
   `pineappl_v0` is now responsible for loading files with file version `v0`
+- raised dependency on `pyo3` to 0.27, which drops support for PyPy 3.9 and 3.10
 
 ## [1.3.3] - 01/03/2026
 
