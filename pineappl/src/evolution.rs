@@ -491,7 +491,8 @@ pub(crate) fn evolve_slice(
 
     Ok((
         Array1::from_iter(sub_fk_tables)
-            .into_shape((1, grid.bwfl().len(), channels0.len()))
+            .into_shape_with_order((1, grid.bwfl().len(), channels0.len()))
+            // UNWRAP: we only change the shape, not the number of elements
             .unwrap(),
         channels0
             .into_iter()

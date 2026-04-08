@@ -38,8 +38,8 @@ git-version = "0.3.5"
 itertools = "0.10.1"
 lhapdf = { package = "managed-lhapdf", version = "0.4.1" }
 lz4_flex = "0.11.6"
-ndarray = { version = "0.15.4" }
-ndarray-npy = { default-features = false, features = ["npz"], version = "0.8.1" }
+ndarray = { version = "0.17.2" }
+ndarray-npy = { default-features = false, features = ["npz"], version = "0.10.0" }
 num-complex = "0.4.4"
 numpy = "0.28.0"
 pkg-config = "0.3.26"
