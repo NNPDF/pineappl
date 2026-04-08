@@ -550,16 +550,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "fs2"
-version = "0.4.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9564fc758e15025b46aa6643b1b77d047d1a56a1aea6e01002ac0c7026876213"
-dependencies = [
- "libc",
- "winapi",
-]
-
-[[package]]
 name = "generic-array"
 version = "0.14.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -764,16 +754,15 @@ dependencies = [
 
 [[package]]
 name = "managed-lhapdf"
-version = "0.4.1"
+version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b3e732acd5eed242a620fc095a9fe2d61a09f42f7c260d1277dff7fb8c0533a6"
+checksum = "236e4a458510e02b6d1afbb7645b1b4ea569b1bc6debd22b69fc61dc9cf6551d"
 dependencies = [
  "anyhow",
  "cxx",
  "cxx-build",
  "dirs",
  "flate2",
- "fs2",
  "pkg-config",
  "serde",
  "tar",
