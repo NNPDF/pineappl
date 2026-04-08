@@ -24,7 +24,7 @@ use std::io::BufReader;
 use std::path::PathBuf;
 
 /// PyO3 wrapper to :rustdoc:`pineappl::grid::Grid <grid/struct.Grid.html>`.
-#[pyclass(name = "Grid", subclass)]
+#[pyclass(from_py_object, name = "Grid", subclass)]
 #[repr(transparent)]
 #[derive(Clone)]
 pub struct PyGrid {

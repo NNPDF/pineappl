@@ -7,7 +7,7 @@ use pineappl::subgrid::{ImportSubgridV1, Subgrid, SubgridEnum};
 use pyo3::prelude::*;
 
 /// PyO3 wrapper to :rustdoc:`pineappl::subgrid::ImportSubgridV1 <subgrid/struct.ImportSubgridV1.html>`.
-#[pyclass(name = "ImportSubgridV1")]
+#[pyclass(name = "ImportSubgridV1", skip_from_py_object)]
 #[derive(Clone)]
 #[repr(transparent)]
 pub struct PyImportSubgridV1 {
@@ -57,7 +57,7 @@ impl PyImportSubgridV1 {
 }
 
 /// PyO3 wrapper to :rustdoc:`pineappl::subgrid::SubgridEnum <subgrid/struct.SubgridEnum.html>`
-#[pyclass(name = "SubgridEnum")]
+#[pyclass(from_py_object, name = "SubgridEnum")]
 #[derive(Clone)]
 #[repr(transparent)]
 pub struct PySubgridEnum {

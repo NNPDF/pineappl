@@ -4,7 +4,7 @@ use pineappl::pids::PidBasis;
 use pyo3::prelude::*;
 
 /// PyO3 wrapper to :rustdoc:`pineappl::pids::PidBasis <pids/enum.PidBasis.html>`.
-#[pyclass(eq, eq_int, name = "PidBasis")]
+#[pyclass(eq, eq_int, from_py_object, name = "PidBasis")]
 #[derive(Clone, PartialEq)]
 pub enum PyPidBasis {
     /// PDG Monte Carlo IDs.
