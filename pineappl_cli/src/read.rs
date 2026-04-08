@@ -130,7 +130,7 @@ impl Subcommand for Opts {
 
             let orders = sorted_grid_orders
                 .into_iter()
-                .group_by(|order| order.alphas + order.alpha)
+                .chunk_by(|order| order.alphas + order.alpha)
                 .into_iter()
                 .map(|mut iter| {
                     if self.group.qcd {

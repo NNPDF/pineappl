@@ -217,7 +217,7 @@ impl Subcommand for Opts {
 
                 let qcd_orders: Vec<_> = orders
                     .iter()
-                    .group_by(|order| order.alphas + order.alpha)
+                    .chunk_by(|order| order.alphas + order.alpha)
                     .into_iter()
                     .map(|mut group| {
                         let order = group.1.next().unwrap();
