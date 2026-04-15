@@ -2336,7 +2336,7 @@ pub unsafe extern "C" fn pineappl_grid_evolve_info(
 /// Type alias for the operator callback
 pub type OperatorCallback = unsafe extern "C" fn(
     usize,        // index which selects Evolution parameters
-    f64,          // fac1
+    f64,          // squared process scale (fact or frg)
     *const i32,   // `pids_in`
     *const f64,   // `x_in`
     *const i32,   // `pids_out`
@@ -2412,9 +2412,11 @@ pub unsafe extern "C" fn pineappl_grid_evolve(
     let alphas = unsafe { slice::from_raw_parts(alphas, ren1_len) };
     let xi = unsafe { slice::from_raw_parts(xi, 3) };
 
+    let n_scale_slices = evolve_info.fac1.len().max(evolve_info.frg1.len()).max(1);
+
     let operator_info = unsafe {
-        slice::from_raw_parts(operator_info, nb_slices * evolve_info.fac1.len())
-            .chunks_exact(evolve_info.fac1.len())
+        slice::from_raw_parts(operator_info, nb_slices * n_scale_slices)
+            .chunks_exact(n_scale_slices)
     };
 
     let shape: (usize, usize, usize, usize) = <[usize; 4]>::try_from(eko_shape)
