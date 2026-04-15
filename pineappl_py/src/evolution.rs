@@ -94,9 +94,16 @@ impl PyEvolveInfo {
     }
 
     /// Squared factorization scales of the `Grid`.
+    ///
+    /// Note: for pure time-like (FF) grids, PineAPPL stores only fragmentation scales. In that
+    /// case, this getter returns `frg1` as a backwards-compatible fallback.
     #[getter]
     fn fac1<'py>(&self, py: Python<'py>) -> Bound<'py, PyArray1<f64>> {
-        self.evolve_info.fac1.clone().into_pyarray(py)
+        if self.evolve_info.fac1.is_empty() && !self.evolve_info.frg1.is_empty() {
+            self.evolve_info.frg1.clone().into_pyarray(py)
+        } else {
+            self.evolve_info.fac1.clone().into_pyarray(py)
+        }
     }
 
     /// Squared fragmentation scales of the `Grid`.
