@@ -298,7 +298,7 @@ impl TryFrom<Grid> for FkTable {
     type Error = Error;
 
     fn try_from(grid: Grid) -> Result<Self> {
-        let mut muf2 = -1.0;
+        let mut mu2_ref = -1.0;
 
         if grid.orders()
             != [Order {
@@ -317,17 +317,24 @@ impl TryFrom<Grid> for FkTable {
                 continue;
             }
 
-            let [fac] = grid
-                .scales()
-                .fac
-                .calc(&subgrid.node_values(), grid.kinematics())[..]
-            else {
-                return Err(Error::General("multiple scales detected".to_owned()));
+            let node_values = subgrid.node_values();
+            let kinematics = grid.kinematics();
+            let fac_s = grid.scales().fac.calc(&node_values, kinematics);
+            let frg_s = grid.scales().frg.calc(&node_values, kinematics);
+
+            let mu2 = match (fac_s.len(), frg_s.len()) {
+                (0, 0) => {
+                    return Err(Error::General("No fact or frg scale on subgrid".to_owned()));
+                }
+                (1, 0) => fac_s[0],
+                (0, 1) => frg_s[0],
+                (1, 1) if subgrid::node_value_eq(fac_s[0], frg_s[0]) => fac_s[0],
+                _ => return Err(Error::General("multiple scales detected".to_owned())),
             };
 
-            if muf2 < 0.0 {
-                muf2 = fac;
-            } else if !subgrid::node_value_eq(muf2, fac) {
+            if mu2_ref < 0.0 {
+                mu2_ref = mu2;
+            } else if !subgrid::node_value_eq(mu2_ref, mu2) {
                 return Err(Error::General("multiple scales detected".to_owned()));
             }
         }
