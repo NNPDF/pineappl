@@ -16,6 +16,7 @@ PROGRAMS = \
 	get-subgrids \
 	set-subgrids \
 	evolve-grid \
+	evolve-grid-pure-ff \
 	evolve-grid-identity \
 	deprecated \
 	display-channels-deprecated \
@@ -62,6 +63,9 @@ set-subgrids: set-subgrids.cpp
 	$(CXX) $(CXXFLAGS) $< $(PINEAPPL_DEPS) -o $@
 
 evolve-grid: evolve-grid.cpp
+	$(CXX) $(CXXFLAGS) $< $(LHAPDF_DEPS) $(PINEAPPL_DEPS) -o $@
+
+evolve-grid-pure-ff: evolve-grid-pure-ff.cpp
 	$(CXX) $(CXXFLAGS) $< $(LHAPDF_DEPS) $(PINEAPPL_DEPS) -o $@
 
 evolve-grid-identity: evolve-grid-identity.cpp

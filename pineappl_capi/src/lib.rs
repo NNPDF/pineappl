@@ -2336,7 +2336,7 @@ pub unsafe extern "C" fn pineappl_grid_evolve_info(
 /// Type alias for the operator callback
 pub type OperatorCallback = unsafe extern "C" fn(
     usize,        // index which selects Evolution parameters
-    f64,          // squared process scale (fact or frg)
+    f64,          // squared process scale (fac or frg)
     *const i32,   // `pids_in`
     *const f64,   // `x_in`
     *const i32,   // `pids_out`

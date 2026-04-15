@@ -324,7 +324,7 @@ impl TryFrom<Grid> for FkTable {
 
             let mu2 = match (fac_s.len(), frg_s.len()) {
                 (0, 0) => {
-                    return Err(Error::General("No fact or frg scale on subgrid".to_owned()));
+                    return Err(Error::General("No fac or frg scale in subgrid".to_owned()));
                 }
                 (1, 0) => fac_s[0],
                 (0, 1) => frg_s[0],
