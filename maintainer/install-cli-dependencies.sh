@@ -1,7 +1,8 @@
 #!/bin/bash
 
 APPLGRID_V=1.6.36
-FASTNLO_V=2.5.0-2826
+FASTNLO_V=2.6
+FASTNLO_R=69d87cf4
 LHAPDF_V=6.5.4
 ZLIB_V=1.3.1
 
@@ -15,8 +16,11 @@ urls=(
     "https://lhapdf.hepforge.org/downloads/?f=LHAPDF-${LHAPDF_V}.tar.gz"
     "https://www.zlib.net/fossils/zlib-${ZLIB_V}.tar.gz"
     "https://applgrid.hepforge.org/downloads/applgrid-${APPLGRID_V}.tgz"
-    "https://fastnlo.hepforge.org/code/v25/fastnlo_toolkit-${FASTNLO_V}.tar.gz"
+    # "https://fastnlo.hepforge.org/code/v25/fastnlo_toolkit-${FASTNLO_V}.tar.gz"
 )
+
+# download fastNLO from Git to support PineAPPL -> fastNLO export
+git clone https://gitlab.etp.kit.edu/qcd-public/fastNLO.git
 
 for url in "${urls[@]}"; do
     curl -fsSL "${url}" | tar xzf -
@@ -83,7 +87,10 @@ cp src/*.h "${APPL_IGRID_DIR}"
 cd ..
 
 # install fastNLO
-cd "fastnlo_toolkit-${FASTNLO_V}"
+cd fastNLO
+git checkout "${FASTNLO_R}"
+cd "v${FASTNLO_V}/toolkit"
+autoreconf -fi
 if [[ ${static} == yes ]]; then
     # compile static libraries with PIC to make statically linking PineAPPL's CLI work
     ./configure --prefix=/usr/local/ --disable-shared --with-pic=yes

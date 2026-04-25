@@ -12,6 +12,9 @@ use std::process::ExitCode;
 #[cfg(feature = "applgrid")]
 mod applgrid;
 
+#[cfg(feature = "fastnlo")]
+mod fastnlo;
+
 #[cfg(feature = "applgrid")]
 fn convert_into_applgrid(
     output: &Path,
@@ -42,23 +45,113 @@ fn convert_into_applgrid(
     ))
 }
 
+#[cfg(feature = "fastnlo")]
+fn convert_into_fastnlo(
+    output: &Path,
+    grid: &Grid,
+    fun_names: &ConvFuns,
+    scales: usize,
+    discard_non_matching_scales: bool,
+) -> Result<(&'static str, Vec<f64>, usize, Vec<bool>)> {
+    use pineappl_fastnlo::ffi;
+
+    // TODO: other cases NYI
+    assert_eq!(scales, 1);
+
+    // TODO: convert this into an error?
+    assert_eq!(fun_names.lhapdf_names.len(), 1);
+
+    // this creates a file, but doesn't give us an object that we can convolve with a function
+    let order_mask = fastnlo::convert_into_fastnlo(grid, output, discard_non_matching_scales)?;
+
+    // so load this file, giving the right PDF set
+    let mut file = ffi::make_fastnlo_lhapdf_with_name_file_set(
+        output.to_str().unwrap(),
+        &fun_names.lhapdf_names[0],
+        // UNWRAP: this shouldn't be negative or overflow
+        fun_names.members[0].unwrap_or(0).try_into().unwrap(),
+    );
+
+    let mut reader = ffi::downcast_lhapdf_to_reader_mut(file.as_mut().unwrap());
+
+    // fastNLO does not support a fragmentation scale
+    let unpermuted_results: Vec<_> = helpers::SCALES_VECTOR_REN_FAC[0..scales]
+        .iter()
+        .map(|&(xir, xif, _)| {
+            if !reader.as_mut().SetScaleFactorsMuRMuF(xir, xif) {
+                return None;
+            }
+            reader.as_mut().CalcCrossSection();
+            Some(ffi::GetCrossSection(reader.as_mut(), false))
+        })
+        .take_while(Option::is_some)
+        .map(Option::unwrap)
+        .collect();
+
+    assert!(matches!(unpermuted_results.len(), 1 | 3 | 7 | 9));
+
+    let bins = unpermuted_results[0].len();
+
+    let results: Vec<_> = (0..bins)
+        .flat_map(|bin| unpermuted_results.iter().map(move |r| r[bin]))
+        .collect();
+
+    Ok(("fastNLO", results, scales, order_mask))
+}
+
+#[cfg(not(feature = "fastnlo"))]
+fn convert_into_fastnlo(
+    _: &Path,
+    _: &Grid,
+    _: &ConvFuns,
+    _: usize,
+    _: bool,
+) -> Result<(&'static str, Vec<f64>, usize, Vec<bool>)> {
+    Err(anyhow!(
+        "you need to install `pineappl` with feature `fastnlo`"
+    ))
+}
+
 fn convert_into_grid(
     output: &Path,
     grid: &mut Grid,
     conv_funs: &mut [Pdf],
+    fun_names: &ConvFuns,
     scales: usize,
     discard_non_matching_scales: bool,
 ) -> Result<(&'static str, Vec<f64>, usize, Vec<bool>)> {
-    if let Some(extension) = output.extension()
-        && (extension == "appl" || extension == "root")
-    {
-        return convert_into_applgrid(output, grid, conv_funs, scales, discard_non_matching_scales);
+    if let Some(extension) = output.extension() {
+        if extension == "appl" || extension == "root" {
+            return convert_into_applgrid(
+                output,
+                grid,
+                conv_funs,
+                scales,
+                discard_non_matching_scales,
+            );
+        } else if extension == "tab"
+            || (extension == "gz"
+                && output
+                    .with_extension("")
+                    .extension()
+                    .map_or(false, |ext| ext == "tab"))
+        {
+            return convert_into_fastnlo(
+                output,
+                grid,
+                fun_names,
+                scales,
+                discard_non_matching_scales,
+            );
+        }
     }
 
-    Err(anyhow!("could not detect file format"))
+    Err(anyhow!(
+        "file extension must be one of: .appl, .root, .tab or .tab.gz"
+    ))
 }
 
-/// Converts PineAPPL grids to APPLgrid files.
+/// Converts PineAPPL grids to APPLgrid/fastNLO files.
 #[derive(Parser)]
 pub struct Opts {
     /// Path to the input grid.
@@ -103,6 +196,7 @@ impl Subcommand for Opts {
             &self.output,
             &mut grid,
             &mut conv_funs,
+            &self.conv_funs,
             self.scales,
             self.discard_non_matching_scales,
         )?;

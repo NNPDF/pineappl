@@ -3,11 +3,13 @@
 set -euo pipefail
 
 pkgs=(
+    automake
     build-essential
     curl
     gfortran
     git
     libssl-dev
+    libtool
     openssl
     pkg-config
 )

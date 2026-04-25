@@ -36,6 +36,7 @@ jobs:
         uses: redhat-actions/buildah-build@v2
         with:
           image: pineappl-ci
+          tags: latest
           containerfiles: maintainer/Containerfile
           context: maintainer/
           oci: true

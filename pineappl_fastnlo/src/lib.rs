@@ -189,6 +189,19 @@ pub mod ffi {
             _: &str,
             _: i32,
         ) -> UniquePtr<fastNLOLHAPDF>;
+
+        fn make_fastnlo_create(
+            alphas_lo: i32,
+            left_bin_limits: &[Vec<f64>],
+            right_bin_limits: &[Vec<f64>],
+            normalizations: &[f64],
+            lo_channels: i32,
+            nlo_channels: i32,
+            nnlo_channels: i32,
+            convolutions: &[i32],
+            channels: &[Vec<pair_int_int>],
+            filename: &str,
+        );
     }
 }
 

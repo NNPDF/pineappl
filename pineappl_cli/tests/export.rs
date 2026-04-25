@@ -5,7 +5,7 @@ use assert_cmd::Command;
 #[cfg(feature = "applgrid")]
 use assert_fs::NamedTempFile;
 
-const HELP_STR: &str = "Converts PineAPPL grids to APPLgrid files
+const HELP_STR: &str = "Converts PineAPPL grids to APPLgrid/fastNLO files
 
 Usage: pineappl export [OPTIONS] <INPUT> <OUTPUT> <CONV_FUNS>
 
