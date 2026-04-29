@@ -30,7 +30,7 @@ struct Group {
         long,
         require_equals = true,
         value_name = "SCALES",
-        value_parser = PossibleValuesParser::new(["3", "7", "9", "17", "27"]).try_map(|s| s.parse::<u16>())
+        value_parser = PossibleValuesParser::new(["3", "7", "9", "13", "17", "27"]).try_map(|s| s.parse::<u16>())
     )]
     scale_abs: Option<u16>,
     /// Calculate scale uncertainties using the covariance method.
@@ -40,7 +40,7 @@ struct Group {
         long,
         require_equals = true,
         value_name = "SCALES",
-        value_parser = PossibleValuesParser::new(["3", "7", "9", "17", "27"]).try_map(|s| s.parse::<u16>())
+        value_parser = PossibleValuesParser::new(["3", "7", "9", "13", "17", "27"]).try_map(|s| s.parse::<u16>())
     )]
     scale_cov: Option<u16>,
     /// Calculate the envelope of results where renormalization, factorization and fragmentation scales are varied.
@@ -50,7 +50,7 @@ struct Group {
         long,
         require_equals = true,
         value_name = "SCALES",
-        value_parser = PossibleValuesParser::new(["3", "7", "9", "17", "27"]).try_map(|s| s.parse::<u16>())
+        value_parser = PossibleValuesParser::new(["3", "7", "9", "13", "17", "27"]).try_map(|s| s.parse::<u16>())
     )]
     scale_env: Option<u16>,
 }
