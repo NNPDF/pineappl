@@ -103,6 +103,12 @@ impl PySubgridEnum {
         array_subgrid.into_pyarray(py)
     }
 
+    /// Check whether the subgrid is empty (contains no non-zero entries).
+    #[must_use]
+    pub fn is_empty(&self) -> bool {
+        self.subgrid_enum.is_empty()
+    }
+
     /// Clone.
     #[must_use]
     pub fn into(&self) -> Self {
