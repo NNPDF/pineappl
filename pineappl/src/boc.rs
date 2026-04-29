@@ -784,7 +784,7 @@ impl Order {
     ///
     /// # Example
     ///
-    /// In the case of Drell—Yan, there are the following orders:
+    /// In the case of Drell–Yan, there are the following orders:
     ///
     /// - exactly one leading order (LO),
     /// - two next-to-leading orders (NLO), which are
