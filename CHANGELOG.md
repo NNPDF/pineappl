@@ -11,6 +11,7 @@ Starting with this version, PineAPPL has an official logo!
 
 ### Added
 
+- added `optimize_using` in `Grid` objects of the Python API
 - added an actual implementation of `pineappl_grid_metadata` and
   `pineappl_grid_set_metadata` in the APIs
 
