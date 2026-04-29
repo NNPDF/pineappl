@@ -15,10 +15,8 @@ version.workspace = true
 workspace = true
 
 [dependencies]
-anyhow = "1.0.68"
-clap = { features = ["string"], version = "4.5.28" }
-clap_mangen = "0.2.26"
-enum_dispatch = "0.3.7"
-#git2 = "0.17.2"
-#semver = "1.0.17"
-pineappl_cli = { path = "../pineappl_cli", version = "=1.3.3" }
+anyhow.workspace = true
+clap = { features = ["string"], workspace = true }
+clap_mangen.workspace = true
+enum_dispatch.workspace = true
+pineappl_cli.workspace = true

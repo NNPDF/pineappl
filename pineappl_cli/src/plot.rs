@@ -217,7 +217,7 @@ impl Subcommand for Opts {
 
                 let qcd_orders: Vec<_> = orders
                     .iter()
-                    .group_by(|order| order.alphas + order.alpha)
+                    .chunk_by(|order| order.alphas + order.alpha)
                     .into_iter()
                     .map(|mut group| {
                         let order = group.1.next().unwrap();
@@ -446,15 +446,15 @@ impl Subcommand for Opts {
         let mut output = self.input.clone();
 
         // remove ".lz4" and ".pineappl" extension
-        if let Some(x) = output.extension() {
-            if x == "lz4" {
-                output = Path::new(output.file_stem().unwrap()).to_path_buf();
-            }
+        if let Some(x) = output.extension()
+            && x == "lz4"
+        {
+            output = Path::new(output.file_stem().unwrap()).to_path_buf();
         }
-        if let Some(x) = output.extension() {
-            if x == "pineappl" {
-                output = Path::new(output.file_stem().unwrap()).to_path_buf();
-            }
+        if let Some(x) = output.extension()
+            && x == "pineappl"
+        {
+            output = Path::new(output.file_stem().unwrap()).to_path_buf();
         }
 
         let xaxis = format!("x{}", grid.bwfl().dimensions());

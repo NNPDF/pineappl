@@ -1411,7 +1411,7 @@ impl Grid {
             .channels()
             .iter()
             .enumerate()
-            .flat_map(|(index, entry)| iter::repeat(index).take(entry.entry().len()))
+            .flat_map(|(index, entry)| iter::repeat_n(index, entry.entry().len()))
             .collect();
 
         self.subgrids = self.subgrids.select(Axis(2), &indices);
@@ -1507,10 +1507,10 @@ impl Grid {
         new_interps.remove(kin_pos);
 
         for kin in &mut new_kinematics {
-            if let Kinematics::X(i) = kin {
-                if *i > conv_idx {
-                    *i -= 1;
-                }
+            if let Kinematics::X(i) = kin
+                && *i > conv_idx
+            {
+                *i -= 1;
             }
         }
 
@@ -1551,12 +1551,11 @@ impl Grid {
 
                     if conv_to_fix.conv_type().is_ff() {
                         new_o.logxia = 0;
-                    } else if let Some(other_conv_idx) = other_conv_idx_opt {
-                        if conv_to_fix.conv_type().is_pdf()
-                            && self.convolutions[other_conv_idx].conv_type().is_ff()
-                        {
-                            new_o.logxif = 0;
-                        }
+                    } else if let Some(other_conv_idx) = other_conv_idx_opt
+                        && conv_to_fix.conv_type().is_pdf()
+                        && self.convolutions[other_conv_idx].conv_type().is_ff()
+                    {
+                        new_o.logxif = 0;
                     }
 
                     unique_orders

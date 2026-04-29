@@ -229,7 +229,7 @@ impl FromArgMatches for MoreArgs {
                         let s = &arg[0];
                         let (conv_idx_str, pdf) = s.split_once(':').unwrap();
                         let conv_idx = conv_idx_str.parse::<usize>().unwrap();
-                        args[index] = Some(OpsArg::FixConvolution((conv_idx, pdf.to_string())))
+                        args[index] = Some(OpsArg::FixConvolution((conv_idx, pdf.to_string())));
                     }
                 }
                 "rotate_pid_basis" => {
@@ -599,7 +599,7 @@ impl Subcommand for Opts {
                 OpsArg::FixConvolution((conv_idx, pdf_set)) => {
                     // TODO: account for the variation of scale
                     let pdf = lhapdf::Pdf::with_setname_and_member(pdf_set, 0)
-                        .with_context(|| format!("Unable to load PDF set '{}'", pdf_set))?;
+                        .with_context(|| format!("Unable to load PDF set '{pdf_set}'"))?;
                     let mut xfx = |id, x, q2| pdf.xfx_q2(id, x, q2);
                     grid = grid.fix_convolution(*conv_idx, &mut xfx, 1.0)?;
                 }

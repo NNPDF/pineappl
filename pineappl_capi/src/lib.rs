@@ -143,10 +143,10 @@ fn grid_interpolation_params(key_vals: Option<&KeyVal>) -> Vec<InterpMain> {
             q2_order = usize::try_from(*value).unwrap();
         }
 
-        if let Some(value) = keyval.bools.get("reweight") {
-            if !value {
-                reweight = ReweightMeth::NoReweight;
-            }
+        if let Some(value) = keyval.bools.get("reweight")
+            && !value
+        {
+            reweight = ReweightMeth::NoReweight;
         }
 
         if let Some(value) = keyval.ints.get("x_bins").or_else(|| keyval.ints.get("nx")) {
@@ -259,7 +259,7 @@ pub struct Lumi(Vec<Channel>);
 /// this function is not safe to call.
 #[unsafe(no_mangle)]
 #[must_use]
-pub unsafe extern "C" fn pineappl_grid_bin_count(grid: *const Grid) -> usize {
+pub const unsafe extern "C" fn pineappl_grid_bin_count(grid: *const Grid) -> usize {
     let grid = unsafe { &*grid };
 
     grid.bwfl().len()
@@ -1891,11 +1891,11 @@ pub unsafe extern "C" fn pineappl_grid_metadata(
     let grid = unsafe { &*grid };
     let key = unsafe { CStr::from_ptr(key) }.to_string_lossy();
 
-    if let Some(value) = grid.metadata().get(key.as_ref()) {
-        CString::new(value.as_str()).unwrap().into_raw()
-    } else {
-        std::ptr::null_mut()
-    }
+    grid.metadata()
+        .get(key.as_ref())
+        .map_or(std::ptr::null_mut(), |value| {
+            CString::new(value.as_str()).unwrap().into_raw()
+        })
 }
 
 /// Sets an internal key-value pair for the grid.
@@ -2356,7 +2356,7 @@ pub unsafe extern "C" fn pineappl_grid_evolve_info(
 /// Type alias for the operator callback
 pub type OperatorCallback = unsafe extern "C" fn(
     usize,        // index which selects Evolution parameters
-    f64,          // fac1
+    f64,          // squared process scale (fac or frg)
     *const i32,   // `pids_in`
     *const f64,   // `x_in`
     *const i32,   // `pids_out`
@@ -2432,9 +2432,11 @@ pub unsafe extern "C" fn pineappl_grid_evolve(
     let alphas = unsafe { slice::from_raw_parts(alphas, ren1_len) };
     let xi = unsafe { slice::from_raw_parts(xi, 3) };
 
+    let n_scale_slices = evolve_info.fac1.len().max(evolve_info.frg1.len()).max(1);
+
     let operator_info = unsafe {
-        slice::from_raw_parts(operator_info, nb_slices * evolve_info.fac1.len())
-            .chunks_exact(evolve_info.fac1.len())
+        slice::from_raw_parts(operator_info, nb_slices * n_scale_slices)
+            .chunks_exact(n_scale_slices)
     };
 
     let shape: (usize, usize, usize, usize) = <[usize; 4]>::try_from(eko_shape)

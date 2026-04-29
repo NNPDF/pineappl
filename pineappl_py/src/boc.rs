@@ -4,8 +4,8 @@ use numpy::{IntoPyArray, PyArray1};
 use pineappl::boc::{Bin, BinsWithFillLimits, Channel, Kinematics, Order, ScaleFuncForm, Scales};
 use pyo3::prelude::*;
 
-/// `PyO3` wrapper to :rustdoc:`pineappl::boc::Bin <boc/struct.Bin.html>`.
-#[pyclass(name = "Bin")]
+/// PyO3 wrapper to :rustdoc:`pineappl::boc::Bin <boc/struct.Bin.html>`.
+#[pyclass(name = "Bin", skip_from_py_object)]
 #[repr(transparent)]
 #[derive(Clone)]
 pub struct PyBin {
@@ -67,8 +67,8 @@ impl PyBin {
     }
 }
 
-/// `PyO3` wrapper to :rustdoc:`pineappl::boc::Bin <boc/struct.Bin.html>`.
-#[pyclass(name = "BinsWithFillLimits")]
+/// PyO3 wrapper to :rustdoc:`pineappl::boc::Bin <boc/struct.Bin.html>`.
+#[pyclass(from_py_object, name = "BinsWithFillLimits")]
 #[repr(transparent)]
 #[derive(Clone)]
 pub struct PyBinsWithFillLimits {
@@ -252,7 +252,7 @@ impl PyBinsWithFillLimits {
 ///
 /// 1. a list containing the PDG value of the 1st, 2nd, and etc. of the incoming parton
 /// 2. a numerical factor that will multiply the result for this specific combination.
-#[pyclass(name = "Channel")]
+#[pyclass(name = "Channel", skip_from_py_object)]
 #[repr(transparent)]
 pub struct PyChannel {
     pub(crate) entry: Channel,
@@ -286,8 +286,8 @@ impl PyChannel {
     }
 }
 
-/// `PyO3` wrapper to :rustdoc:`pineappl::boc::Kinematics <boc/enum.Kinematics.html>`.
-#[pyclass(eq, name = "Kinematics")]
+/// PyO3 wrapper to :rustdoc:`pineappl::boc::Kinematics <boc/enum.Kinematics.html>`.
+#[pyclass(eq, name = "Kinematics", skip_from_py_object)]
 #[derive(Clone, PartialEq, Eq)]
 pub enum PyKinematics {
     /// map to `Kinematics::Scale`
@@ -305,8 +305,8 @@ impl From<PyKinematics> for Kinematics {
     }
 }
 
-/// `PyO3` wrapper to :rustdoc:`pineappl::boc::ScaleFuncForm <boc/enum.ScaleFuncForm.html>`.
-#[pyclass(eq, name = "ScaleFuncForm")]
+/// PyO3 wrapper to :rustdoc:`pineappl::boc::ScaleFuncForm <boc/enum.ScaleFuncForm.html>`.
+#[pyclass(eq, name = "ScaleFuncForm", skip_from_py_object)]
 #[derive(Clone, PartialEq, Eq)]
 pub enum PyScaleFuncForm {
     /// map to `ScaleFuncForm::NoScale`
@@ -364,8 +364,8 @@ impl From<PyScaleFuncForm> for ScaleFuncForm {
     }
 }
 
-/// `PyO3` wrapper to :rustdoc:`pineappl::boc::Scales <boc/struct.Scales.html>`.
-#[pyclass(name = "Scales")]
+/// PyO3 wrapper to :rustdoc:`pineappl::boc::Scales <boc/struct.Scales.html>`.
+#[pyclass(name = "Scales", skip_from_py_object)]
 pub struct PyScales {
     pub(crate) scales: Scales,
 }
@@ -394,8 +394,8 @@ impl PyScales {
     }
 }
 
-/// `PyO3` wrapper to :rustdoc:`pineappl::boc::Order <boc/struct.Order.html>`.
-#[pyclass(name = "Order")]
+/// PyO3 wrapper to :rustdoc:`pineappl::boc::Order <boc/struct.Order.html>`.
+#[pyclass(name = "Order", skip_from_py_object)]
 #[repr(transparent)]
 pub struct PyOrder {
     pub(crate) order: Order,

@@ -4,7 +4,7 @@ use pineappl::interpolation::{Interp, InterpMeth, Map, ReweightMeth};
 use pyo3::prelude::*;
 
 /// PyO3 wrapper to :rustdoc:`pineappl::interpolation::Interp <interpolation/struct.Interp.html>`.
-#[pyclass(name = "Interp")]
+#[pyclass(name = "Interp", skip_from_py_object)]
 #[repr(transparent)]
 pub struct PyInterp {
     pub(crate) interp: Interp,
@@ -17,7 +17,7 @@ impl PyInterp {
 }
 
 /// PyO3 wrapper to :rustdoc:`pineappl::interpolation::ReweightMeth <interpolation/enum.ReweightMeth.html>`.
-#[pyclass(eq, eq_int, name = "ReweightingMethod")]
+#[pyclass(eq, eq_int, from_py_object, name = "ReweightingMethod")]
 #[derive(Clone, PartialEq, Eq)]
 pub enum PyReweightingMethod {
     /// map to ReweightMeth::NoReweight
@@ -36,7 +36,7 @@ impl From<PyReweightingMethod> for ReweightMeth {
 }
 
 /// PyO3 wrapper to :rustdoc:`pineappl::interpolation::Map <interpolation/enum.Map.html>`.
-#[pyclass(eq, eq_int, name = "MappingMethod")]
+#[pyclass(eq, eq_int, from_py_object, name = "MappingMethod")]
 #[derive(Clone, PartialEq, Eq)]
 pub enum PyMappingMethod {
     /// map to Map::ApplGridF2
@@ -55,7 +55,7 @@ impl From<PyMappingMethod> for Map {
 }
 
 /// PyO3 wrapper to :rustdoc:`pineappl::interpolation::InterpMeth <interpolation/enum.InterpMeth.html>`.
-#[pyclass(eq, eq_int, name = "InterpolationMethod")]
+#[pyclass(eq, eq_int, from_py_object, name = "InterpolationMethod")]
 #[derive(Clone, PartialEq, Eq)]
 pub enum PyInterpolationMethod {
     /// map to InterpMeth::Lagrange

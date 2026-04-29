@@ -15,8 +15,8 @@ use std::io::BufReader;
 use std::path::PathBuf;
 use std::str::FromStr;
 
-/// `PyO3` wrapper to :rustdoc:`pineappl::fk_table::FkAssumptions <fk_table/enum.FkAssumptions.html>`.
-#[pyclass(name = "FkAssumptions")]
+/// PyO3 wrapper to :rustdoc:`pineappl::fk_table::FkAssumptions <fk_table/enum.FkAssumptions.html>`.
+#[pyclass(name = "FkAssumptions", skip_from_py_object)]
 #[repr(transparent)]
 pub struct PyFkAssumptions {
     pub(crate) fk_assumptions: FkAssumptions,
@@ -38,8 +38,8 @@ impl PyFkAssumptions {
     }
 }
 
-/// `PyO3` wrapper to :rustdoc:`pineappl::fk_table::FkTable <fk_table/struct.FkTable.html>`.
-#[pyclass(name = "FkTable")]
+/// PyO3 wrapper to :rustdoc:`pineappl::fk_table::FkTable <fk_table/struct.FkTable.html>`.
+#[pyclass(name = "FkTable", skip_from_py_object)]
 #[repr(transparent)]
 pub struct PyFkTable {
     pub(crate) fk_table: FkTable,

@@ -1,7 +1,7 @@
 [package]
 authors = ["Christopher Schwan <handgranaten-herbert@posteo.de>"]
-description = "PineAPPL's interface to fastNLO"
-name = "pineappl_fastnlo"
+description = "Reads PineAPPL files written by PineAPPL version 0.x"
+name = "pineappl_v0"
 readme = "README.md"
 
 categories.workspace = true
@@ -16,12 +16,8 @@ version.workspace = true
 workspace = true
 
 [dependencies]
-cxx.workspace = true
+bincode.workspace = true
+enum_dispatch.workspace = true
+ndarray = { features = ["serde"], workspace = true }
+serde.workspace = true
 thiserror.workspace = true
-
-[build-dependencies]
-cxx-build.workspace = true
-pkg-config.workspace = true
-
-[features]
-static = []

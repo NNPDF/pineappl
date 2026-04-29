@@ -10,7 +10,7 @@ from pineappl.convolutions import Conv, ConvType
 from pineappl.evolution import OperatorSliceInfo
 from pineappl.fk_table import FkTable
 from pineappl.interpolation import Interp
-from pineappl.grid import Grid
+from pineappl.grid import Grid, GridOptFlag
 from pineappl.subgrid import ImportSubgridV1
 from pineappl.pids import PidBasis
 
@@ -200,6 +200,31 @@ class TestGrid:
         )
         g.set_subgrid(0, 1, 0, subgrid.into())
         g.optimize()
+
+    def test_optimize_using(self, fake_grids):
+        orders = [Order(3, 0, 0, 0, 0), Order(4, 0, 0, 0, 0)]
+        channels = [Channel(UP_ANTIUP_CHANNEL), Channel(UP_ANTIUP_CHANNEL)]
+        g = fake_grids.grid_with_generic_convolution(
+            nb_convolutions=2,
+            channels=channels,
+            orders=orders,
+            convolutions=[CONVOBJECT, CONVOBJECT],
+        )
+
+        g.fill(
+            order=0,
+            observable=0.1,
+            channel=0,
+            ntuple=[1e3, 0.5, 0.5],
+            weight=1.0,
+        )
+
+        assert len(g.orders()) == 2
+        assert len(g.channels()) == 2
+
+        g.optimize_using([GridOptFlag.StripEmptyOrders, GridOptFlag.StripEmptyChannels])
+        assert len(g.orders()) == 1
+        assert len(g.channels()) == 1
 
     def test_bins(self, fake_grids):
         g = fake_grids.grid_with_generic_convolution(

@@ -21,7 +21,7 @@ use pyo3::prelude::*;
 /// :class:`~pineappl.grid.Grid` ``.convolve`` still expects LHAPDF-style callables that return
 /// ``x * f``; the core library divides by ``x`` when building the luminosity. See the submodule
 /// docstring and `issue 388 <https://github.com/NNPDF/pineappl/issues/388>`__.
-#[pyclass(name = "ImportSubgridV1")]
+#[pyclass(name = "ImportSubgridV1", skip_from_py_object)]
 #[derive(Clone)]
 #[repr(transparent)]
 pub struct PyImportSubgridV1 {
@@ -74,8 +74,8 @@ impl PyImportSubgridV1 {
     }
 }
 
-/// `PyO3` wrapper to :rustdoc:`pineappl::subgrid::SubgridEnum <subgrid/struct.SubgridEnum.html>`
-#[pyclass(name = "SubgridEnum")]
+/// PyO3 wrapper to :rustdoc:`pineappl::subgrid::SubgridEnum <subgrid/struct.SubgridEnum.html>`
+#[pyclass(from_py_object, name = "SubgridEnum")]
 #[derive(Clone)]
 #[repr(transparent)]
 pub struct PySubgridEnum {
@@ -119,6 +119,12 @@ impl PySubgridEnum {
             array_subgrid[index.as_slice()] = value;
         }
         array_subgrid.into_pyarray(py)
+    }
+
+    /// Check whether the subgrid is empty (contains no non-zero entries).
+    #[must_use]
+    pub fn is_empty(&self) -> bool {
+        self.subgrid_enum.is_empty()
     }
 
     /// Clone.

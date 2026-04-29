@@ -13,7 +13,7 @@ use numpy::{IntoPyArray, PyArray1, PyReadonlyArray4};
 use pineappl::boc::Kinematics;
 use pineappl::convolutions::ConvolutionCache;
 use pineappl::evolution::AlphasTable;
-use pineappl::grid::Grid;
+use pineappl::grid::{Grid, GridOptFlags};
 use pineappl::pids::PidBasis;
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
@@ -23,8 +23,42 @@ use std::fs::File;
 use std::io::BufReader;
 use std::path::PathBuf;
 
-/// `PyO3` wrapper to :rustdoc:`pineappl::grid::Grid <grid/struct.Grid.html>`.
-#[pyclass(name = "Grid", subclass)]
+/// PyO3 wrapper for :rustdoc:`pineappl::grid::GridOptFlags <grid/struct.GridOptFlags.html>`.
+#[pyclass(eq, eq_int, from_py_object, name = "GridOptFlag")]
+#[derive(Clone, PartialEq, Eq)]
+pub enum PyGridOptFlag {
+    /// map to `GridOptFlags::OPTIMIZE_SUBGRID_TYPE`
+    OptimizeSubgridType,
+    /// map to `GridOptFlags::OPTIMIZE_NODES`
+    OptimizeNodes,
+    /// map to `GridOptFlags::STATIC_SCALE_DETECTION`
+    StaticScaleDetection,
+    /// map to `GridOptFlags::SYMMETRIZE_CHANNELS`
+    SymmetrizeChannels,
+    /// map to `GridOptFlags::STRIP_EMPTY_ORDERS`
+    StripEmptyOrders,
+    /// map to `GridOptFlags::MERGE_SAME_CHANNELS`
+    MergeSameChannels,
+    /// map to `GridOptFlags::STRIP_EMPTY_CHANNELS`
+    StripEmptyChannels,
+}
+
+impl From<PyGridOptFlag> for GridOptFlags {
+    fn from(value: PyGridOptFlag) -> Self {
+        match value {
+            PyGridOptFlag::OptimizeSubgridType => Self::OPTIMIZE_SUBGRID_TYPE,
+            PyGridOptFlag::OptimizeNodes => Self::OPTIMIZE_NODES,
+            PyGridOptFlag::StaticScaleDetection => Self::STATIC_SCALE_DETECTION,
+            PyGridOptFlag::SymmetrizeChannels => Self::SYMMETRIZE_CHANNELS,
+            PyGridOptFlag::StripEmptyOrders => Self::STRIP_EMPTY_ORDERS,
+            PyGridOptFlag::MergeSameChannels => Self::MERGE_SAME_CHANNELS,
+            PyGridOptFlag::StripEmptyChannels => Self::STRIP_EMPTY_CHANNELS,
+        }
+    }
+}
+
+/// PyO3 wrapper to :rustdoc:`pineappl::grid::Grid <grid/struct.Grid.html>`.
+#[pyclass(from_py_object, name = "Grid", subclass)]
 #[repr(transparent)]
 #[derive(Clone)]
 pub struct PyGrid {
@@ -546,7 +580,7 @@ impl PyGrid {
                         // create lazy iterators from Python object
                         subslice.try_iter().unwrap().map(|item| {
                             let item = item.unwrap();
-                            let op_tuple = item.downcast::<PyTuple>().unwrap();
+                            let op_tuple = item.cast::<PyTuple>().unwrap();
                             let info: PyOperatorSliceInfo =
                                 op_tuple.get_item(0).unwrap().extract().unwrap();
                             let op: PyReadonlyArray4<f64> =
@@ -654,6 +688,19 @@ impl PyGrid {
     /// Optimize the contents of the Grid.
     pub fn optimize(&mut self) {
         self.grid.optimize();
+    }
+
+    /// Optimize the Grid using selected optimization flags.
+    ///
+    /// Parameters
+    /// ----------
+    /// flags : list[`GridOptFlag`]
+    ///     list of optimization flags.
+    pub fn optimize_using(&mut self, flags: Vec<PyGridOptFlag>) {
+        self.grid
+            .optimize_using(flags.into_iter().fold(GridOptFlags::empty(), |acc, flag| {
+                acc | GridOptFlags::from(flag)
+            }));
     }
 
     /// Merge with another grid.
@@ -871,5 +918,6 @@ pub fn register(parent_module: &Bound<'_, PyModule>) -> PyResult<()> {
         "import sys; sys.modules['pineappl.grid'] = m"
     );
     m.add_class::<PyGrid>()?;
+    m.add_class::<PyGridOptFlag>()?;
     parent_module.add_submodule(&m)
 }

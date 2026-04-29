@@ -18,8 +18,8 @@ pub struct Opts {
 fn render_manpages(path: &Path, cmd: &clap::Command, version: &str) -> Result<()> {
     let name = cmd
         .get_bin_name()
-        .unwrap_or(cmd.get_name())
-        .replace(" ", "-");
+        .unwrap_or_else(|| cmd.get_name())
+        .replace(' ', "-");
 
     Man::new(cmd.clone())
         // pass space, otherwise the ordering of the remaining arguments is incorrect

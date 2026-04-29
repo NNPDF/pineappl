@@ -1,6 +1,6 @@
 //! Supporting classes and functions for [`Grid::evolve`].
 
-use super::boc::{Channel, Kinematics, Order};
+use super::boc::{Channel, Kinematics, Order, ScaleFuncForm};
 use super::convolutions::ConvType;
 use super::error::{Error, Result};
 use super::grid::Grid;
@@ -318,14 +318,30 @@ fn ndarray_from_subgrid_orders_slice(
             .collect();
 
         let rens = grid.scales().ren.calc(&node_values, grid.kinematics());
-        let facs = grid.scales().fac.calc(&node_values, grid.kinematics());
+
+        // Pure FF grids (e.g. SIA) contains `fac = NoScale` and thus use `frg` as fact. scale.
+        let use_frg_for_process = matches!(grid.scales().fac, ScaleFuncForm::NoScale);
+        let proc_scales = if use_frg_for_process {
+            grid.scales().frg.calc(&node_values, grid.kinematics())
+        } else {
+            grid.scales().fac.calc(&node_values, grid.kinematics())
+        };
+        let xi_proc_sq = if use_frg_for_process {
+            xia * xia
+        } else {
+            xif * xif
+        };
 
         for (indices, value) in subgrid.indexed_iter() {
-            // TODO: implement evolution for non-zero fragmentation scales
             let ren = rens[grid.scales().ren.idx(&indices, &scale_dims)];
-            let fac = facs[grid.scales().fac.idx(&indices, &scale_dims)];
+            let proc_idx = if use_frg_for_process {
+                grid.scales().frg.idx(&indices, &scale_dims)
+            } else {
+                grid.scales().fac.idx(&indices, &scale_dims)
+            };
+            let proc_mu2 = proc_scales[proc_idx];
 
-            if !subgrid::node_value_eq(xif * xif * fac, fac1) {
+            if !subgrid::node_value_eq(xi_proc_sq * proc_mu2, fac1) {
                 continue;
             }
 
@@ -492,7 +508,8 @@ pub(crate) fn evolve_slice(
 
     Ok((
         Array1::from_iter(sub_fk_tables)
-            .into_shape((1, grid.bwfl().len(), channels0.len()))
+            .into_shape_with_order((1, grid.bwfl().len(), channels0.len()))
+            // UNWRAP: we only change the shape, not the number of elements
             .unwrap(),
         channels0
             .into_iter()
