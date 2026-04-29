@@ -981,7 +981,7 @@ impl Grid {
     }
 
     /// Upgrades the internal data structures to their latest versions.
-    pub const fn upgrade(&mut self) {}
+    pub fn upgrade(&mut self) {}
 
     /// Return the metadata of this grid.
     #[must_use]
