@@ -16,6 +16,8 @@ Starting with this version, PineAPPL has an official logo!
 
 ### Fixed
 
+- fixed fragmentation scale evolution, particularly for the specific case where
+  the fragmentation scale is the only scale present
 - fixed a bug in the Newton's convergence method by raising the maximum number
   of iteration
 - fixed a bug in the implementation of `pineappl_channels_add` of the Fortran
