@@ -18,7 +18,7 @@ impl PyBin {
     ///
     /// Parameters
     /// ----------
-    /// bin_limits: list(tuple(float, float))
+    /// `bin_limits`: list(tuple(float, float))
     ///     edges of the bins
     /// normalization: float
     ///     normalization factor
@@ -38,7 +38,7 @@ impl PyBin {
     ///     dimension on which the observable is defined
     #[getter]
     #[must_use]
-    pub fn dimensions(&self) -> usize {
+    pub const fn dimensions(&self) -> usize {
         self.bin.dimensions()
     }
 
@@ -80,16 +80,14 @@ impl PyBinsWithFillLimits {
     /// Constructor for `BinsWithFillLimits`.
     ///
     /// # Panics
-    /// TODO
     ///
-    /// # Errors
-    /// TODO
+    /// Panics if `bins` and `fill_limits` are inconsistent (same rules as the Rust `BinsWithFillLimits::new`).
     ///
     /// Parameters
     /// ----------
     /// bins: Bin
     ///     a list containing the bin specifications
-    /// fill_limits: list(float)
+    /// `fill_limits`: list(float)
     ///     edges of the bins
     #[new]
     #[must_use]
@@ -106,11 +104,12 @@ impl PyBinsWithFillLimits {
     /// Construct the bin specifications using the bin edges.
     ///
     /// # Panics
-    /// TODO
+    ///
+    /// Panics if `fill_limits` cannot be converted into valid bins.
     ///
     /// Parameters
     /// ----------
-    /// fill_limits: list(float)
+    /// `fill_limits`: list(float)
     ///     edges of the bins
     #[must_use]
     #[staticmethod]
@@ -123,7 +122,8 @@ impl PyBinsWithFillLimits {
     /// Construct the bin specifications using the edges and the normalizations.
     ///
     /// # Panics
-    /// TODO
+    ///
+    /// Panics if `limits` and `normalizations` are inconsistent with the Rust constructors.
     ///
     /// Parameters
     /// ----------
@@ -220,7 +220,7 @@ impl PyBinsWithFillLimits {
     /// Returns
     /// -------
     /// list(list(tuple(float, float))):
-    ///     the bin edges with shape (n_bins, n_dimension, 2)
+    ///     the bin edges with shape (`n_bins`, `n_dimension`, 2)
     #[must_use]
     pub fn bin_limits(&self) -> Vec<Vec<(f64, f64)>> {
         self.bins_fill_limits
@@ -246,7 +246,7 @@ impl PyBinsWithFillLimits {
     }
 }
 
-/// PyO3 wrapper to :rustdoc:`pineappl::boc::Channel <boc/struct.Channel.html>`.
+/// `PyO3` wrapper to :rustdoc:`pineappl::boc::Channel <boc/struct.Channel.html>`.
 ///
 /// Each entry consists of a tuple, which contains, in the following order:
 ///
@@ -290,9 +290,9 @@ impl PyChannel {
 #[pyclass(eq, name = "Kinematics", skip_from_py_object)]
 #[derive(Clone, PartialEq, Eq)]
 pub enum PyKinematics {
-    /// map to Kinematics::Scale
+    /// map to `Kinematics::Scale`
     Scale(usize),
-    /// map to Kinematics::X
+    /// map to `Kinematics::X`
     X(usize),
 }
 
@@ -309,36 +309,36 @@ impl From<PyKinematics> for Kinematics {
 #[pyclass(eq, name = "ScaleFuncForm", skip_from_py_object)]
 #[derive(Clone, PartialEq, Eq)]
 pub enum PyScaleFuncForm {
-    /// map to ScaleFuncForm::NoScale
+    /// map to `ScaleFuncForm::NoScale`
     /// NOTE No variant is not supported in complex enums
     NoScale(usize),
-    /// map to ScaleFuncForm::Scale
+    /// map to `ScaleFuncForm::Scale`
     Scale(usize),
-    /// map to ScaleFuncForm::QuadraticSum
+    /// map to `ScaleFuncForm::QuadraticSum`
     QuadraticSum(usize, usize),
-    /// map to ScaleFuncForm::QuadraticMean
+    /// map to `ScaleFuncForm::QuadraticMean`
     QuadraticMean(usize, usize),
-    /// map to ScaleFuncForm::QuadraticSumOver4
+    /// map to `ScaleFuncForm::QuadraticSumOver4`
     QuadraticSumOver4(usize, usize),
-    /// map to ScaleFuncForm::LinearMean
+    /// map to `ScaleFuncForm::LinearMean`
     LinearMean(usize, usize),
-    /// map to ScaleFuncForm::LinearSum
+    /// map to `ScaleFuncForm::LinearSum`
     LinearSum(usize, usize),
-    /// map to ScaleFuncForm::ScaleMax
+    /// map to `ScaleFuncForm::ScaleMax`
     ScaleMax(usize, usize),
-    /// map to ScaleFuncForm::ScaleMin
+    /// map to `ScaleFuncForm::ScaleMin`
     ScaleMin(usize, usize),
-    /// map to ScaleFuncForm::Prod
+    /// map to `ScaleFuncForm::Prod`
     Prod(usize, usize),
-    /// map to ScaleFuncForm::S2plusS1half
+    /// map to `ScaleFuncForm::S2plusS1half`
     S2plusS1half(usize, usize),
-    /// map to ScaleFuncForm::Pow4Sum
+    /// map to `ScaleFuncForm::Pow4Sum`
     Pow4Sum(usize, usize),
-    /// map to ScaleFuncForm::WgtAvg
+    /// map to `ScaleFuncForm::WgtAvg`
     WgtAvg(usize, usize),
-    /// map to ScaleFuncForm::S2plusS1fourth
+    /// map to `ScaleFuncForm::S2plusS1fourth`
     S2plusS1fourth(usize, usize),
-    /// map to ScaleFuncForm::ExpProd2
+    /// map to `ScaleFuncForm::ExpProd2`
     ExpProd2(usize, usize),
 }
 
@@ -381,6 +381,7 @@ impl PyScales {
     /// Constructor for `Scales`
     #[new]
     #[must_use]
+    #[allow(clippy::needless_pass_by_value)]
     pub fn news_scales(
         ren: PyRef<PyScaleFuncForm>,
         fac: PyRef<PyScaleFuncForm>,
@@ -413,15 +414,15 @@ impl PyOrder {
     /// Parameters
     /// ----------
     /// alphas : int
-    ///     power of :math:`\alpha_s`
+    ///     power of `alpha_s`
     /// alpha : int
-    ///     power of :math:`\alpha`
+    ///     power of alpha (electroweak coupling)
     /// logxir : int
-    ///     power of :math:`\ln(\xi_r)`
+    ///     power of `ln(xi_r)` (renormalization scale log)
     /// logxif : int
-    ///     power of :math:`\ln(\xi_f)`
+    ///     power of `ln(xi_f)` (factorization scale log)
     /// logxia : int
-    ///     power of :math:`\ln(\xi_a)`
+    ///     power of `ln(xi_a)` (fragmentation scale log)
     #[new]
     #[must_use]
     pub const fn new_order(alphas: u8, alpha: u8, logxir: u8, logxif: u8, logxia: u8) -> Self {
@@ -433,15 +434,15 @@ impl PyOrder {
     /// Returns
     /// -------
     /// alphas : int
-    ///     power of :math:`\alpha_s`
+    ///     power of `alpha_s`
     /// alpha : int
-    ///     power of :math:`\alpha`
+    ///     power of alpha (electroweak coupling)
     /// logxir : int
-    ///     power of :math:`\ln(\xi_r)`
+    ///     power of `ln(xi_r)`
     /// logxif : int
-    ///     power of :math:`\ln(\xi_f)`
+    ///     power of `ln(xi_f)`
     /// logxia : int
-    ///     power of :math:`\ln(\xi_a)`
+    ///     power of `ln(xi_a)`
     #[must_use]
     pub const fn as_tuple(&self) -> (u8, u8, u8, u8, u8) {
         (
@@ -468,6 +469,7 @@ impl PyOrder {
     ///     boolean array, to be used as orders' mask
     #[staticmethod]
     #[must_use]
+    #[allow(clippy::needless_pass_by_value)]
     pub fn create_mask<'py>(
         orders: Vec<PyRef<Self>>,
         max_as: u8,

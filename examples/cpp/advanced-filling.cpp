@@ -174,7 +174,7 @@ int main() {
     pineappl_grid_write(grid, "advanced-filling.pineappl.lz4");
 
     //-----------------------------------------------------------------------//
-    
+
     // Remove the bins for which the convolution is zero.
     std::vector<uintptr_t> zero_indices;
     zero_indices.reserve(dxsec.size());

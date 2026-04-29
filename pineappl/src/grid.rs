@@ -156,13 +156,13 @@ impl Grid {
         }
     }
 
-    /// TODO
+    /// Optional reference cross sections and uncertainties carried with this grid.
     #[must_use]
     pub const fn reference(&self) -> &Reference {
         &self.reference
     }
 
-    /// TODO
+    /// Replace the attached [`Reference`] data (caller should keep layout consistent with bins).
     pub fn set_reference(&mut self, reference: Reference) {
         // TODO: check that the number of bins and channels is consistent between the grid and
         // `reference`
@@ -199,9 +199,17 @@ impl Grid {
     /// first factor varies the renormalization scale, the second the factorization scale. Note
     /// that for the variation to be trusted all non-zero log-grids must be contained.
     ///
+    /// Convolution callbacks in `lumi_cache` must return **`x * f`** (LHAPDF). Internally, factors
+    /// **`f`** are used so that they match subgrid data from [`InterpSubgridV1`](crate::subgrid::InterpSubgridV1)
+    /// and from [`ImportSubgridV1`](crate::subgrid::ImportSubgridV1). The latter is mainly for
+    /// **coefficient functions** dumped from outside PineAPPL that are defined to be convolved with
+    /// **`f`**; those imported values must already use the **`f`** convention. See [`crate::convolutions`].
+    ///
     /// # Panics
     ///
-    /// TODO
+    /// Panics if [`ConvolutionCache::new_grid_conv_cache`] cannot match the grid convolutions to
+    /// the cache, if non-empty `order_mask` or `channel_mask` slices are shorter than the number of
+    /// orders or channels respectively, or if PDF lookup inside the cache panics.
     pub fn convolve(
         &self,
         cache: &mut ConvolutionCache,
@@ -288,7 +296,8 @@ impl Grid {
     ///
     /// # Panics
     ///
-    /// TODO
+    /// In debug builds, panics if `ntuple.len()` differs from the number of interpolations. Filling
+    /// an [`ImportSubgridV1`](crate::subgrid::ImportSubgridV1) always panics because it is read-only.
     pub fn fill(
         &mut self,
         order: usize,
@@ -655,10 +664,6 @@ impl Grid {
     /// Scales each subgrid by a factor which is the product of the given values `alphas`, `alpha`,
     /// `logxir`, and `logxif`, each raised to the corresponding powers for each subgrid. In
     /// addition, every subgrid is scaled by a factor `global` independently of its order.
-    ///
-    /// # Panics
-    ///
-    /// TODO
     pub fn scale_by_order(
         &mut self,
         alphas: f64,
@@ -721,11 +726,11 @@ impl Grid {
         self.subgrids.view_mut()
     }
 
-    /// TODO
+    /// Replace bin definitions while keeping the same number of bins as the existing grid.
     ///
     /// # Errors
     ///
-    /// TODO
+    /// Returns [`Error::General`] if `bwfl` has a different number of bins than this grid.
     pub fn set_bwfl(&mut self, bwfl: BinsWithFillLimits) -> Result<()> {
         let bins = bwfl.len();
         let grid_bins = self.bwfl().len();
@@ -741,7 +746,7 @@ impl Grid {
         Ok(())
     }
 
-    /// TODO
+    /// Bin limits, fill limits, and per-bin normalizations.
     #[must_use]
     pub const fn bwfl(&self) -> &BinsWithFillLimits {
         &self.bwfl
@@ -984,11 +989,7 @@ impl Grid {
         &self.metadata
     }
 
-    /// Return the metadata of this grid.
-    ///
-    /// # Panics
-    ///
-    /// TODO
+    /// Mutable access to string metadata key-value pairs stored in the grid file header.
     #[must_use]
     pub const fn metadata_mut(&mut self) -> &mut BTreeMap<String, String> {
         &mut self.metadata
@@ -1447,10 +1448,11 @@ impl Grid {
     /// This function integrates out one of the convolution dimensions of the grid by convolving it
     /// with the provided function `xfx`.
     ///
-    /// The `conv_idx` parameter specifies which convolution to fix. The `xfx` function provides
-    /// the values of the parton distribution function or fragmentation function for a given parton
-    /// ID, `x` value, and scale `mu2`. The `xi` parameter is a scale factor for the factorization
-    /// or fragmentation scale.
+    /// The `conv_idx` parameter specifies which convolution to fix. The `xfx` function must follow
+    /// the LHAPDF convention and return **`x * f(x, mu2)`** for the given parton ID, `x`, and squared
+    /// scale `mu2`. The implementation uses **`f`** when folding into subgrid coefficients (see
+    /// [`crate::convolutions`]). The `xi` parameter is a scale factor for the factorization or
+    /// fragmentation scale.
     ///
     /// # Special handling of fragmentation functions
     ///

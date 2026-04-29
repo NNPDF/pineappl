@@ -1,43 +1,43 @@
-//! TODO
+//! Optional reference cross sections and uncertainties stored alongside a [`crate::grid::Grid`].
 
 use serde::{Deserialize, Serialize};
 
-/// Absolute reference result for a single bin.
+/// Absolute reference cross section for a single bin.
 #[derive(Clone, Deserialize, Serialize)]
 pub enum AbsRefRes {
-    /// TODO
+    /// One value per bin.
     ByBin(f64),
-    /// TODO
+    /// One value per bin and perturbative order.
     ByBinOrder(Vec<f64>),
-    /// TODO
+    /// One value per bin and luminosity channel.
     ByBinChannel(Vec<f64>),
-    /// TODO
+    /// Values for each bin, order, and channel.
     ByBinOrderChannel(Vec<Vec<f64>>),
 }
 
 /// Relative reference uncertainty for a single bin.
 #[derive(Clone, Deserialize, Serialize)]
 pub enum RelRefUnc {
-    /// TODO
+    /// Relative uncertainty per bin.
     ByBin(f64),
-    /// TODO
+    /// Per-order uncertainties combined with `CombOp`.
     ByBinOrder(Vec<f64>, CombOp),
-    /// TODO
+    /// Per-channel uncertainties combined with `CombOp`.
     ByBinChannel(Vec<f64>, CombOp),
-    /// TODO
+    /// Per-order and channel uncertainties combined with `CombOp`.
     ByBinOrderChannel(Vec<Vec<f64>>, CombOp),
 }
 
-/// TODO
+/// How to combine several relative uncertainties into one.
 #[derive(Clone, Deserialize, Serialize)]
 pub enum CombOp {
-    /// TODO
+    /// Linear sum of relative terms.
     Sum,
-    /// TODO
+    /// Square root of the sum of squares (in quadrature).
     Quadrature,
 }
 
-/// TODO
+/// Reference results and convolution-function labels for validation or plotting.
 #[derive(Clone, Default, Deserialize, Serialize)]
 pub struct Reference {
     ref_res_unc: Vec<(AbsRefRes, RelRefUnc)>,

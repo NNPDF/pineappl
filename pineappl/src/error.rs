@@ -1,4 +1,4 @@
-//! TODO
+//! Error types for the `pineappl` library.
 
 use thiserror::Error;
 
@@ -13,5 +13,5 @@ pub enum Error {
     Other(#[from] anyhow::Error),
 }
 
-/// TODO
+/// Convenient result type using [`Error`].
 pub type Result<T> = std::result::Result<T, Error>;

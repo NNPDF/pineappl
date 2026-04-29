@@ -27,10 +27,11 @@ pub struct FkTable {
     grid: Grid,
 }
 
-/// The optimization assumptions for an [`FkTable`], needed for [`FkTable::optimize`]. Since FK
-/// tables are typically stored at very small `Q2 = Q0`, the PDFs `f(x,Q0)` of heavy quarks are
-/// typically set to zero at this scale or set to the same value as their anti-quark PDF. This is
-/// used to optimize the size of FK tables.
+/// The optimization assumptions for an [`FkTable`], needed for [`FkTable::optimize`].
+///
+/// Since FK tables are typically stored at very small `Q2 = Q0`, the PDFs `f(x,Q0)` of heavy
+/// quarks are typically set to zero at this scale or set to the same value as their anti-quark
+/// PDF. This is used to optimize the size of FK tables.
 #[repr(C)]
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum FkAssumptions {
@@ -123,7 +124,8 @@ impl FkTable {
     ///
     /// # Panics
     ///
-    /// TODO
+    /// Panics if a subgrid node value is missing from the global `x` grid or if internal index
+    /// layout assumptions are violated (indicates a corrupted or inconsistent FK table).
     #[must_use]
     pub fn table(&self) -> ArrayD<f64> {
         let x_grid = self.x_grid();
@@ -192,6 +194,10 @@ impl FkTable {
     }
 
     /// Return the squared factorization scale.
+    ///
+    /// # Panics
+    ///
+    /// Every `FkTable` has either a single factorization scale or none, otherwise panic.
     #[must_use]
     pub fn fac0(&self) -> Option<f64> {
         let fac1 = self.grid.evolve_info(&[true]).fac1;
@@ -199,7 +205,6 @@ impl FkTable {
         if let [fac0] = fac1[..] {
             Some(fac0)
         } else {
-            // every `FkTable` has either a single factorization scale or none
             assert!(fac1.is_empty());
 
             None
@@ -207,6 +212,10 @@ impl FkTable {
     }
 
     /// Return the squared fragmentation scale.
+    ///
+    /// # Panics
+    ///
+    /// Every `FkTable` has either a single fragmentation scale or none, otherwise panic.
     #[must_use]
     pub fn frg0(&self) -> Option<f64> {
         let frg1 = self.grid.evolve_info(&[true]).frg1;
@@ -214,7 +223,6 @@ impl FkTable {
         if let [frg0] = frg1[..] {
             Some(frg0)
         } else {
-            // every `FkTable` has either a single fragmentation scale or none
             assert!(frg1.is_empty());
 
             None

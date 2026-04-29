@@ -1,4 +1,4 @@
-//! TODO
+//! Particle ID basis handling, charge conjugation, and channel translation for FK evolution.
 
 use super::boc::Channel;
 use super::error::{Error, Result};
@@ -104,7 +104,7 @@ impl PidBasis {
         }
     }
 
-    /// TODO
+    /// Express `channel` in the target basis `to`, mapping PDG and evolution IDs as needed.
     #[must_use]
     pub fn translate(&self, to: Self, channel: Channel) -> Channel {
         match (self, to) {
@@ -114,7 +114,7 @@ impl PidBasis {
         }
     }
 
-    /// TODO
+    /// Return symmetry rules used when optimizing FK tables for the given `assumptions`.
     #[must_use]
     pub fn opt_rules(&self, assumptions: FkAssumptions) -> OptRules {
         match (*self, assumptions) {
@@ -444,9 +444,10 @@ pub const fn charge_conjugate_pdg_pid(pid: i32) -> i32 {
     }
 }
 
-/// Given `tuples` representing a linear combination of PDG MC IDs, return a PID for the
-/// [`PidBasis::Evol`] basis. The order of each tuple in `tuples` is not relevant. If the inversion
-/// is not possible, `None` is returned.
+/// Given `tuples` representing a linear combination of PDG MC IDs.
+///
+/// This return a PID for the [`PidBasis::Evol`] basis. The order of each tuple in `tuples` is not
+/// relevant. If the inversion is not possible, `None` is returned.
 #[must_use]
 pub fn pdg_mc_ids_to_evol(tuples: &[(i32, f64)]) -> Option<i32> {
     let mut tuples = tuples.to_vec();
