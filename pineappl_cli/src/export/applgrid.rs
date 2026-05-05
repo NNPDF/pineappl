@@ -96,6 +96,7 @@ pub fn convert_into_applgrid(
     grid: &mut Grid,
     output: &Path,
     discard_non_matching_scales: bool,
+    discard_non_matching_momentum: bool,
 ) -> Result<(UniquePtr<grid>, Vec<bool>)> {
     let dim = grid.bwfl().dimensions();
 
@@ -334,7 +335,13 @@ pub fn convert_into_applgrid(
                             .iter()
                             .position(|&x| subgrid::node_value_eq(x, x1))
                             .map_or_else(
-                                || bail!("momentum fraction x1 = {x1} not found in APPLgrid"),
+                                || {
+                                    if discard_non_matching_momentum {
+                                        Ok(-1)
+                                    } else {
+                                        bail!("momentum fraction x1 = {x1} not found in APPLgrid")
+                                    }
+                                },
                                 |idx| Ok(idx.try_into().unwrap()),
                             )
                     })
@@ -346,7 +353,13 @@ pub fn convert_into_applgrid(
                             .iter()
                             .position(|&x| subgrid::node_value_eq(x, x2))
                             .map_or_else(
-                                || bail!("momentum fraction x2 = {x2} not found in APPLgrid"),
+                                || {
+                                    if discard_non_matching_momentum {
+                                        Ok(-1)
+                                    } else {
+                                        bail!("momentum fraction x2 = {x2} not found in APPLgrid")
+                                    }
+                                },
                                 |idx| Ok(idx.try_into().unwrap()),
                             )
                     })
@@ -373,15 +386,40 @@ pub fn convert_into_applgrid(
                         continue;
                     }
 
+                    let appl_x1_i = appl_x1_idx[indices[1]];
+                    if appl_x1_i == -1 {
+                        if value != 0.0 {
+                            println!(
+                                "WARNING: discarding non-matching momentum fraction x1 = {}",
+                                x1_grid[indices[1]]
+                            );
+                        }
+
+                        continue;
+                    }
+
+                    let appl_x2_i = if convolutions == 2 {
+                        let i = appl_x2_idx[indices[2]];
+                        if i == -1 {
+                            if value != 0.0 {
+                                println!(
+                                    "WARNING: discarding non-matching momentum fraction x2 = {}",
+                                    x2_grid[indices[2]]
+                                );
+                            }
+
+                            continue;
+                        }
+                        i
+                    } else {
+                        0
+                    };
+
                     ffi::sparse_matrix_set(
                         weightgrid.as_mut(),
                         appl_q2_idx,
-                        appl_x1_idx[indices[1]],
-                        if convolutions == 2 {
-                            appl_x2_idx[indices[2]]
-                        } else {
-                            0
-                        },
+                        appl_x1_i,
+                        appl_x2_i,
                         factor * value,
                     );
                 }

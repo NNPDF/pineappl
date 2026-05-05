@@ -15,12 +15,13 @@ Arguments:
   <CONV_FUNS>  LHAPDF ID(s) or name of the PDF(s)/FF(s) to check the converted grid with
 
 Options:
-      --accuracy <ACCURACY>          Relative threshold between the table and the converted grid when comparison fails [default: 1e-10]
-      --discard-non-matching-scales  Discard non-matching scales that would otherwise lead to panics
-  -s, --scales <SCALES>              Set the number of scale variations to compare with if they are available [default: 7] [possible values: 1, 3, 7, 9]
-      --digits-abs <ABS>             Set the number of fractional digits shown for absolute numbers [default: 7]
-      --digits-rel <REL>             Set the number of fractional digits shown for relative numbers [default: 7]
-  -h, --help                         Print help
+      --accuracy <ACCURACY>            Relative threshold between the table and the converted grid when comparison fails [default: 1e-10]
+      --discard-non-matching-scales    Discard non-matching scales that would otherwise lead to panics
+      --discard-non-matching-momentum  Discard non-matching momentum fractions that would otherwise lead to panics
+  -s, --scales <SCALES>                Set the number of scale variations to compare with if they are available [default: 7] [possible values: 1, 3, 7, 9]
+      --digits-abs <ABS>               Set the number of fractional digits shown for absolute numbers [default: 7]
+      --digits-rel <REL>               Set the number of fractional digits shown for relative numbers [default: 7]
+  -h, --help                           Print help
 ";
 
 #[cfg(feature = "applgrid")]
