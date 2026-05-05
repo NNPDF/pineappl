@@ -19,11 +19,16 @@ fn convert_into_applgrid(
     conv_funs: &mut [Pdf],
     _: usize,
     discard_non_matching_scales: bool,
+    discard_non_matching_momentum: bool,
 ) -> Result<(&'static str, Vec<f64>, usize, Vec<bool>)> {
     // TODO: check also scale-varied results
 
-    let (mut applgrid, order_mask) =
-        applgrid::convert_into_applgrid(grid, output, discard_non_matching_scales)?;
+    let (mut applgrid, order_mask) = applgrid::convert_into_applgrid(
+        grid,
+        output,
+        discard_non_matching_scales,
+        discard_non_matching_momentum,
+    )?;
     let results = applgrid::convolve_applgrid(applgrid.pin_mut(), conv_funs);
 
     Ok(("APPLgrid", results, 1, order_mask))
@@ -35,6 +40,7 @@ fn convert_into_applgrid(
     _: &mut Grid,
     _: &mut [Pdf],
     _: usize,
+    _: bool,
     _: bool,
 ) -> Result<(&'static str, Vec<f64>, usize, Vec<bool>)> {
     Err(anyhow!(
@@ -48,11 +54,19 @@ fn convert_into_grid(
     conv_funs: &mut [Pdf],
     scales: usize,
     discard_non_matching_scales: bool,
+    discard_non_matching_momentum: bool,
 ) -> Result<(&'static str, Vec<f64>, usize, Vec<bool>)> {
     if let Some(extension) = output.extension()
         && (extension == "appl" || extension == "root")
     {
-        return convert_into_applgrid(output, grid, conv_funs, scales, discard_non_matching_scales);
+        return convert_into_applgrid(
+            output,
+            grid,
+            conv_funs,
+            scales,
+            discard_non_matching_scales,
+            discard_non_matching_momentum,
+        );
     }
 
     Err(anyhow!("could not detect file format"))
@@ -75,6 +89,9 @@ pub struct Opts {
     /// Discard non-matching scales that would otherwise lead to panics.
     #[arg(long)]
     discard_non_matching_scales: bool,
+    /// Discard non-matching momentum fractions that would otherwise lead to panics.
+    #[arg(long)]
+    discard_non_matching_momentum: bool,
     /// Set the number of scale variations to compare with if they are available.
     #[arg(
         default_value_t = 7,
@@ -105,6 +122,7 @@ impl Subcommand for Opts {
             &mut conv_funs,
             self.scales,
             self.discard_non_matching_scales,
+            self.discard_non_matching_momentum,
         )?;
 
         for Order {
