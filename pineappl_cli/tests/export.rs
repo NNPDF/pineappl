@@ -132,6 +132,156 @@ fn export_applgrid() {
         .stdout(predicates::str::ends_with(EXPORT_APPLGRID_STR));
 }
 
+#[cfg(feature = "applgrid")]
+const EXPORT_NNLO_AK5_PTJ_STR: &str = "b    APPLgrid     PineAPPL     rel. diff
+--+------------+------------+--------------
+0   7.1475199e8  7.1475253e8   7.6053554e-7
+1   2.5536645e8  2.5536667e8   8.6645764e-7
+2   8.0742409e7  8.0742409e7  1.2478907e-13
+3   4.0260433e7  4.0260445e7   2.8169024e-7
+4   1.9839883e7  1.9839887e7   2.1808465e-7
+5   1.0119027e7  1.0119028e7   1.3544486e-7
+6   5.5702376e6  5.5702379e6   5.8673922e-8
+7   3.1322190e6  3.1322207e6   5.3759875e-7
+8   1.9447742e6  1.9447743e6   4.2597541e-8
+9   1.1701564e6  1.1701565e6   7.4993014e-8
+10  7.2929160e5  7.2929198e5   5.1385162e-7
+11  4.7885350e5  4.7885359e5   1.8458927e-7
+12  3.0583779e5  3.0583781e5   7.0650601e-8
+13  2.0537268e5  2.0537272e5   1.9724071e-7
+14  1.3581347e5  1.3581349e5   1.4894264e-7
+15  9.3481731e4  9.3481745e4   1.5065258e-7
+16  6.1789306e4  6.1789317e4   1.7921741e-7
+17  4.2234799e4  4.2234800e4   3.7378332e-9
+18  2.9446997e4  2.9446998e4   2.7827810e-8
+19  2.0711158e4  2.0711158e4   3.6083760e-9
+20  1.4399288e4  1.4399288e4  -1.6959262e-9
+21  1.0204248e4  1.0204248e4  2.1560531e-13
+22  7.0541335e3  7.0541335e3  2.0916602e-13
+23  5.1274795e3  5.1274798e3   5.3440854e-8
+24  3.5785021e3  3.5785021e3 -7.3925543e-10
+25  2.5497806e3  2.5497806e3  2.0650148e-13
+26  1.8525134e3  1.8525134e3 -7.1513917e-10
+27  1.3124163e3  1.3124164e3   6.5466644e-8
+28  9.3353298e2  9.3353296e2  -2.4834690e-8
+29  6.8182565e2  6.8182566e2   1.9250868e-8
+30  4.8152109e2  4.8152109e2  2.0583535e-13
+31  3.4599110e2  3.4599110e2  2.0228264e-13
+32  2.4853801e2  2.4853801e2  1.9961810e-13
+33  1.8153858e2  1.8153858e2  1.9295676e-13
+34  1.2893001e2  1.2893001e2  1.8895996e-13
+35  9.2863897e1  9.2863897e1 -1.2712831e-11
+36  6.8219858e1  6.8219863e1   6.7323209e-8
+37  4.8499048e1  4.8499049e1   2.6932878e-9
+38  3.5260803e1  3.5260804e1   3.1629175e-8
+39  2.4875207e1  2.4875207e1   1.5327475e-9
+40  1.8248343e1  1.8248344e1   9.2649788e-8
+41  1.2848351e1  1.2848351e1  -3.4248875e-8
+42  9.3637433e0  9.3637433e0   1.0366541e-9
+43  6.5025357e0  6.5025357e0   2.9029490e-9
+44  4.7299678e0  4.7299683e0   1.1183387e-7
+45  3.3169392e0  3.3169393e0   1.6485298e-8
+46  2.3366424e0  2.3366426e0   7.2538949e-8
+47  1.6375345e0  1.6375347e0   1.3000311e-7
+48  1.1395783e0  1.1395784e0   8.0374843e-8
+49 7.7573740e-1 7.7573745e-1   6.3753925e-8
+50 5.3385646e-1 5.3385655e-1   1.7113346e-7
+51 3.5431304e-1 3.5431287e-1  -4.7859888e-7
+52 2.3984658e-1 2.3984660e-1   7.3858889e-8
+53 1.5742653e-1 1.5742660e-1   4.7452613e-7
+54 1.0381680e-1 1.0381681e-1   1.3036277e-7
+55 6.7367194e-2 6.7367194e-2   4.7924602e-9
+56 4.1754029e-2 4.1754049e-2   4.8244591e-7
+57 2.5167475e-2 2.5167484e-2   3.3871366e-7
+58 1.5430966e-2 1.5430971e-2   3.0639168e-7
+59 8.9218263e-3 8.9218286e-3   2.6013356e-7
+60 5.0265483e-3 5.0265486e-3   6.8485890e-8
+61 2.9066861e-3 2.9066853e-3  -2.9518261e-7
+62 1.4089133e-3 1.4089139e-3   4.5456056e-7
+63 6.7833493e-4 6.7833993e-4   7.3775731e-6
+64 1.0497365e-4 1.0497395e-4   2.8590177e-6
+";
+
+#[test]
+#[cfg(feature = "applgrid")]
+fn export_nnlo_ak5_ptj_discard_non_matching_values() {
+    let output = NamedTempFile::new("nnlo.ak5_ptj.appl").unwrap();
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "export",
+            "--discard-non-matching-values",
+            "--accuracy=1e-5",
+            "../test-data/nnlo.ak5_ptj.pineappl.lz4",
+            output.path().to_str().unwrap(),
+            "NNPDF31_nlo_as_0118_luxqed",
+        ])
+        .assert()
+        .success()
+        .stdout(predicates::str::ends_with(EXPORT_NNLO_AK5_PTJ_STR));
+}
+
+#[test]
+#[cfg(feature = "applgrid")]
+fn export_nnlo_ak5_ptj_discard_non_matching_scales_alias() {
+    let output = NamedTempFile::new("nnlo.ak5_ptj.appl").unwrap();
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "export",
+            "--discard-non-matching-scales",
+            "--accuracy=1e-5",
+            "../test-data/nnlo.ak5_ptj.pineappl.lz4",
+            output.path().to_str().unwrap(),
+            "NNPDF31_nlo_as_0118_luxqed",
+        ])
+        .assert()
+        .success()
+        .stdout(predicates::str::ends_with(EXPORT_NNLO_AK5_PTJ_STR));
+}
+
+#[test]
+#[cfg(feature = "applgrid")]
+fn export_nnlo_ak5_ptj_discard_non_matching_momentum_alias() {
+    let output = NamedTempFile::new("nnlo.ak5_ptj.appl").unwrap();
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "export",
+            "--discard-non-matching-momentum",
+            "--accuracy=1e-5",
+            "../test-data/nnlo.ak5_ptj.pineappl.lz4",
+            output.path().to_str().unwrap(),
+            "NNPDF31_nlo_as_0118_luxqed",
+        ])
+        .assert()
+        .success()
+        .stdout(predicates::str::ends_with(EXPORT_NNLO_AK5_PTJ_STR));
+}
+
+#[test]
+#[cfg(feature = "applgrid")]
+fn export_nnlo_ak5_ptj_no_discard_fails() {
+    let output = NamedTempFile::new("converted.appl").unwrap();
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "export",
+            "../test-data/nnlo.ak5_ptj.pineappl.lz4",
+            output.path().to_str().unwrap(),
+            "NNPDF31_nlo_as_0118_luxqed",
+        ])
+        .assert()
+        .failure()
+        .stderr(predicates::str::contains(
+            "factorization scale muf2 = 33634.5450347851 not found in APPLgrid",
+        ));
+}
+
 #[test]
 #[cfg(feature = "applgrid")]
 fn export_dis_applgrid() {
