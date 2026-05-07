@@ -95,8 +95,7 @@ fn reconstruct_subgrid_params(grid: &Grid, order: usize, bin: usize) -> Result<V
 pub fn convert_into_applgrid(
     grid: &mut Grid,
     output: &Path,
-    discard_non_matching_scales: bool,
-    discard_non_matching_momentum: bool,
+    discard_non_matching_values: bool,
 ) -> Result<(UniquePtr<grid>, Vec<bool>)> {
     let dim = grid.bwfl().dimensions();
 
@@ -279,7 +278,7 @@ pub fn convert_into_applgrid(
                             .position(|&x| subgrid::node_value_eq(x, fac))
                             .map_or_else(
                                 || {
-                                    if discard_non_matching_scales {
+                                    if discard_non_matching_values {
                                         Ok(-1)
                                     } else {
                                         bail!(
@@ -336,7 +335,7 @@ pub fn convert_into_applgrid(
                             .position(|&x| subgrid::node_value_eq(x, x1))
                             .map_or_else(
                                 || {
-                                    if discard_non_matching_momentum {
+                                    if discard_non_matching_values {
                                         Ok(-1)
                                     } else {
                                         bail!("momentum fraction x1 = {x1} not found in APPLgrid")
@@ -354,7 +353,7 @@ pub fn convert_into_applgrid(
                             .position(|&x| subgrid::node_value_eq(x, x2))
                             .map_or_else(
                                 || {
-                                    if discard_non_matching_momentum {
+                                    if discard_non_matching_values {
                                         Ok(-1)
                                     } else {
                                         bail!("momentum fraction x2 = {x2} not found in APPLgrid")

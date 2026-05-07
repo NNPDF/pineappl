@@ -18,17 +18,12 @@ fn convert_into_applgrid(
     grid: &mut Grid,
     conv_funs: &mut [Pdf],
     _: usize,
-    discard_non_matching_scales: bool,
-    discard_non_matching_momentum: bool,
+    discard_non_matching_values: bool,
 ) -> Result<(&'static str, Vec<f64>, usize, Vec<bool>)> {
     // TODO: check also scale-varied results
 
-    let (mut applgrid, order_mask) = applgrid::convert_into_applgrid(
-        grid,
-        output,
-        discard_non_matching_scales,
-        discard_non_matching_momentum,
-    )?;
+    let (mut applgrid, order_mask) =
+        applgrid::convert_into_applgrid(grid, output, discard_non_matching_values)?;
     let results = applgrid::convolve_applgrid(applgrid.pin_mut(), conv_funs);
 
     Ok(("APPLgrid", results, 1, order_mask))
@@ -41,7 +36,6 @@ fn convert_into_applgrid(
     _: &mut [Pdf],
     _: usize,
     _: bool,
-    _: bool,
 ) -> Result<(&'static str, Vec<f64>, usize, Vec<bool>)> {
     Err(anyhow!(
         "you need to install `pineappl` with feature `applgrid`"
@@ -53,20 +47,12 @@ fn convert_into_grid(
     grid: &mut Grid,
     conv_funs: &mut [Pdf],
     scales: usize,
-    discard_non_matching_scales: bool,
-    discard_non_matching_momentum: bool,
+    discard_non_matching_values: bool,
 ) -> Result<(&'static str, Vec<f64>, usize, Vec<bool>)> {
     if let Some(extension) = output.extension()
         && (extension == "appl" || extension == "root")
     {
-        return convert_into_applgrid(
-            output,
-            grid,
-            conv_funs,
-            scales,
-            discard_non_matching_scales,
-            discard_non_matching_momentum,
-        );
+        return convert_into_applgrid(output, grid, conv_funs, scales, discard_non_matching_values);
     }
 
     Err(anyhow!("could not detect file format"))
@@ -86,12 +72,9 @@ pub struct Opts {
     /// Relative threshold between the table and the converted grid when comparison fails.
     #[arg(default_value = "1e-10", long)]
     accuracy: f64,
-    /// Discard non-matching scales that would otherwise lead to panics.
-    #[arg(long)]
-    discard_non_matching_scales: bool,
-    /// Discard non-matching momentum fractions that would otherwise lead to panics.
-    #[arg(long)]
-    discard_non_matching_momentum: bool,
+    /// Discard non-matching scales or momentum fractions that would otherwise lead to panics.
+    #[arg(long, aliases = ["discard-non-matching-scales", "discard-non-matching-momentum"])]
+    discard_non_matching_values: bool,
     /// Set the number of scale variations to compare with if they are available.
     #[arg(
         default_value_t = 7,
@@ -121,8 +104,7 @@ impl Subcommand for Opts {
             &mut grid,
             &mut conv_funs,
             self.scales,
-            self.discard_non_matching_scales,
-            self.discard_non_matching_momentum,
+            self.discard_non_matching_values,
         )?;
 
         for Order {
