@@ -44,7 +44,7 @@ files=(
     'https://data.nnpdf.science/pineappl/test-data/LHCB_WP_7TEV_opt.pineappl.lz4'
     'https://data.nnpdf.science/pineappl/test-data/LHCB_WP_7TEV_v2.tar'
     'https://data.nnpdf.science/pineappl/test-data/LHCB_WP_7TEV_v2_xif_2.tar'
-    'https://data.nnpdf.science/pineappl/test-data/nnlo.ak5_ptj.pineappl.lz4'
+    'https://data.nnpdf.science/pineappl/test-data/nnlo.ak5_ptj-bin63.pineappl.lz4'
     'https://data.nnpdf.science/pineappl/test-data/NJetEvents_0-0-2.tab.gz'
     'https://data.nnpdf.science/pineappl/test-data/NNPDF_POS_F2D_40.pineappl.lz4'
     'https://data.nnpdf.science/pineappl/test-data/NUTEV_CC_NU_FE_SIGMARED.pineappl.lz4'
