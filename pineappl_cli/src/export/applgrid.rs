@@ -1,6 +1,7 @@
 use anyhow::{Result, bail};
 use cxx::{UniquePtr, let_cxx_string};
 use float_cmp::approx_eq;
+use itertools::izip;
 use lhapdf::Pdf;
 use ndarray::{Axis, s};
 use pineappl::boc::{Channel, Kinematics, Order};
@@ -261,47 +262,31 @@ pub fn convert_into_applgrid(
                 grid.channels().len().try_into().unwrap(),
                 grid.convolutions().len() == 1,
             );
-            let appl_q2: Vec<_> = (0..igrid.Ntau()).map(|i| igrid.getQ2(i)).collect();
-            let appl_x1: Vec<_> = (0..igrid.Ny1()).map(|i| igrid.getx1(i)).collect();
-            let appl_x2: Vec<_> = (0..igrid.Ny2()).map(|i| igrid.getx2(i)).collect();
+            let appl_grids: Vec<Vec<_>> = vec![
+                (0..igrid.Ntau()).map(|i| igrid.getQ2(i)).collect(),
+                (0..igrid.Ny1()).map(|i| igrid.getx1(i)).collect(),
+                (0..igrid.Ny2()).map(|i| igrid.getx2(i)).collect(),
+            ];
 
             for (channel, subgrid) in subgrids
                 .iter()
                 .enumerate()
                 .filter(|(_, subgrid)| !subgrid.is_empty())
             {
-                let appl_q2_idx: Vec<_> = grid.scales().fac.calc(&subgrid.node_values(), grid.kinematics())
-                    .iter()
-                    .map(|&fac| {
-                        appl_q2
-                            .iter()
-                            .position(|&x| subgrid::node_value_eq(x, fac))
-                            .map_or_else(
-                                || {
-                                    if discard_non_matching_values {
-                                        Ok(-1)
-                                    } else {
-                                        bail!(
-                                            "factorization scale muf2 = {fac} not found in APPLgrid; try exporting with `--discard-non-matching-values`",
-                                        )
-                                    }
-                                },
-                                |idx| Ok(idx.try_into().unwrap()),
-                            )
-                    })
-                    .collect::<Result<_>>()?;
-
-                let (x1_grid, x2_grid) = if convolutions == 2 {
-                    (
-                        grid.kinematics()
-                            .iter()
-                            .zip(subgrid.node_values())
-                            .find_map(|(kin, node_values)| {
-                                matches!(kin, &Kinematics::X(idx) if idx == 0)
-                                    .then_some(node_values)
-                            })
-                            // TODO: convert this into an error
-                            .unwrap(),
+                let grids = vec![
+                    grid.scales()
+                        .fac
+                        .calc(&subgrid.node_values(), grid.kinematics())
+                        .into_owned(),
+                    grid.kinematics()
+                        .iter()
+                        .zip(subgrid.node_values())
+                        .find_map(|(kin, node_values)| {
+                            matches!(kin, &Kinematics::X(idx) if idx == 0).then_some(node_values)
+                        })
+                        // TODO: convert this into an error
+                        .unwrap(),
+                    if convolutions == 2 {
                         grid.kinematics()
                             .iter()
                             .zip(subgrid.node_values())
@@ -310,118 +295,75 @@ pub fn convert_into_applgrid(
                                     .then_some(node_values)
                             })
                             // TODO: convert this into an error
-                            .unwrap(),
-                    )
-                } else {
-                    (
-                        grid.kinematics()
-                            .iter()
-                            .zip(subgrid.node_values())
-                            .find_map(|(kin, node_values)| {
-                                matches!(kin, &Kinematics::X(idx) if idx == 0)
-                                    .then_some(node_values)
-                            })
-                            // TODO: convert this into an error
-                            .unwrap(),
-                        Vec::new(),
-                    )
-                };
+                            .unwrap()
+                    } else {
+                        Vec::new()
+                    },
+                ];
 
-                let appl_x1_idx: Vec<_> = x1_grid
-                    .iter()
-                    .map(|&x1| {
-                        appl_x1
-                            .iter()
-                            .position(|&x| subgrid::node_value_eq(x, x1))
-                            .map_or_else(
-                                || {
-                                    if discard_non_matching_values {
-                                        Ok(-1)
-                                    } else {
-                                        bail!("momentum fraction x1 = {x1} not found in APPLgrid; try exporting with `--discard-non-matching-values`")
-                                    }
-                                },
-                                |idx| Ok(idx.try_into().unwrap()),
-                            )
-                    })
-                    .collect::<Result<_>>()?;
-                let appl_x2_idx: Vec<_> = x2_grid
-                    .iter()
-                    .map(|&x2| {
-                        appl_x2
-                            .iter()
-                            .position(|&x| subgrid::node_value_eq(x, x2))
-                            .map_or_else(
-                                || {
-                                    if discard_non_matching_values {
-                                        Ok(-1)
-                                    } else {
-                                        bail!("momentum fraction x2 = {x2} not found in APPLgrid; try exporting with `--discard-non-matching-values`")
-                                    }
-                                },
-                                |idx| Ok(idx.try_into().unwrap()),
-                            )
-                    })
-                    .collect::<Result<_>>()?;
+                let appl_idx: Vec<Vec<_>> = izip!(&grids, &appl_grids, ["factorization scale muf2", "momentum fraction x1", "momentum fraction x2"])
+                    .map(|(grid, appl_grid, label)| {
+                        grid
+                        .iter()
+                        .map(|&value| {
+                            appl_grid
+                                .iter()
+                                .position(|&appl_value| subgrid::node_value_eq(appl_value, value))
+                                .map_or_else(
+                                    || {
+                                        if discard_non_matching_values {
+                                            Ok(-1)
+                                        } else {
+                                            bail!("{label} = {value} not found in APPLgrid; try exporting with `--discard-non-matching-values`")
+                                        }
+                                    },
+                                    |idx| Ok(idx.try_into().unwrap()),
+                                )
+                        })
+                        .collect::<Result<_>>()
+                    }
+                ).collect::<Result<_>>()?;
 
                 let mut weightgrid = ffi::igrid_weightgrid(igrid.pin_mut(), channel);
 
-                for (indices, value) in subgrid.indexed_iter() {
+                'looop: for (indices, value) in subgrid.indexed_iter() {
                     // TODO: here we assume that all X are consecutive starting from the second
                     // element and are in ascending order
-                    let iq2 = indices[0];
-                    let appl_q2_idx = appl_q2_idx[iq2];
 
-                    if appl_q2_idx == -1 {
-                        if value != 0.0 {
-                            println!(
-                                "WARNING: discarding non-matching scale muf2 = {} in subgrid {:?}",
-                                grid.scales()
-                                    .fac
-                                    .calc(&subgrid.node_values(), grid.kinematics())[iq2],
-                                (order, bin, channel)
-                            );
-                        }
+                    let appl_indices = [
+                        appl_idx[0][indices[0]],
+                        appl_idx[1][indices[1]],
+                        if convolutions == 2 {
+                            appl_idx[2][indices[2]]
+                        } else {
+                            0
+                        },
+                    ];
 
-                        continue;
-                    }
-
-                    let appl_x1_i = appl_x1_idx[indices[1]];
-                    if appl_x1_i == -1 {
-                        if value != 0.0 {
-                            println!(
-                                "WARNING: discarding non-matching momentum fraction x1 = {} in subgrid {:?}",
-                                x1_grid[indices[1]],
-                                (order, bin, channel)
-                            );
-                        }
-
-                        continue;
-                    }
-
-                    let appl_x2_i = if convolutions == 2 {
-                        let i = appl_x2_idx[indices[2]];
-                        if i == -1 {
+                    for (&appl_index, grid, &index, label) in izip!(
+                        &appl_indices,
+                        &grids,
+                        &indices,
+                        ["scale muf2", "momentum fraction x1", "momentum fraction x2"]
+                    ) {
+                        if appl_index == -1 {
                             if value != 0.0 {
                                 println!(
-                                    "WARNING: discarding non-matching momentum fraction x2 = {} in subgrid {:?}",
-                                    x2_grid[indices[2]],
+                                    "WARNING: discarding non-matching {label} = {} in subgrid {:?}",
+                                    grid[index],
                                     (order, bin, channel)
                                 );
                             }
 
-                            continue;
+                            continue 'looop;
                         }
-                        i
-                    } else {
-                        0
-                    };
+                    }
 
                     ffi::sparse_matrix_set(
                         weightgrid.as_mut(),
-                        appl_q2_idx,
-                        appl_x1_i,
-                        appl_x2_i,
+                        appl_indices[0],
+                        appl_indices[1],
+                        appl_indices[2],
                         factor * value,
                     );
                 }
