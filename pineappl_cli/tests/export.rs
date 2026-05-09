@@ -16,7 +16,7 @@ Arguments:
 
 Options:
       --accuracy <ACCURACY>          Relative threshold between the table and the converted grid when comparison fails [default: 1e-10]
-      --discard-non-matching-values  Discard non-matching scales or momentum fractions that would otherwise lead to panics
+      --discard-non-matching-values  Discard non-matching scales and momentum fractions that would otherwise fail the export
   -s, --scales <SCALES>              Set the number of scale variations to compare with if they are available [default: 7] [possible values: 1, 3, 7, 9]
       --digits-abs <ABS>             Set the number of fractional digits shown for absolute numbers [default: 7]
       --digits-rel <REL>             Set the number of fractional digits shown for relative numbers [default: 7]
@@ -202,6 +202,10 @@ const EXPORT_NNLO_AK5_PTJ_STR: &str = "b    APPLgrid     PineAPPL     rel. diff
 64 1.0497365e-4 1.0497395e-4   2.8590177e-6
 ";
 
+#[cfg(feature = "applgrid")]
+const EXPORT_NNLO_AK5_PTJ_NO_DISCARD_FAILS_STR: &str = "Error: factorization scale muf2 = 33634.5450347851 not found in APPLgrid; try exporting with `--discard-non-matching-values`
+";
+
 #[test]
 #[cfg(feature = "applgrid")]
 fn export_nnlo_ak5_ptj_discard_non_matching_values() {
@@ -277,9 +281,7 @@ fn export_nnlo_ak5_ptj_no_discard_fails() {
         ])
         .assert()
         .failure()
-        .stderr(predicates::str::contains(
-            "factorization scale muf2 = 33634.5450347851 not found in APPLgrid",
-        ));
+        .stderr(EXPORT_NNLO_AK5_PTJ_NO_DISCARD_FAILS_STR);
 }
 
 #[test]

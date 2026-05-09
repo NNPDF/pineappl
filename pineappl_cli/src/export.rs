@@ -72,7 +72,7 @@ pub struct Opts {
     /// Relative threshold between the table and the converted grid when comparison fails.
     #[arg(default_value = "1e-10", long)]
     accuracy: f64,
-    /// Discard non-matching scales or momentum fractions that would otherwise lead to panics.
+    /// Discard non-matching scales and momentum fractions that would otherwise fail the export.
     #[arg(long, aliases = ["discard-non-matching-scales", "discard-non-matching-momentum"])]
     discard_non_matching_values: bool,
     /// Set the number of scale variations to compare with if they are available.

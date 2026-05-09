@@ -282,7 +282,7 @@ pub fn convert_into_applgrid(
                                         Ok(-1)
                                     } else {
                                         bail!(
-                                            "factorization scale muf2 = {fac} not found in APPLgrid",
+                                            "factorization scale muf2 = {fac} not found in APPLgrid; try exporting with `--discard-non-matching-values`",
                                         )
                                     }
                                 },
@@ -338,7 +338,7 @@ pub fn convert_into_applgrid(
                                     if discard_non_matching_values {
                                         Ok(-1)
                                     } else {
-                                        bail!("momentum fraction x1 = {x1} not found in APPLgrid")
+                                        bail!("momentum fraction x1 = {x1} not found in APPLgrid; try exporting with `--discard-non-matching-values`")
                                     }
                                 },
                                 |idx| Ok(idx.try_into().unwrap()),
@@ -356,7 +356,7 @@ pub fn convert_into_applgrid(
                                     if discard_non_matching_values {
                                         Ok(-1)
                                     } else {
-                                        bail!("momentum fraction x2 = {x2} not found in APPLgrid")
+                                        bail!("momentum fraction x2 = {x2} not found in APPLgrid; try exporting with `--discard-non-matching-values`")
                                     }
                                 },
                                 |idx| Ok(idx.try_into().unwrap()),
@@ -375,10 +375,11 @@ pub fn convert_into_applgrid(
                     if appl_q2_idx == -1 {
                         if value != 0.0 {
                             println!(
-                                "WARNING: discarding non-matching scale muf2 = {}",
+                                "WARNING: discarding non-matching scale muf2 = {} in subgrid {:?}",
                                 grid.scales()
                                     .fac
-                                    .calc(&subgrid.node_values(), grid.kinematics())[iq2]
+                                    .calc(&subgrid.node_values(), grid.kinematics())[iq2],
+                                (order, bin, channel)
                             );
                         }
 
@@ -389,8 +390,9 @@ pub fn convert_into_applgrid(
                     if appl_x1_i == -1 {
                         if value != 0.0 {
                             println!(
-                                "WARNING: discarding non-matching momentum fraction x1 = {}",
-                                x1_grid[indices[1]]
+                                "WARNING: discarding non-matching momentum fraction x1 = {} in subgrid {:?}",
+                                x1_grid[indices[1]],
+                                (order, bin, channel)
                             );
                         }
 
@@ -402,8 +404,9 @@ pub fn convert_into_applgrid(
                         if i == -1 {
                             if value != 0.0 {
                                 println!(
-                                    "WARNING: discarding non-matching momentum fraction x2 = {}",
-                                    x2_grid[indices[2]]
+                                    "WARNING: discarding non-matching momentum fraction x2 = {} in subgrid {:?}",
+                                    x2_grid[indices[2]],
+                                    (order, bin, channel)
                                 );
                             }
 
