@@ -101,8 +101,7 @@ pub fn convert_into_applgrid(
 
     if dim > 1 {
         bail!(
-            "grid has {} dimensions, but APPLgrid only supports one-dimensional distributions",
-            dim
+            "grid has {dim} dimensions, but APPLgrid only supports one-dimensional distributions"
         );
     }
 
