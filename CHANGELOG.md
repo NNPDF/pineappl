@@ -27,7 +27,7 @@ Starting with this version, PineAPPL has an official logo!
 
 ### Changed
 
-- raised MSRV to 1.94.0
+- raised MSRV to 1.91.0
 - raised Rust edition to 2024
 - instead of depending on a previous version of the PineAPPL crate, a new crate
   `pineappl_v0` is now responsible for loading files with file version `v0`
