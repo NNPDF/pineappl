@@ -976,6 +976,7 @@ impl Grid {
     }
 
     /// Upgrades the internal data structures to their latest versions.
+    #[expect(clippy::missing_const_for_fn)] // this method may have an actual implementation in the future
     pub fn upgrade(&mut self) {}
 
     /// Return the metadata of this grid.
