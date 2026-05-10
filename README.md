@@ -39,70 +39,18 @@ one:
 
 Below are some samples of tools in high-energy physics that uses PineAPPL.
 
-<table>
-  <thead>
-    <tr>
-      <th>Tool</th>
-      <th>Description</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr><th colspan="2">Parton-Level Monte Carlo Generators</th></tr>
-    <tr>
-      <td><a href="https://nnlojet.hepforge.org/index.html"><b>NNLOJet</b></a></td>
-      <td>Parton-level event generator for jet cross sections at NNLO QCD accuracy.</td>
-    </tr>
-    <tr>
-      <td><a href="https://matrix.hepforge.org/"><b>MATRIX</b></a></td>
-      <td>Parton-level event generator for fully differential cross sections at NNLO.</td>
-    </tr>
-    <tr><th colspan="2">General-Purpose Monte Carlo Generators</th></tr>
-    <tr>
-      <td><a href="https://github.com/mg5amcnlo/mg5amcnlo"><b>MadGraph5_aMC@NLO</b></a></td>
-      <td>Multi-purpose event generator for LO and NLO calculations.</td>
-    </tr>
-    <tr><th colspan="2">Fixed-order Codes</th></tr>
-    <tr>
-      <td><a href="https://github.com/QCDLab/PineAPFEL"><b>PineAPFEL</b></a></td>
-      <td>APFEL++ interface that produces PineAPPL grids with coefficient functions for unpolarized and longitudinally polarized DIS, SIA, and SIDIS.</td>
-    </tr>
-    <tr>
-      <td><a href="https://github.com/NNPDF/yadism"><b>Yadism</b></a></td>
-      <td>Computes DIS coefficient functions up to N3LO for unpolarized and longitudinally polarized processes.</td>
-    </tr>
-    <tr><th colspan="2">Evolution Codes</th></tr>
-    <tr>
-      <td><a href="https://github.com/QCDLab/PineAPFEL"><b>PineAPFEL</b></a></td>
-      <td>Evolves theory predictions stored as PineAPPL grids using APFEL++.</td>
-    </tr>
-    <tr>
-      <td><a href="https://github.com/NNPDF/pineko"><b>Pineko</b></a></td>
-      <td>Evolves theory predictions stored as PineAPPL grids using EKO evolution operators.</td>
-    </tr>
-    <tr><th colspan="2">PDF Fitting Codes</th></tr>
-    <tr>
-      <td><a href="https://ncteq.hepforge.org/"><b>nCTEQ</b></a></td>
-      <td>Framework for extracting nuclear parton distribution functions.</td>
-    </tr>
-    <tr>
-      <td><a href="https://github.com/NNPDF/nnpdf"><b>NNPDF</b></a></td>
-      <td>Machine learning framework for global PDF analyses.</td>
-    </tr>
-    <tr>
-      <td><a href="https://gitlab.cern.ch/fitters/xfitter"><b>xFitter</b></a></td>
-      <td>QCD fit framework designed to extract PDFs.</td>
-    </tr>
-    <tr><th colspan="2">Interfaces to Other Grid Formats</th></tr>
-    <tr>
-      <td><a href="https://applgrid.hepforge.org/"><b>APPLgrid</b></a></td>
-      <td>Fast interpolation grid library for PDF-independent storage of perturbative QCD calculations.</td>
-    </tr>
-    <tr>
-      <td><a href="https://fastnlo.hepforge.org/"><b>fastNLO</b></a></td>
-      <td>Framework for fast pQCD calculations for hadron-induced processes.</td>
-    </tr>
-  </tbody>
-</table>
+| Tool | Description |
+|------|-------------|
+| [**MadGraph5_aMC@NLO**](https://github.com/mg5amcnlo/mg5amcnlo) | Multi-purpose event generator for LO and NLO calculations. |
+| [**MATRIX**](https://matrix.hepforge.org/) | Parton-level event generator for fully differential cross sections at NNLO. |
+| [**nCTEQ**](https://ncteq.hepforge.org/) | Framework for extracting nuclear parton distribution functions. |
+| [**NNLOJet**](https://nnlojet.hepforge.org/index.html) | Parton-level event generator for jet cross sections at NNLO QCD accuracy. |
+| [**NNPDF**](https://github.com/NNPDF/nnpdf) | Machine learning framework for global PDF analyses. |
+| [**NNSFν**](https://github.com/NNPDF/nnusf) | Machine learning framework for all-energy neutrino structure functions. |
+| [**PineAPFEL**](https://github.com/QCDLab/PineAPFEL) | [APFEL++](https://github.com/vbertone/apfelxx) interface that produces and evolve PineAPPL grids with coefficient functions for unpolarized and longitudinally polarized DIS, SIA, and SIDIS. |
+| [**Pineko**](https://github.com/NNPDF/pineko) | Evolves theory predictions stored as PineAPPL grids using [EKO](https://github.com/NNPDF/eko) evolution operators. |
+| [**xFitter**](https://gitlab.cern.ch/fitters/xfitter) | QCD fit framework designed to extract PDFs. |
+| [**Yadism**](https://github.com/NNPDF/yadism) | Computes DIS coefficient functions up to N3LO for unpolarized and longitudinally polarized processes. |
 
 # Citation
 
