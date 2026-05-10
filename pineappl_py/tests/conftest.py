@@ -1,6 +1,5 @@
 import numpy as np
 import pytest
-import subprocess
 from typing import List
 
 from pineappl.boc import (
@@ -199,6 +198,7 @@ def fake_grids():
 def download_objects(tmp_path_factory):
     def _download_fk(objname: str) -> None:
         import os
+
         path = os.path.abspath(f"../test-data/{objname}")
         return path
 

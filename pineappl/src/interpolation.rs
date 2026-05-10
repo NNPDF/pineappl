@@ -61,35 +61,36 @@ fn lagrange_weights(i: usize, n: usize, u: f64) -> f64 {
     product / convert::f64_from_usize(factorials)
 }
 
-/// TODO
+/// How node weights are adjusted before accumulating into the sparse grid.
 #[repr(C)]
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub enum ReweightMeth {
-    /// TODO
+    /// APPLgrid-style reweighting in `x` (see internal `applgrid::reweight_x`).
     ApplGridX,
-    /// TODO
+    /// No multiplicative reweighting (factor 1).
     NoReweight,
 }
 
-/// TODO
+/// Map between physical variable `x` and internal interpolation coordinate `y`.
 #[repr(C)]
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub enum Map {
-    /// TODO
+    /// Momentum fraction map used by APPLgrid (`fy2` / `fx2`).
     ApplGridF2,
-    /// TODO
+    /// Scale map using `ln ln(Q2/0.0625)` and its inverse.
     ApplGridH0,
 }
 
-/// TODO
+/// Interpolation method along one dimension.
 #[repr(C)]
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub enum InterpMeth {
-    /// TODO
+    /// Lagrange interpolation through `order + 1` consecutive nodes.
     Lagrange,
 }
 
-/// TODO
+/// One-dimensional interpolation specification: mapped range, node count, polynomial order,
+/// and method.
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Interp {
     min: f64,
@@ -116,7 +117,7 @@ impl PartialEq for Interp {
 impl Eq for Interp {}
 
 impl Interp {
-    /// TODO
+    /// Build an interpolator from physical `min`..=`max`, node count, polynomial `order`, and options.
     ///
     /// # Panics
     ///
@@ -172,7 +173,7 @@ impl Interp {
         convert::f64_from_usize(index).mul_add(self.deltay(), self.min)
     }
 
-    /// TODO
+    /// Multiplicative weight applied at abscissa `x` before adding to the grid.
     #[must_use]
     pub fn reweight(&self, x: f64) -> f64 {
         match self.reweight {
@@ -181,7 +182,9 @@ impl Interp {
         }
     }
 
-    /// TODO
+    /// Map `x` to the index of the first contributing node and a fractional offset in `y` space.
+    ///
+    /// Returns `None` if `x` maps outside the interpolated interval.
     #[must_use]
     pub fn interpolate(&self, x: f64) -> Option<(usize, f64)> {
         let y = self.map_x_to_y(x);
@@ -206,7 +209,7 @@ impl Interp {
         }
     }
 
-    /// TODO
+    /// Lagrange weights for each of the `order + 1` nodes in the current stencil, given `fraction` in `y`.
     #[must_use]
     pub fn node_weights(&self, fraction: f64) -> ArrayVec<f64, MAX_INTERP_ORDER_PLUS_ONE> {
         (0..=self.order)
@@ -216,13 +219,13 @@ impl Interp {
             .collect()
     }
 
-    /// TODO
+    /// Polynomial interpolation order (number of intervals spanned is `order + 1` nodes).
     #[must_use]
     pub const fn order(&self) -> usize {
         self.order
     }
 
-    /// TODO
+    /// Node positions in physical `x` for this dimension.
     #[must_use]
     pub fn node_values(&self) -> Vec<f64> {
         if self.nodes == 1 {
@@ -248,43 +251,43 @@ impl Interp {
         }
     }
 
-    /// TODO
+    /// Number of support nodes along this dimension.
     #[must_use]
     pub const fn nodes(&self) -> usize {
         self.nodes
     }
 
-    /// TODO
+    /// Smallest physical `x` covered by the node set (after mapping and ordering).
     #[must_use]
     pub fn min(&self) -> f64 {
         self.map_y_to_x(self.min).min(self.map_y_to_x(self.max))
     }
 
-    /// TODO
+    /// Largest physical `x` covered by the node set (after mapping and ordering).
     #[must_use]
     pub fn max(&self) -> f64 {
         self.map_y_to_x(self.min).max(self.map_y_to_x(self.max))
     }
 
-    /// TODO
+    /// Coordinate map between `x` and internal `y`.
     #[must_use]
     pub const fn map(&self) -> Map {
         self.map
     }
 
-    /// TODO
+    /// Interpolation kernel (currently only Lagrange).
     #[must_use]
     pub const fn interp_meth(&self) -> InterpMeth {
         self.interp_meth
     }
 
-    /// TODO
+    /// Reweighting mode in `x`.
     #[must_use]
     pub const fn reweight_meth(&self) -> ReweightMeth {
         self.reweight
     }
 
-    /// TODO
+    /// Restrict to the node indices in `range` (inclusive start, exclusive end in node index space).
     #[must_use]
     pub fn sub_interp(&self, range: Range<usize>) -> Self {
         Self {
@@ -299,7 +302,9 @@ impl Interp {
     }
 }
 
-/// TODO
+/// Add `weight` into `array` at the stencil given by `interps` and `ntuple`.
+///
+/// Returns `false` if `weight` is zero or if any dimension maps outside its range.
 pub fn interpolate(
     interps: &[Interp],
     ntuple: &[f64],

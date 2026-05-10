@@ -33,8 +33,9 @@ pub struct EvolveInfo {
     pub ren1: Vec<f64>,
 }
 
-/// Information about the evolution kernel operator slice (EKO) passed to [`Grid::evolve`] as
-/// `operator`, which is used to convert a [`Grid`] into an [`FkTable`](super::fk_table::FkTable).
+/// Information about the evolution kernel operator slice (EKO) passed to [`Grid::evolve`].
+///
+/// This is used to convert a [`Grid`] into an [`FkTable`](super::fk_table::FkTable).
 /// The dimensions of the EKO must correspond to the values given in [`fac1`](Self::fac1),
 /// [`pids0`](Self::pids0), [`x0`](Self::x0), [`pids1`](Self::pids1) and [`x1`](Self::x1), exactly
 /// in this order. Members with a `1` are defined at the squared factorization scale given as

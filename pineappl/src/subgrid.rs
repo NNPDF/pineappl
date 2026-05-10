@@ -8,13 +8,13 @@ use itertools::izip;
 use serde::{Deserialize, Serialize};
 use std::{iter, mem};
 
-/// TODO
+/// Compare two node values for equality up to a fixed float tolerance.
 #[must_use]
 pub fn node_value_eq(lhs: f64, rhs: f64) -> bool {
     approx_eq!(f64, lhs, rhs, ulps = 4096)
 }
 
-/// TODO
+/// Like [`node_value_eq`], taking mutable references for use with `dedup_by`.
 #[must_use]
 pub fn node_value_eq_ref_mut(lhs: &mut f64, rhs: &mut f64) -> bool {
     node_value_eq(*lhs, *rhs)
@@ -69,7 +69,16 @@ impl Subgrid for EmptySubgridV1 {
     fn optimize_nodes(&mut self) {}
 }
 
-/// TODO
+/// Dense imported subgrid backed by a [`PackedArray`] and explicit node coordinates per dimension.
+///
+/// This type exists mainly so you can **inject coefficient functions** produced from DIS-like codes.
+/// These are defined to be convolved with the parton density **`f`**.
+///
+/// # Parton factors: `f` versus `x * f`
+///
+/// Coefficients you store here (and the node values you attach) must match the PineAPPL definition
+/// where the hard cross section is combined with parton distributions as **`f(x)`**, **not** with
+/// **`x * f(x)`**.
 #[derive(Clone, Deserialize, Serialize)]
 pub struct ImportSubgridV1 {
     array: PackedArray<f64>,
@@ -184,7 +193,10 @@ impl Subgrid for ImportSubgridV1 {
 }
 
 impl ImportSubgridV1 {
-    /// Constructor.
+    /// Build an imported subgrid from packed coefficients and per-dimension node values.
+    ///
+    /// Intended for **external coefficient dumps** that must be folded with **`f`**; see [`ImportSubgridV1`].
+    /// Values in `array` must use the **`f` (not `x * f`)** convention.
     #[must_use]
     pub const fn new(array: PackedArray<f64>, node_values: Vec<Vec<f64>>) -> Self {
         Self { array, node_values }
@@ -408,12 +420,12 @@ pub enum SubgridEnum {
     InterpSubgridV1,
     /// Empty subgrid.
     EmptySubgridV1,
-    /// TODO
+    /// Imported sparse layout for **injected coefficient tables** convolved with **`f`** (see [`ImportSubgridV1`]).
     ImportSubgridV1,
 }
 
 impl SubgridEnum {
-    /// TODO
+    /// Merge `other` into `self`, optionally swapping two convolution dimensions.
     pub fn merge(&mut self, other: &Self, transpose: Option<(usize, usize)>) {
         if other.is_empty() {
             return;
@@ -458,7 +470,7 @@ pub struct Stats {
 /// Trait each subgrid must implement.
 #[enum_dispatch]
 pub trait Subgrid {
-    /// TODO
+    /// Node coordinates for each kinematic dimension (same order as the grid kinematics).
     fn node_values(&self) -> Vec<Vec<f64>>;
 
     /// Fill the subgrid with `weight` that is being interpolated with `interps` using the
@@ -489,7 +501,7 @@ pub trait Subgrid {
     /// Return statistics for this subgrid.
     fn stats(&self) -> Stats;
 
-    /// TODO
+    /// Try to collapse a static scale dimension into fewer nodes where possible.
     fn optimize_nodes(&mut self);
 }
 

@@ -14,11 +14,13 @@ use std::cmp::Ordering;
 use std::ops::Range;
 use std::str::FromStr;
 
-/// Defines kinematic variables stored in each subgrid of a [`Grid`]. A grid with two convolutions
-/// will need exactly two `X`-type kinematic variables, specifically `X(0)` and `X(1)` for the
-/// first and second convolutions, respectively. Furthermore, at least one `Scale`-type kinematics
-/// is needed to denote factorization, renormalization and/or fragmentation scales. More scales
-/// can be used to make the three scales have functionally different forms.
+/// Defines the kinematic variables stored in each subgrid of a [`crate::grid::Grid`].
+///
+/// A grid with two convolutions for instance will need exactly two `X`-type kinematic
+/// variables, specifically `X(0)` and `X(1)` for the first and second convolutions,
+/// respectively. Furthermore, at least one `Scale`-type kinematics is needed to denote
+/// factorization, renormalization and/or fragmentation scales. More scales can be used
+/// to make the three scales have functionally different forms.
 #[repr(C)]
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub enum Kinematics {
@@ -28,9 +30,10 @@ pub enum Kinematics {
     X(usize),
 }
 
-/// Defines how the factorization, renormalization and fragmentation scale are calculated from the
-/// available kinematic scales. A `ScaleFuncForm::Scale(0)` means that the corresponding scale will
-/// be calculated from the kinematic variable given as `Kinematics::Scale(0)`.
+/// Defines how the factorization, renormalization and fragmentation scale are calculated.
+///
+/// A `ScaleFuncForm::Scale(0)` means that the corresponding scale will be calculated from
+/// the kinematic variable given as `Kinematics::Scale(0)`.
 #[repr(C)]
 #[derive(Clone, Deserialize, Eq, PartialEq, Serialize)]
 pub enum ScaleFuncForm {
@@ -38,36 +41,43 @@ pub enum ScaleFuncForm {
     NoScale,
     /// Calculates the corresponding scale as the numerical value given `Kinematics::Scale(0)`.
     Scale(usize),
-    /// TODO
+    /// Combine two scale nodes by taking the quadratic sum: `s = s_1 + s_2`.
     QuadraticSum(usize, usize),
-    /// TODO
+    /// Combine two scale nodes by quadratic mean: `s = frac{1}{2}(s_1 + s_2)`.
     QuadraticMean(usize, usize),
-    /// TODO
+    /// Combine two scale nodes by a scaled quadratic sum: `s = frac{1}{4}(s_1 + s_2)`.
     QuadraticSumOver4(usize, usize),
-    /// TODO
+    /// Combine two scale nodes by linear mean: `s = frac{1}{4}(sqrt{s_1}+sqrt{s_2})^2`.
     LinearMean(usize, usize),
-    /// TODO
+    /// Combine two scale nodes by linear sum: `s = (sqrt{s_1}+sqrt{s_2})^2`.
     LinearSum(usize, usize),
-    /// TODO
+    /// Combine two scale nodes by maximum: `s = max(s_1, s_2)`.
     ScaleMax(usize, usize),
-    /// TODO
+    /// Combine two scale nodes by minimum: `s = min(s_1, s_2)`.
     ScaleMin(usize, usize),
-    /// TODO
+    /// Combine two scale nodes by product: `s = s_1 s_2`.
     Prod(usize, usize),
-    /// TODO
+    /// Combine two scale nodes as `s = s_2 + frac{1}{2} s_1`.
     S2plusS1half(usize, usize),
-    /// TODO
+    /// Combine two scale nodes by fourth-power sum: `s = sqrt{s_1^2 + s_2^2}`.
     Pow4Sum(usize, usize),
-    /// TODO
+    /// Weighted average: `s = frac{s_1^2 + s_2^2}{s_1 + s_2}`.
     WgtAvg(usize, usize),
-    /// TODO
+    /// Combine two scale nodes as `s = s_2 + frac{1}{4} s_1`.
     S2plusS1fourth(usize, usize),
-    /// TODO
+    /// Exponential-product variant: `s = (sqrt{s_1} e^{0.3 sqrt{s_2}})^2`.
     ExpProd2(usize, usize),
 }
 
 impl ScaleFuncForm {
-    /// TODO
+    /// Calculate the scale nodes implied by this scale form.
+    ///
+    /// The returned slice contains the scale nodes constructed from the subgrid's
+    /// `node_values` and the grid's `kinematics` definition. For two-argument forms
+    /// the output corresponds to the Cartesian product of the two input scale-node
+    /// vectors.
+    ///
+    /// For [`ScaleFuncForm::NoScale`] an empty slice is returned.
     #[must_use]
     pub fn calc<'a>(
         &self,
@@ -145,7 +155,13 @@ impl ScaleFuncForm {
         }
     }
 
-    /// TODO
+    /// Map a tuple of scale indices to a flattened index for this scale form.
+    ///
+    /// - `indices` are the per-dimension indices into the scale-node vectors.
+    /// - `scale_dims` are the lengths of the scale-node vectors; for two-argument forms
+    ///   the second element is used as the stride.
+    ///
+    /// This method is used internally to index precomputed lists for each scale choice.
     #[must_use]
     pub fn idx(&self, indices: &[usize], scale_dims: &[usize]) -> usize {
         match self.clone() {
@@ -187,7 +203,10 @@ impl<'a> From<&'a Scales> for [&'a ScaleFuncForm; 3] {
 }
 
 impl Scales {
-    /// TODO
+    /// Return `true` if these scale definitions are compatible with `kinematics`.
+    ///
+    /// A scale definition is compatible if every [`ScaleFuncForm`] refers only to scale-type
+    /// kinematic variables that are present in `kinematics`.
     pub fn compatible_with(&self, kinematics: &[Kinematics]) -> bool {
         for scale in [&self.ren, &self.fac, &self.frg].map(Clone::clone) {
             match scale {
@@ -216,7 +235,11 @@ impl Scales {
     }
 }
 
-/// TODO
+/// Bin limits and normalization.
+///
+/// A bin may be multi-dimensional; `limits` stores the per-dimension (left, right) bounds, while
+/// `normalization` typically stores the product of bin widths (used when converting between
+/// differential and integrated representations).
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Bin {
     limits: Vec<(f64, f64)>,
@@ -224,11 +247,11 @@ pub struct Bin {
 }
 
 impl Bin {
-    /// TODO
+    /// Construct a new bin.
     ///
     /// # Panics
     ///
-    /// TODO
+    /// Panics if any limit interval has an upper bound smaller than its lower bound.
     #[must_use]
     pub fn new(limits: Vec<(f64, f64)>, normalization: f64) -> Self {
         for limits in &limits {
@@ -241,25 +264,25 @@ impl Bin {
         }
     }
 
-    /// TODO
+    /// Return the number of dimensions of this bin.
     #[must_use]
     pub const fn dimensions(&self) -> usize {
         self.limits.len()
     }
 
-    /// TODO
+    /// Return the bin normalization.
     #[must_use]
     pub const fn normalization(&self) -> f64 {
         self.normalization
     }
 
-    /// TODO
+    /// Return the per-dimension bin limits.
     #[must_use]
     pub fn limits(&self) -> &[(f64, f64)] {
         &self.limits
     }
 
-    /// TODO
+    /// Compare two bins approximately (ULP-based comparison for floating point values).
     #[must_use]
     pub fn partial_eq_with_ulps(&self, other: &Self, ulps: i64) -> bool {
         self.limits.iter().zip(other.limits()).all(|(&lhs, &rhs)| {
@@ -268,7 +291,11 @@ impl Bin {
     }
 }
 
-/// TODO
+/// Bin collection and fill limits.
+///
+/// This structure stores the bin limits/normalizations together with an auxiliary 1D list
+/// of *fill limits* used by certain filling/remapping algorithms. For a grid with `n` bins,
+/// the `fill_limits` vector has length `n + 1`.
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct BinsWithFillLimits {
     bins: Vec<Bin>,
@@ -276,11 +303,12 @@ pub struct BinsWithFillLimits {
 }
 
 impl BinsWithFillLimits {
-    /// TODO
+    /// Construct from explicit bins and fill limits.
     ///
     /// # Errors
     ///
-    /// TODO
+    /// Returns an error if the number of bins does not match the number of fill limits
+    /// minus one.
     pub fn new(bins: Vec<Bin>, fill_limits: Vec<f64>) -> Result<Self> {
         // TODO: validate the bins
 
@@ -301,11 +329,12 @@ impl BinsWithFillLimits {
         Ok(Self { bins, fill_limits })
     }
 
-    /// TODO
+    /// Construct a 1D binning from fill limits.
     ///
     /// # Errors
     ///
-    /// TODO
+    /// Returns an error if the fill limits are inconsistent with the inferred number
+    /// of bins.
     pub fn from_fill_limits(fill_limits: Vec<f64>) -> Result<Self> {
         let bins = fill_limits
             .windows(2)
@@ -315,15 +344,15 @@ impl BinsWithFillLimits {
         Self::new(bins, fill_limits)
     }
 
-    /// TODO
+    /// Construct from per-bin limits and normalizations.
     ///
     /// # Errors
     ///
-    /// TODO
+    /// Returns an error if `limits.len() != normalizations.len()`.
     ///
     /// # Panics
     ///
-    /// TODO
+    /// Panics if any per-bin limits are invalid (see [`Bin::new`]).
     pub fn from_limits_and_normalizations(
         limits: Vec<Vec<(f64, f64)>>,
         normalizations: Vec<f64>,
@@ -347,7 +376,9 @@ impl BinsWithFillLimits {
         Self::new(bins, fill_limits)
     }
 
-    /// TODO
+    /// Return slices that partition the bins into simply-connected blocks.
+    ///
+    /// For one-dimensional binning this returns a single slice spanning all bins.
     pub fn slices(&self) -> Vec<Range<usize>> {
         if self.dimensions() == 1 {
             // TODO: check that bins are contiguous
@@ -369,19 +400,19 @@ impl BinsWithFillLimits {
         }
     }
 
-    /// TODO
+    /// Return the underlying bins.
     #[must_use]
     pub fn bins(&self) -> &[Bin] {
         &self.bins
     }
 
-    /// TODO
+    /// Return the number of bins.
     #[must_use]
     pub const fn len(&self) -> usize {
         self.bins.len()
     }
 
-    /// TODO
+    /// Return the number of dimensions (taken from the first bin).
     #[must_use]
     pub fn dimensions(&self) -> usize {
         self.bins
@@ -391,7 +422,7 @@ impl BinsWithFillLimits {
             .dimensions()
     }
 
-    /// TODO
+    /// Return the bin index corresponding to `value` in fill-limit space.
     #[must_use]
     pub fn fill_index(&self, value: f64) -> Option<usize> {
         match self
@@ -406,22 +437,22 @@ impl BinsWithFillLimits {
         }
     }
 
-    /// TODO
+    /// Return the fill limits.
     #[must_use]
     pub fn fill_limits(&self) -> &[f64] {
         &self.fill_limits
     }
 
-    /// TODO
+    /// Return the bin normalizations.
     pub fn normalizations(&self) -> Vec<f64> {
         self.bins.iter().map(Bin::normalization).collect()
     }
 
-    /// TODO
+    /// Merge a contiguous range of bins.
     ///
     /// # Errors
     ///
-    /// TODO
+    /// Returns an error if `range` does not form a simply-connected block under [`Self::slices`].
     // TODO: change range to `RangeBounds<usize>`
     pub fn merge(&self, range: Range<usize>) -> Result<Self> {
         // TODO: allow more flexible merging
@@ -458,11 +489,11 @@ impl BinsWithFillLimits {
         )
     }
 
-    /// TODO
+    /// Remove a bin by index.
     ///
     /// # Panics
     ///
-    /// TODO
+    /// Panics if attempting to remove the last remaining bin.
     pub fn remove(&mut self, index: usize) -> Bin {
         assert!(self.len() > 1);
 
@@ -470,7 +501,7 @@ impl BinsWithFillLimits {
         self.bins.remove(index)
     }
 
-    /// TODO
+    /// Compare two `BinsWithFillLimits` approximately (ULP-based comparison of bin contents).
     #[must_use]
     pub fn bins_partial_eq_with_ulps(&self, other: &Self, ulps: i64) -> bool {
         (self.bins.len() == other.bins.len())
@@ -753,7 +784,7 @@ impl Order {
     ///
     /// # Example
     ///
-    /// In the case of Drell—Yan, there are the following orders:
+    /// In the case of Drell–Yan, there are the following orders:
     ///
     /// - exactly one leading order (LO),
     /// - two next-to-leading orders (NLO), which are
@@ -762,7 +793,7 @@ impl Order {
     /// - three next-to-next-to-leading orders (NNLO),
     ///   - the NNLO QCD,
     ///   - the NNLO EW, and finally
-    ///   - the mixed NNLO QCD—EW.
+    ///   - the mixed NNLO QCD-EW.
     ///
     /// ```rust
     /// use pineappl::boc::Order;
@@ -772,7 +803,7 @@ impl Order {
     ///     Order::new(1, 2, 0, 0, 0), //  NLO QCD    : alphas   alpha^2
     ///     Order::new(0, 3, 0, 0, 0), //  NLO  EW    :          alpha^3
     ///     Order::new(2, 2, 0, 0, 0), // NNLO QCD    : alphas^2 alpha^2
-    ///     Order::new(1, 3, 0, 0, 0), // NNLO QCD—EW : alphas   alpha^3
+    ///     Order::new(1, 3, 0, 0, 0), // NNLO QCD-EW : alphas   alpha^3
     ///     Order::new(0, 4, 0, 0, 0), // NNLO EW     :          alpha^4
     /// ];
     ///
@@ -817,11 +848,11 @@ impl Order {
     ///
     /// let orders = [
     ///     Order::new(2, 0, 0, 0, 0), //   LO QCD    : alphas^2
-    ///     Order::new(1, 1, 0, 0, 0), //   LO QCD—EW : alphas   alpha
+    ///     Order::new(1, 1, 0, 0, 0), //   LO QCD-EW : alphas   alpha
     ///     Order::new(0, 2, 0, 0, 0), //   LO  EW    :          alpha^2
     ///     Order::new(3, 0, 0, 0, 0), //  NLO QCD    : alphas^3
-    ///     Order::new(2, 1, 0, 0, 0), //  NLO QCD—EW : alphas^2 alpha
-    ///     Order::new(1, 2, 0, 0, 0), //  NLO QCD—EW : alphas   alpha^2
+    ///     Order::new(2, 1, 0, 0, 0), //  NLO QCD-EW : alphas^2 alpha
+    ///     Order::new(1, 2, 0, 0, 0), //  NLO QCD-EW : alphas   alpha^2
     ///     Order::new(0, 3, 0, 0, 0), //  NLO EW     :          alpha^3
     /// ];
     ///
@@ -892,10 +923,11 @@ impl Order {
     }
 }
 
-/// This structure represents a channel. Each channel consists of a tuple containing in the
-/// following order, the particle ID of the first incoming parton, then the particle ID of the
-/// second parton, and finally a numerical factor that will multiply the result for this specific
-/// combination.
+/// This structure represents the channel object.
+///
+/// Each channel consists of a tuple containing in the following order, the particle ID of the
+/// first incoming parton, then the particle ID of the second parton, and finally a numerical
+/// factor that will multiply the result for this specific combination.
 #[derive(Clone, Debug, Deserialize, PartialEq, PartialOrd, Serialize)]
 pub struct Channel {
     entry: Vec<(Vec<i32>, f64)>,
@@ -1103,7 +1135,8 @@ impl Channel {
     ///
     /// # Panics
     ///
-    /// TODO
+    /// Panics if any luminosity coefficient is not comparable (for example NaN), or if the
+    /// channel has no entries (should not occur for a well-formed grid).
     #[must_use]
     pub fn factor(&self) -> (f64, Self) {
         let factor = self
@@ -1268,7 +1301,7 @@ mod tests {
             Order::new(1, 2, 0, 0, 0), //  NLO QCD    : alphas   alpha^2
             Order::new(0, 3, 0, 0, 0), //  NLO  EW    :          alpha^3
             Order::new(2, 2, 0, 0, 0), // NNLO QCD    : alphas^2 alpha^2
-            Order::new(1, 3, 0, 0, 0), // NNLO QCD—EW : alphas   alpha^3
+            Order::new(1, 3, 0, 0, 0), // NNLO QCD-EW : alphas   alpha^3
             Order::new(0, 4, 0, 0, 0), // NNLO EW     :          alpha^4
         ];
 
@@ -1340,16 +1373,16 @@ mod tests {
         // Top-pair production orders
         let orders = [
             Order::new(2, 0, 0, 0, 0), //   LO QCD    : alphas^2
-            Order::new(1, 1, 0, 0, 0), //   LO QCD—EW : alphas   alpha
+            Order::new(1, 1, 0, 0, 0), //   LO QCD-EW : alphas   alpha
             Order::new(0, 2, 0, 0, 0), //   LO  EW    :          alpha^2
             Order::new(3, 0, 0, 0, 0), //  NLO QCD    : alphas^3
-            Order::new(2, 1, 0, 0, 0), //  NLO QCD—EW : alphas^2 alpha
-            Order::new(1, 2, 0, 0, 0), //  NLO QCD—EW : alphas   alpha^2
+            Order::new(2, 1, 0, 0, 0), //  NLO QCD-EW : alphas^2 alpha
+            Order::new(1, 2, 0, 0, 0), //  NLO QCD-EW : alphas   alpha^2
             Order::new(0, 3, 0, 0, 0), //  NLO  EW    :          alpha^3
             Order::new(4, 0, 0, 0, 0), // NNLO QCD    : alphas^4
-            Order::new(3, 1, 0, 0, 0), // NNLO QCD—EW : alphas^3 alpha
-            Order::new(2, 2, 0, 0, 0), // NNLO QCD—EW : alphas^2 alpha^2
-            Order::new(1, 3, 0, 0, 0), // NNLO QCD—EW : alphas   alpha^3
+            Order::new(3, 1, 0, 0, 0), // NNLO QCD-EW : alphas^3 alpha
+            Order::new(2, 2, 0, 0, 0), // NNLO QCD-EW : alphas^2 alpha^2
+            Order::new(1, 3, 0, 0, 0), // NNLO QCD-EW : alphas   alpha^3
             Order::new(0, 4, 0, 0, 0), // NNLO EW     :          alpha^4
         ];
 

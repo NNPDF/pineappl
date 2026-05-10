@@ -75,22 +75,22 @@ use std::os::raw::{c_char, c_void};
 use std::path::Path;
 use std::slice;
 
-/// TODO
+/// Select subgrid type optimization when passed to grid optimization (see `GridOptFlags::OPTIMIZE_SUBGRID_TYPE`).
 pub const PINEAPPL_GOF_OPTIMIZE_SUBGRID_TYPE: GridOptFlags = GridOptFlags::OPTIMIZE_SUBGRID_TYPE;
 
-/// TODO
+/// Select static-scale / node optimization (see `GridOptFlags::OPTIMIZE_NODES`).
 pub const PINEAPPL_GOF_OPTIMIZE_NODES: GridOptFlags = GridOptFlags::OPTIMIZE_NODES;
 
-/// TODO
+/// Merge transposed channels when convolutions coincide (see `GridOptFlags::SYMMETRIZE_CHANNELS`).
 pub const PINEAPPL_GOF_SYMMETRIZE_CHANNELS: GridOptFlags = GridOptFlags::SYMMETRIZE_CHANNELS;
 
-/// TODO
+/// Drop orders whose subgrids are all empty (see `GridOptFlags::STRIP_EMPTY_ORDERS`).
 pub const PINEAPPL_GOF_STRIP_EMPTY_ORDERS: GridOptFlags = GridOptFlags::STRIP_EMPTY_ORDERS;
 
-/// TODO
+/// Merge channels with identical parton content (see `GridOptFlags::MERGE_SAME_CHANNELS`).
 pub const PINEAPPL_GOF_MERGE_SAME_CHANNELS: GridOptFlags = GridOptFlags::MERGE_SAME_CHANNELS;
 
-/// TODO
+/// Remove channels with only empty subgrids (see `GridOptFlags::STRIP_EMPTY_CHANNELS`).
 pub const PINEAPPL_GOF_STRIP_EMPTY_CHANNELS: GridOptFlags = GridOptFlags::STRIP_EMPTY_CHANNELS;
 
 // TODO: make sure no `panic` calls leave functions marked as `extern "C"`
@@ -445,18 +445,20 @@ pub unsafe extern "C" fn pineappl_grid_convolute_with_two(
     }
 }
 
-/// Convolutes the specified grid with the PDF `xfx`, which is the PDF for a hadron with the PDG id
-/// `pdg_id`, and strong coupling `alphas`. These functions must evaluate the PDFs for the given
-/// `x` and `q2` for the parton with the given PDG id, `pdg_id`, and return the result. Note that
-/// the value must be the PDF multiplied with its argument `x`. The value of the pointer `state`
-/// provided to these functions is the same one given to this function. The parameter `order_mask`
-/// must be as long as there are perturbative orders contained in `grid` and is used to selectively
-/// disable (`false`) or enable (`true`) individual orders. If `order_mask` is set to `NULL`, all
-/// orders are active. The parameter `channel_mask` can be used similarly, but must be as long as
-/// the channels `grid` was created with has entries, or `NULL` to enable all channels. The values
-/// `xi_ren` and `xi_fac` can be used to vary the renormalization and factorization from its
-/// central value, which corresponds to `1.0`. After convolution of the grid with the PDFs the
-/// differential cross section for each bin is written into `results`.
+/// Convolutes the specified grid with the PDF `xfx`.
+///
+/// `xfx` is the PDF for a hadron with the PDG id `pdg_id`, and strong coupling `alphas`. These
+/// functions must evaluate the PDFs for the given `x` and `q2` for the parton with the given PDG
+/// id, `pdg_id`, and return the result. Note that the value must be the PDF multiplied with its
+/// argument `x`. The value of the pointer `state` provided to these functions is the same one given
+/// to this function. The parameter `order_mask` must be as long as there are perturbative orders
+/// contained in `grid` and is used to selectively disable (`false`) or enable (`true`) individual
+/// orders. If `order_mask` is set to `NULL`, all orders are active. The parameter `channel_mask`
+/// can be used similarly, but must be as long as the channels `grid` was created with has entries,
+/// or `NULL` to enable all channels. The values `xi_ren` and `xi_fac` can be used to vary the
+/// renormalization and factorization from its central value, which corresponds to `1.0`. After
+/// convolution of the grid with the PDFs the differential cross section for each bin is written
+/// into `results`.
 ///
 /// # Safety
 ///
@@ -508,19 +510,20 @@ pub unsafe extern "C" fn pineappl_grid_convolve_with_one(
     ));
 }
 
-/// Convolutes the specified grid with the PDFs `xfx1` and `xfx2`, which are the PDFs of hadrons
-/// with PDG ids `pdg_id1` and `pdg_id2`, respectively, and strong coupling `alphas`. These
-/// functions must evaluate the PDFs for the given `x` and `q2` for the parton with the given PDG
-/// id, `pdg_id`, and return the result. Note that the value must be the PDF multiplied with its
-/// argument `x`. The value of the pointer `state` provided to these functions is the same one
-/// given to this function. The parameter `order_mask` must be as long as there are perturbative
-/// orders contained in `grid` and is used to selectively disable (`false`) or enable (`true`)
-/// individual orders. If `order_mask` is set to `NULL`, all orders are active. The parameter
-/// `channel_mask` can be used similarly, but must be as long as the channels `grid` was created
-/// with has entries, or `NULL` to enable all channels. The values `xi_ren` and `xi_fac` can be
-/// used to vary the renormalization and factorization from its central value, which corresponds to
-/// `1.0`. After convolution of the grid with the PDFs the differential cross section for each bin
-/// is written into `results`.
+/// Convolutes the specified grid with the PDFs `xfx1` and `xfx2`.
+///
+/// `xfx1` and `xfx2` are the PDFs of hadrons with PDG ids `pdg_id1` and `pdg_id2`, respectively,
+/// and strong coupling `alphas`. These functions must evaluate the PDFs for the given `x` and `q2`
+/// for the parton with the given PDG id, `pdg_id`, and return the result. Note that the value must
+/// be the PDF multiplied with its argument `x`. The value of the pointer `state` provided to these
+/// functions is the same one given to this function. The parameter `order_mask` must be as long as
+/// there are perturbative orders contained in `grid` and is used to selectively disable (`false`)
+/// or enable (`true`) individual orders. If `order_mask` is set to `NULL`, all orders are active.
+/// The parameter `channel_mask` can be used similarly, but must be as long as the channels `grid`
+/// was created with has entries, or `NULL` to enable all channels. The values `xi_ren` and `xi_fac`
+/// can be used to vary the renormalization and factorization from its central value, which
+/// corresponds to `1.0`. After convolution of the grid with the PDFs the differential cross section
+/// for each bin is written into `results`.
 ///
 /// # Safety
 ///
@@ -578,9 +581,10 @@ pub unsafe extern "C" fn pineappl_grid_convolve_with_two(
     ));
 }
 
-/// Try to deduplicate channels of `grid` by detecting pairs of them that contain the same
-/// subgrids. The numerical equality is tested using a tolerance of `ulps`, given in [units of
-/// least precision](https://docs.rs/float-cmp/latest/float_cmp/index.html#some-explanation).
+/// Try to deduplicate channels of `grid` by detecting pairs of them that contain the same subgrids.
+///
+/// The numerical equality is tested using a tolerance of `ulps`, given in
+/// [units of least precision](https://docs.rs/float-cmp/latest/float_cmp/index.html#some-explanation).
 ///
 /// # Safety
 ///
@@ -622,9 +626,10 @@ pub unsafe extern "C" fn pineappl_grid_fill(
     grid.fill(order, observable, lumi, &[q2, x1, x2], weight);
 }
 
-/// Fill `grid` for the given momentum fractions `x1` and `x2`, at the scale `q2` for the given
-/// value of the `order` and `observable` with `weights`. The parameter of weight must contain a
-/// result for entry of the luminosity function the grid was created with.
+/// Fill `grid` for the given momentum fractions `x1` and `x2`, at the scale `q2`.
+///
+/// This is done for a given value of the `order` and `observable` with `weights`. The parameter
+/// of weight must contain a result for entry of the luminosity function the grid was created with.
 ///
 /// # Safety
 ///
@@ -758,7 +763,8 @@ pub unsafe extern "C" fn pineappl_grid_order_count(grid: *const Grid) -> usize {
 ///
 /// # Panics
 ///
-/// TODO
+/// Panics if bin limits, order parameters, or metadata cannot be converted into a valid `Grid`
+/// (invalid strings, parse errors, or inconsistent state); the C API aborts on these errors.
 #[deprecated(since = "1.0.0", note = "use `pineappl_grid_new2` instead")]
 #[unsafe(no_mangle)]
 #[must_use]
@@ -832,7 +838,7 @@ pub unsafe extern "C" fn pineappl_grid_new(
 ///
 /// # Panics
 ///
-/// TODO
+/// Panics if the file cannot be opened or the grid cannot be deserialized.
 #[unsafe(no_mangle)]
 #[must_use]
 pub unsafe extern "C" fn pineappl_grid_read(filename: *const c_char) -> Box<Grid> {
@@ -853,7 +859,7 @@ pub unsafe extern "C" fn pineappl_grid_read(filename: *const c_char) -> Box<Grid
 ///
 /// # Panics
 ///
-/// TODO
+/// Panics if the bin merge range is invalid for this grid.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn pineappl_grid_merge_bins(grid: *mut Grid, from: usize, to: usize) {
     let grid = unsafe { &mut *grid };
@@ -872,7 +878,7 @@ pub unsafe extern "C" fn pineappl_grid_merge_bins(grid: *mut Grid, from: usize, 
 ///
 /// # Panics
 ///
-/// TODO
+/// Does not panic for out-of-range indices; they are ignored by the underlying implementation.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn pineappl_grid_delete_bins(
     grid: *mut Grid,
@@ -893,7 +899,7 @@ pub unsafe extern "C" fn pineappl_grid_delete_bins(
 ///
 /// # Panics
 ///
-/// TODO
+/// Panics if merging the two grids fails (for example incompatible binning).
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn pineappl_grid_merge_and_delete(grid: *mut Grid, other: Option<Box<Grid>>) {
     if let Some(other) = other {
@@ -984,9 +990,10 @@ pub unsafe extern "C" fn pineappl_grid_optimize_using(grid: *mut Grid, flags: Gr
     grid.optimize_using(flags);
 }
 
-/// Scales each subgrid by a bin-dependent factor given in `factors`. If a bin does not have a
-/// corresponding entry in `factors` it is not rescaled. If `factors` has more entries than there
-/// are bins the superfluous entries do not have an effect.
+/// Scales each subgrid by a bin-dependent factor given in `factors`.
+///
+/// If a bin does not have a corresponding entry in `factors` it is not rescaled. If `factors` has
+/// more entries than there are bins the superfluous entries do not have an effect.
 ///
 /// # Safety
 ///
@@ -1006,8 +1013,9 @@ pub unsafe extern "C" fn pineappl_grid_scale_by_bin(
 }
 
 /// Scales each subgrid by a factor which is the product of the given values `alphas`, `alpha`,
-/// `logxir`, and `logxif`, each raised to the corresponding powers for each subgrid. In addition,
-/// every subgrid is scaled by a factor `global` independently of its order.
+/// `logxir`, and `logxif`, each raised to the corresponding powers for each subgrid.
+///
+/// In addition, every subgrid is scaled by a factor `global` independently of its order.
 ///
 /// # Safety
 ///
@@ -1038,7 +1046,7 @@ pub unsafe extern "C" fn pineappl_grid_scale_by_order(
 ///
 /// # Panics
 ///
-/// TODO
+/// Panics if constructing the returned C string fails (for example embedded null bytes in metadata).
 #[deprecated(since = "1.0.0", note = "use `pineappl_grid_metadata` instead")]
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn pineappl_grid_key_value(
@@ -1077,7 +1085,7 @@ pub unsafe extern "C" fn pineappl_grid_key_value(
 ///
 /// # Panics
 ///
-/// TODO
+/// Panics if initial-state metadata strings cannot be parsed as integers when updating convolutions.
 #[deprecated(since = "1.0.0", note = "use `pineappl_grid_set_metadata` instead")]
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn pineappl_grid_set_key_value(
@@ -1107,9 +1115,11 @@ pub unsafe extern "C" fn pineappl_grid_set_key_value(
     grid.metadata_mut().insert(key, value);
 }
 
-/// Sets a remapper for the grid. This can be used to 'upgrade' one-dimensional bin limits to
-/// N-dimensional ones. The new bin limits must be given in the form of tuples giving the left and
-/// right limits, and a tuple for each dimension.
+/// Sets a remapper for the grid.
+///
+/// This can be used to 'upgrade' one-dimensional bin limits to N-dimensional ones. The new bin
+/// limits must be given in the form of tuples giving the left and right limits, and a tuple for
+/// each dimension.
 ///
 /// # Safety
 ///
@@ -1119,7 +1129,7 @@ pub unsafe extern "C" fn pineappl_grid_set_key_value(
 ///
 /// # Panics
 ///
-/// TODO
+/// Panics if the constructed bins are inconsistent with the grid or `set_bwfl` rejects them.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn pineappl_grid_set_remapper(
     grid: *mut Grid,
@@ -1166,7 +1176,7 @@ pub unsafe extern "C" fn pineappl_grid_set_remapper(
 ///
 /// # Panics
 ///
-/// TODO
+/// Panics if the output file cannot be created or writing the grid fails.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn pineappl_grid_write(grid: *const Grid, filename: *const c_char) {
     let grid = unsafe { &*grid };
@@ -1496,19 +1506,19 @@ pub struct Channels {
 /// Type for defining the interpolation object
 #[repr(C)]
 pub struct Interp {
-    /// TODO
+    /// Physical lower edge of the interpolation range (before internal mapping).
     pub min: f64,
-    /// TODO
+    /// Physical upper edge of the interpolation range (before internal mapping).
     pub max: f64,
-    /// TODO
+    /// Number of support nodes.
     pub nodes: usize,
-    /// TODO
+    /// Polynomial interpolation order.
     pub order: usize,
-    /// TODO
+    /// Reweighting mode in the physical variable.
     pub reweight: ReweightMeth,
-    /// TODO
+    /// Map between physical variable and internal coordinate.
     pub map: Map,
-    /// TODO
+    /// Interpolation kernel (Lagrange, ...).
     pub interp_meth: InterpMeth,
 }
 
@@ -1648,11 +1658,15 @@ pub extern "C" fn pineappl_channels_delete(channels: Option<Box<Channels>>) {}
 ///
 /// # Safety
 ///
-/// TODO
+/// `bin_limits` must point to at least `bins + 1` floats. `order_params` must point to `5 * orders`
+/// bytes. `channels` must be a valid `Channels` pointer. `convolutions` must point to as many
+/// `Conv` values as recorded in `channels`. `interps` must point to `interpolations` elements.
+/// `kinematics` must point to one entry per interpolation. `scales` must point to three
+/// `ScaleFuncForm` values (ren, fac, frg). Any mismatch is undefined behavior.
 ///
 /// # Panics
 ///
-/// TODO
+/// Panics if bin limits, orders, or internal `Grid::new` validation fail (unwraps in the Rust layer).
 #[unsafe(no_mangle)]
 #[must_use]
 pub unsafe extern "C" fn pineappl_grid_new2(
@@ -2015,11 +2029,12 @@ pub unsafe extern "C" fn pineappl_grid_convolve(
 ///
 /// # Safety
 ///
-/// TODO
+/// `grid` must be a valid grid pointer. `xfx` must be a valid function pointer obeying the same
+/// calling convention; `state` is passed through to `xfx` and may be null if unused.
 ///
 /// # Panics
 ///
-/// TODO
+/// Panics if `fix_convolution` fails in the Rust API (for example invalid `conv_idx`).
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn pineappl_grid_fix_convolution(
     grid: *const Grid,
@@ -2041,7 +2056,8 @@ pub unsafe extern "C" fn pineappl_grid_fix_convolution(
 ///
 /// # Safety
 ///
-/// TODO
+/// `grid` must be valid. `conv_types` must point to writable memory for `grid.convolutions().len()`
+/// elements.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn pineappl_grid_conv_types(grid: *const Grid, conv_types: *mut ConvType) {
     let grid = unsafe { &*grid };
@@ -2165,6 +2181,10 @@ pub unsafe extern "C" fn pineappl_grid_subgrid_array(
 
 /// Set the subgrid of a Grid for a given bin, order, and channel.
 ///
+/// This installs an [`ImportSubgridV1`], mainly for **tabulated coefficients from another program**
+/// that must be folded with parton **`f`**. Non-zero `subgrid_array` entries must use the **`f`**
+/// convention (density or fragmentation as a function of momentum fraction), **not** **`x * f`**.
+///
 /// # Safety
 ///
 /// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
@@ -2219,7 +2239,7 @@ pub unsafe extern "C" fn pineappl_grid_set_subgrid(
 ///
 /// # Panics
 ///
-/// TODO
+/// Panics if the new bin layout cannot be built or `set_bwfl` rejects it (for example bin count mismatch).
 ///
 /// # Safety
 ///
@@ -2353,7 +2373,7 @@ pub type OperatorCallback = unsafe extern "C" fn(
 /// * `grid` - A `Grid` object
 /// * `op_info` - An array of `OperatorInfo` objects containing the information about the evolution.
 /// * `operator` - A callack that returns the evolution operator.
-/// * `max_orders` - The maximum QCD and EW orders `(αs, α)`.
+/// * `max_orders` - The maximum QCD and EW orders `(alpha_s, alpha)`.
 /// * `params_state` - Parameters that get passed to `operator`.
 /// * `x_in` - The  x-grid that defines the Grid.
 /// * `x_out` - The x-grid that will define the evolved Grid.
@@ -2362,7 +2382,7 @@ pub type OperatorCallback = unsafe extern "C" fn(
 /// * `eko_shape` - The shape of the evolution operator.
 /// * `xi` - The values that defines that scale variations.
 /// * `ren` - An array containing the values of the renormalization scale variation.
-/// * `alphas` - An array containing the values of `αs`. It must have the same size as `ren1`.
+/// * `alphas` - An array containing the values of `alpha_s`. It must have the same size as `ren1`.
 ///
 /// # Safety
 ///

@@ -50,7 +50,8 @@ impl PyFkTable {
     /// Constructor from an existing grid.
     ///
     /// # Panics
-    /// TODO
+    ///
+    /// Panics if `grid` is not a valid FK-table-backed grid (`FkTable::try_from` fails).
     #[new]
     #[must_use]
     pub fn new(grid: PyGrid) -> Self {
@@ -62,9 +63,10 @@ impl PyFkTable {
     /// Read an FK Table from given path.
     ///
     /// # Panics
-    /// TODO
     ///
-    /// Parameteters
+    /// Panics if the file cannot be opened, the grid cannot be read, or it cannot be converted to an FK table.
+    ///
+    /// Parameters
     /// ------------
     /// path : str
     ///     path to the FK table
@@ -81,9 +83,6 @@ impl PyFkTable {
 
     /// Get cross section tensor.
     ///
-    /// # Errors
-    /// TODO
-    ///
     /// Returns
     /// -------
     /// numpy.ndarray :
@@ -95,8 +94,9 @@ impl PyFkTable {
     /// Get the type(s) of convolution(s) for the current FK table.
     ///
     /// Returns
-    /// list(PyConv):
-    ///     list of convolution type with the corresponding PIDs
+    /// -------
+    /// list of `PyConv`
+    ///     One entry per convolution (type and PID).
     #[getter]
     #[must_use]
     pub fn convolutions(&self) -> Vec<PyConv> {
@@ -113,7 +113,7 @@ impl PyFkTable {
     /// Returns
     /// -------
     /// list(list(float)):
-    ///     limits/edges of the bins with shape (n_bins, n_dimension, 2)
+    ///     limits/edges of the bins with shape (`n_bins`, `n_dimension`, 2)
     #[must_use]
     pub fn bin_limits(&self) -> Vec<Vec<(f64, f64)>> {
         self.fk_table
@@ -201,7 +201,7 @@ impl PyFkTable {
     ///
     /// Returns
     /// -------
-    /// x_grid : numpy.ndarray(float)
+    /// `x_grid` : numpy.ndarray(float)
     ///     interpolation grid
     #[must_use]
     pub fn x_grid<'py>(&self, py: Python<'py>) -> Bound<'py, PyArray1<f64>> {
@@ -222,7 +222,7 @@ impl PyFkTable {
     ///
     /// Parameters
     /// ----------
-    /// pid_basis: PyPidBasis
+    /// `pid_basis`: `PyPidBasis`
     ///     PID basis of the resulting FK Table
     pub fn rotate_pid_basis(&mut self, pid_basis: PyPidBasis) {
         self.fk_table.rotate_pid_basis(pid_basis.into());
@@ -291,19 +291,24 @@ impl PyFkTable {
 
     /// Convolve the FK table with as many distributions.
     ///
+    /// ``xfx`` callables must return ``x * f`` (LHAPDF). If the underlying filling grid used
+    /// :class:`pineappl.subgrid.ImportSubgridV1` (**external coefficient dumps** meant to fold
+    /// with ``f``), those values must have been stored as ``f``, not ``x * f``.
+    ///
     /// # Panics
-    /// TODO
+    ///
+    /// Panics if Python PDF callbacks fail or if the underlying Rust convolution panics.
     ///
     /// Parameters
     /// ----------
-    /// pdg_convs : list(PyConv)
+    /// `pdg_convs` : list(PyConv)
     ///     list containing the types of convolutions and PID
     /// xfxs : list(callable)
-    ///     list of lhapdf-like callable with arguments `pid, x, Q2` returning x*pdf
-    /// bin_indices : numpy.ndarray(int)
+    ///     list of LHAPDF-like callables ``(pid, x, Q2) -> x * f``
+    /// `bin_indices` : numpy.ndarray(int)
     ///     A list with the indices of the corresponding bins that should be calculated. An
     ///     empty list means that all bins should be calculated.
-    /// channel_mask : numpy.ndarray(bool)
+    /// `channel_mask` : numpy.ndarray(bool)
     ///     Mask for selecting specific channels. The value `True` means the
     ///     corresponding channel is included. An empty list corresponds to all channels being
     ///     enabled.
@@ -313,6 +318,7 @@ impl PyFkTable {
     /// numpy.ndarray(float) :
     ///     cross sections for all bins
     #[must_use]
+    #[allow(clippy::needless_pass_by_value)]
     #[pyo3(signature = (pdg_convs, xfxs, bin_indices = None, channel_mask= None))]
     pub fn convolve<'py>(
         &self,
@@ -357,9 +363,10 @@ impl PyFkTable {
     ///
     /// Parameters
     /// ----------
-    /// assumptions : PyFkAssumptions
-    ///     assumptions about the FkTable properties, declared by the user, deciding which
+    /// assumptions : `PyFkAssumptions`
+    ///     assumptions about the `FkTable` properties, declared by the user, deciding which
     ///     optimizations are possible
+    #[allow(clippy::needless_pass_by_value)]
     pub fn optimize(&mut self, assumptions: PyRef<PyFkAssumptions>) {
         self.fk_table.optimize(assumptions.fk_assumptions);
     }
