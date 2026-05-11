@@ -11,11 +11,14 @@ Starting with this version, PineAPPL has an official logo!
 
 ### Added
 
+- added `optimize_using` in `Grid` objects of the Python API
 - added an actual implementation of `pineappl_grid_metadata` and
   `pineappl_grid_set_metadata` in the APIs
 
 ### Fixed
 
+- fixed fragmentation scale evolution, particularly for the specific case where
+  the fragmentation scale is the only scale present
 - fixed a bug in the Newton's convergence method by raising the maximum number
   of iteration
 - fixed a bug in the implementation of `pineappl_channels_add` of the Fortran
@@ -24,8 +27,16 @@ Starting with this version, PineAPPL has an official logo!
 
 ### Changed
 
-- raised MSRV to 1.94.0
+- raised MSRV to 1.91.0
 - raised Rust edition to 2024
+- instead of depending on a previous version of the PineAPPL crate, a new crate
+  `pineappl_v0` is now responsible for loading files with file version `v0`
+- raised dependency on `pyo3` to 0.27, which drops support for PyPy 3.9 and 3.10
+- renamed the switch `--discard-non-matching-scales` to
+  `--discard-non-matching-values`, which now also discards momentum fraction
+  values unavailable to APPLgrid. Both `--discard-non-matching-scales` and the
+  new `--discard-non-matching-momenta` are aliases to the new option name to
+  guarantee backwards compatibility of the CLI.
 
 ## [1.3.3] - 01/03/2026
 

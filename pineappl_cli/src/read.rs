@@ -5,7 +5,7 @@ use clap::{Args, Parser, ValueHint};
 use itertools::Itertools;
 use pineappl::boc::Order;
 use pineappl::fk_table::FkTable;
-use prettytable::{cell, row, Row};
+use prettytable::{Row, cell, row};
 use std::path::PathBuf;
 use std::process::ExitCode;
 
@@ -130,7 +130,7 @@ impl Subcommand for Opts {
 
             let orders = sorted_grid_orders
                 .into_iter()
-                .group_by(|order| order.alphas + order.alpha)
+                .chunk_by(|order| order.alphas + order.alpha)
                 .into_iter()
                 .map(|mut iter| {
                     if self.group.qcd {

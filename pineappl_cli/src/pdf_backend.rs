@@ -4,7 +4,7 @@
 //! currently supporting `LHAPDF` and `NeoPDF`. It allows runtime selection of the backend
 //! and provides type-safe access to PDF metadata.
 
-use anyhow::{anyhow, Context, Result};
+use anyhow::{Context, Result, anyhow};
 use std::fmt;
 use std::str::FromStr;
 

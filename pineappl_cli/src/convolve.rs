@@ -2,7 +2,7 @@ use super::helpers::{self, ConvFuns, ConvoluteMode};
 use super::{GlobalConfiguration, Subcommand};
 use anyhow::Result;
 use clap::{Parser, ValueHint};
-use prettytable::{cell, Row};
+use prettytable::{Row, cell};
 use std::ops::RangeInclusive;
 use std::path::PathBuf;
 use std::process::ExitCode;

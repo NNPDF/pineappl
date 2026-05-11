@@ -91,10 +91,13 @@ class TestSubgrid:
         grid.set_subgrid(0, 0, 0, test_subgrid.into())
         extr_subgrid = grid.subgrid(0, 0, 0)
         assert isinstance(extr_subgrid, SubgridEnum)
+        assert not extr_subgrid.is_empty()
 
-        # Check that the subgrid can be scaled
         extr_subgrid.scale(factor=100)
         assert isinstance(extr_subgrid.into(), SubgridEnum)
+
+        empty_subgrid = grid.subgrid(0, 0, 1)
+        assert empty_subgrid.is_empty()
 
     @pytest.mark.parametrize("nb_xdim", [1, 2, 3, 4])
     def test_subgrid_arrays(self, nb_xdim: int):

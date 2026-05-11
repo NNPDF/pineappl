@@ -2,8 +2,8 @@ use super::helpers::{self, ConvFuns, ConvoluteMode};
 use super::{GlobalConfiguration, Subcommand};
 use anyhow::Result;
 use clap::builder::TypedValueParser;
-use clap::{value_parser, Parser, ValueHint};
-use prettytable::{cell, Row};
+use clap::{Parser, ValueHint, value_parser};
+use prettytable::{Row, cell};
 use std::path::PathBuf;
 use std::process::ExitCode;
 

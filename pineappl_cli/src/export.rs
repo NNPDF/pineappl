@@ -1,6 +1,6 @@
 use super::helpers::{self, ConvFuns, ConvoluteMode};
 use super::{GlobalConfiguration, Subcommand};
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use clap::builder::{PossibleValuesParser, TypedValueParser};
 use clap::{Parser, ValueHint};
 use lhapdf::Pdf;
@@ -18,12 +18,12 @@ fn convert_into_applgrid(
     grid: &mut Grid,
     conv_funs: &mut [Pdf],
     _: usize,
-    discard_non_matching_scales: bool,
+    discard_non_matching_values: bool,
 ) -> Result<(&'static str, Vec<f64>, usize, Vec<bool>)> {
     // TODO: check also scale-varied results
 
     let (mut applgrid, order_mask) =
-        applgrid::convert_into_applgrid(grid, output, discard_non_matching_scales)?;
+        applgrid::convert_into_applgrid(grid, output, discard_non_matching_values)?;
     let results = applgrid::convolve_applgrid(applgrid.pin_mut(), conv_funs);
 
     Ok(("APPLgrid", results, 1, order_mask))
@@ -47,18 +47,12 @@ fn convert_into_grid(
     grid: &mut Grid,
     conv_funs: &mut [Pdf],
     scales: usize,
-    discard_non_matching_scales: bool,
+    discard_non_matching_values: bool,
 ) -> Result<(&'static str, Vec<f64>, usize, Vec<bool>)> {
-    if let Some(extension) = output.extension() {
-        if extension == "appl" || extension == "root" {
-            return convert_into_applgrid(
-                output,
-                grid,
-                conv_funs,
-                scales,
-                discard_non_matching_scales,
-            );
-        }
+    if let Some(extension) = output.extension()
+        && (extension == "appl" || extension == "root")
+    {
+        return convert_into_applgrid(output, grid, conv_funs, scales, discard_non_matching_values);
     }
 
     Err(anyhow!("could not detect file format"))
@@ -78,9 +72,9 @@ pub struct Opts {
     /// Relative threshold between the table and the converted grid when comparison fails.
     #[arg(default_value = "1e-10", long)]
     accuracy: f64,
-    /// Discard non-matching scales that would otherwise lead to panics.
-    #[arg(long)]
-    discard_non_matching_scales: bool,
+    /// Discard non-matching scales and momentum fractions that would otherwise fail the export.
+    #[arg(long, aliases = ["discard-non-matching-scales", "discard-non-matching-momentum"])]
+    discard_non_matching_values: bool,
     /// Set the number of scale variations to compare with if they are available.
     #[arg(
         default_value_t = 7,
@@ -110,7 +104,7 @@ impl Subcommand for Opts {
             &mut grid,
             &mut conv_funs,
             self.scales,
-            self.discard_non_matching_scales,
+            self.discard_non_matching_values,
         )?;
 
         for Order {
@@ -125,7 +119,9 @@ impl Subcommand for Opts {
             .zip(order_mask.iter())
             .filter_map(|(order, keep)| (!keep).then_some(order.clone()))
         {
-            println!("WARNING: the order O(as^{alphas} a^{alpha} lr^{logxir} lf^{logxif} la^{logxia}) isn't supported by {grid_type} and will be skipped.");
+            println!(
+                "WARNING: the order O(as^{alphas} a^{alpha} lr^{logxir} lf^{logxif} la^{logxia}) isn't supported by {grid_type} and will be skipped."
+            );
         }
 
         let orders: Vec<_> = grid
@@ -191,11 +187,7 @@ impl Subcommand for Opts {
                         // ALLOW: here we really need an exact comparison
                         // TODO: change allow to `expect` if MSRV >= 1.81.0
                         #[allow(clippy::float_cmp)]
-                        if a == b {
-                            0.0
-                        } else {
-                            b / a - 1.0
-                        }
+                        if a == b { 0.0 } else { b / a - 1.0 }
                     })
                     .collect();
 

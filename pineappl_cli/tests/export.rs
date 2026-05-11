@@ -16,7 +16,7 @@ Arguments:
 
 Options:
       --accuracy <ACCURACY>          Relative threshold between the table and the converted grid when comparison fails [default: 1e-10]
-      --discard-non-matching-scales  Discard non-matching scales that would otherwise lead to panics
+      --discard-non-matching-values  Discard non-matching scales and momentum fractions that would otherwise fail the export
   -s, --scales <SCALES>              Set the number of scale variations to compare with if they are available [default: 7] [possible values: 1, 3, 7, 9]
       --digits-abs <ABS>             Set the number of fractional digits shown for absolute numbers [default: 7]
       --digits-rel <REL>             Set the number of fractional digits shown for relative numbers [default: 7]
@@ -130,6 +130,94 @@ fn export_applgrid() {
         .assert()
         .success()
         .stdout(predicates::str::ends_with(EXPORT_APPLGRID_STR));
+}
+
+#[cfg(feature = "applgrid")]
+const EXPORT_NNLO_AK5_PTJ_STR: &str = "b   APPLgrid     PineAPPL    rel. diff
+-+------------+------------+------------
+0 6.7833493e-4 6.7833993e-4 7.3775731e-6
+";
+
+#[cfg(feature = "applgrid")]
+const EXPORT_NNLO_AK5_PTJ_NO_DISCARD_FAILS_STR: &str = "Error: factorization scale muf2 = 46548084.443279915 not found in APPLgrid; try exporting with `--discard-non-matching-values`
+";
+
+#[test]
+#[cfg(feature = "applgrid")]
+fn export_nnlo_ak5_ptj_discard_non_matching_values() {
+    let output = NamedTempFile::new("nnlo.ak5_ptj.appl").unwrap();
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "export",
+            "--discard-non-matching-values",
+            "--accuracy=1e-5",
+            "../test-data/nnlo.ak5_ptj-bin63.pineappl.lz4",
+            output.path().to_str().unwrap(),
+            "NNPDF31_nlo_as_0118_luxqed",
+        ])
+        .assert()
+        .success()
+        .stdout(predicates::str::ends_with(EXPORT_NNLO_AK5_PTJ_STR));
+}
+
+#[test]
+#[cfg(feature = "applgrid")]
+fn export_nnlo_ak5_ptj_discard_non_matching_scales_alias() {
+    let output = NamedTempFile::new("nnlo.ak5_ptj.appl").unwrap();
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "export",
+            "--discard-non-matching-scales",
+            "--accuracy=1e-5",
+            "../test-data/nnlo.ak5_ptj-bin63.pineappl.lz4",
+            output.path().to_str().unwrap(),
+            "NNPDF31_nlo_as_0118_luxqed",
+        ])
+        .assert()
+        .success()
+        .stdout(predicates::str::ends_with(EXPORT_NNLO_AK5_PTJ_STR));
+}
+
+#[test]
+#[cfg(feature = "applgrid")]
+fn export_nnlo_ak5_ptj_discard_non_matching_momentum_alias() {
+    let output = NamedTempFile::new("nnlo.ak5_ptj.appl").unwrap();
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "export",
+            "--discard-non-matching-momentum",
+            "--accuracy=1e-5",
+            "../test-data/nnlo.ak5_ptj-bin63.pineappl.lz4",
+            output.path().to_str().unwrap(),
+            "NNPDF31_nlo_as_0118_luxqed",
+        ])
+        .assert()
+        .success()
+        .stdout(predicates::str::ends_with(EXPORT_NNLO_AK5_PTJ_STR));
+}
+
+#[test]
+#[cfg(feature = "applgrid")]
+fn export_nnlo_ak5_ptj_no_discard_fails() {
+    let output = NamedTempFile::new("converted.appl").unwrap();
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "export",
+            "../test-data/nnlo.ak5_ptj-bin63.pineappl.lz4",
+            output.path().to_str().unwrap(),
+            "NNPDF31_nlo_as_0118_luxqed",
+        ])
+        .assert()
+        .failure()
+        .stderr(EXPORT_NNLO_AK5_PTJ_NO_DISCARD_FAILS_STR);
 }
 
 #[test]

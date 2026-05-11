@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Context, Result};
+use anyhow::{Context, Result, anyhow};
 use flate2::read::GzDecoder;
 use ndarray::s;
 use pineappl::boc::{BinsWithFillLimits, Kinematics, Order, ScaleFuncForm, Scales};
@@ -182,12 +182,14 @@ fn read_fktable(reader: impl BufRead) -> Result<Grid> {
 
                 grid = Some(fktable);
 
-                arrays = iter::repeat(PackedArray::new(if hadronic {
-                    vec![1, nx1, nx2]
-                } else {
-                    vec![1, nx1]
-                }))
-                .take(flavor_mask.iter().filter(|&&value| value).count())
+                arrays = iter::repeat_n(
+                    PackedArray::new(if hadronic {
+                        vec![1, nx1, nx2]
+                    } else {
+                        vec![1, nx1]
+                    }),
+                    flavor_mask.iter().filter(|&&value| value).count(),
+                )
                 .collect();
             }
             _ => match section {
@@ -257,12 +259,14 @@ fn read_fktable(reader: impl BufRead) -> Result<Grid> {
                             .into();
                         }
 
-                        arrays = iter::repeat(PackedArray::new(if hadronic {
-                            vec![1, nx1, nx2]
-                        } else {
-                            vec![1, nx1]
-                        }))
-                        .take(flavor_mask.iter().filter(|&&value| value).count())
+                        arrays = iter::repeat_n(
+                            PackedArray::new(if hadronic {
+                                vec![1, nx1, nx2]
+                            } else {
+                                vec![1, nx1]
+                            }),
+                            flavor_mask.iter().filter(|&&value| value).count(),
+                        )
                         .collect();
                         last_bin = bin;
                     }
@@ -334,10 +338,10 @@ pub fn convert_fktable(input: &Path) -> Result<Grid> {
         let file = entry.unwrap();
         let path = file.header().path().unwrap();
 
-        if let Some(extension) = path.extension() {
-            if extension == "dat" {
-                return read_fktable(BufReader::new(file));
-            }
+        if let Some(extension) = path.extension()
+            && extension == "dat"
+        {
+            return read_fktable(BufReader::new(file));
         }
     }
 

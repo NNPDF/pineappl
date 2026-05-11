@@ -10,8 +10,8 @@ use pineappl::packed_array::PackedArray;
 use pineappl::pids::PidBasis;
 use pineappl::subgrid::ImportSubgridV1;
 use pineappl_fastnlo::ffi::{
-    self, fastNLOCoeffAddBase, fastNLOCoeffAddFix, fastNLOCoeffAddFlex, fastNLOLHAPDF,
-    fastNLOPDFLinearCombinations, EScaleFunctionalForm,
+    self, EScaleFunctionalForm, fastNLOCoeffAddBase, fastNLOCoeffAddFix, fastNLOCoeffAddFlex,
+    fastNLOLHAPDF, fastNLOPDFLinearCombinations,
 };
 use std::f64::consts::TAU;
 use std::iter;
@@ -134,8 +134,8 @@ fn convert_coeff_add_fix(
             Map::ApplGridH0,
             InterpMeth::Lagrange,
         ))
-        .chain(
-            iter::repeat(Interp::new(
+        .chain(iter::repeat_n(
+            Interp::new(
                 2e-7,
                 1.0,
                 50,
@@ -143,9 +143,9 @@ fn convert_coeff_add_fix(
                 ReweightMeth::ApplGridX,
                 Map::ApplGridF2,
                 InterpMeth::Lagrange,
-            ))
-            .take(npdf),
-        )
+            ),
+            npdf,
+        ))
         .collect(),
         if npdf == 2 {
             vec![Kinematics::Scale(0), Kinematics::X(0), Kinematics::X(1)]
@@ -327,18 +327,20 @@ fn convert_coeff_add_flex(
         PidBasis::Pdg,
         convolutions,
         // TODO: read out interpolation parameters from fastNLO
-        iter::repeat(Interp::new(
-            1e2,
-            1e8,
-            40,
-            3,
-            ReweightMeth::NoReweight,
-            Map::ApplGridH0,
-            InterpMeth::Lagrange,
-        ))
-        .take(2)
-        .chain(
-            iter::repeat(Interp::new(
+        iter::repeat_n(
+            Interp::new(
+                1e2,
+                1e8,
+                40,
+                3,
+                ReweightMeth::NoReweight,
+                Map::ApplGridH0,
+                InterpMeth::Lagrange,
+            ),
+            2,
+        )
+        .chain(iter::repeat_n(
+            Interp::new(
                 2e-7,
                 1.0,
                 50,
@@ -346,9 +348,9 @@ fn convert_coeff_add_flex(
                 ReweightMeth::ApplGridX,
                 Map::ApplGridF2,
                 InterpMeth::Lagrange,
-            ))
-            .take(npdf),
-        )
+            ),
+            npdf,
+        ))
         .collect(),
         [Kinematics::Scale(0), Kinematics::Scale(1)]
             .into_iter()

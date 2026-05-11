@@ -12,7 +12,7 @@ use pineappl::grid::{Grid, GridOptFlags};
 use pineappl::interpolation::{Interp, InterpMeth, Map, ReweightMeth};
 use pineappl::pids::PidBasis;
 use pineappl::subgrid::{Subgrid, SubgridEnum};
-use rand::Rng;
+use rand::{Rng, RngExt};
 use rand_pcg::Pcg64;
 use std::f64::consts::PI;
 use std::io::Cursor;
@@ -89,8 +89,8 @@ fn hadronic_pspgen(rng: &mut impl Rng, mmin: f64, mmax: f64) -> Psp2to2 {
 
     let mut jacobian = 1.0;
 
-    let r1 = rng.r#gen::<f64>();
-    let r2 = rng.r#gen::<f64>();
+    let r1 = rng.random::<f64>();
+    let r2 = rng.random::<f64>();
     let tau0 = smin / smax;
     let tau = tau0.powf(r1);
     let y = tau.powf(1.0 - r2);
@@ -100,7 +100,7 @@ fn hadronic_pspgen(rng: &mut impl Rng, mmin: f64, mmax: f64) -> Psp2to2 {
     jacobian *= tau * tau0.ln().powi(2) * r1;
 
     // theta integration (in the CMS)
-    let cos_theta = rng.r#gen::<f64>().mul_add(2.0, -1.0);
+    let cos_theta = rng.random::<f64>().mul_add(2.0, -1.0);
     jacobian *= 2.0;
 
     let t = -0.5 * s * (1.0 - cos_theta);
