@@ -45,7 +45,8 @@ If you use PineAPPL, please cite
 By using PineAPPL, you're probably also using
 
 - [APPLgrid],
-- [fastNLO] and/or
+- [fastNLO],
+- [NeoPDF] and/or
 - [LHAPDF].
 
 If that is the case, please cite these accordingly.
@@ -53,6 +54,7 @@ If that is the case, please cite these accordingly.
 [APPLgrid]: https://applgrid.hepforge.org
 [fastNLO]: https://fastnlo.hepforge.org
 [LHAPDF]: https://lhapdf.hepforge.org
+[NeoPDF]: https://qcdlab.github.io/neopdf/
 [zenodo DOI]: https://zenodo.org/badge/latestdoi/248306479
 [paper]: https://inspirehep.net/literature/1814432
 

@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Isolate PDF interpolation backend, current suppored backends include
+  LHAPDF and NeoPDF
+
 ## [1.4.0] - 12/05/2026
 
 Starting with this version, PineAPPL has an official logo!
