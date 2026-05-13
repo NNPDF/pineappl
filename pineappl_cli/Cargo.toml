@@ -30,7 +30,7 @@ lhapdf.workspace = true
 lz4_flex = { optional = true, workspace = true }
 ndarray.workspace = true
 ndarray-npy = { optional = true, workspace = true }
-neopdf = "0.3.3"
+neopdf.workspace = true
 pineappl.workspace = true
 pineappl_applgrid = { optional = true, workspace = true }
 pineappl_fastnlo = { optional = true, workspace = true }
