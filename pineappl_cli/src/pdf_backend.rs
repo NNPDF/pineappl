@@ -421,7 +421,7 @@ pub fn create_pdf_set(name: &str, backend: Backend) -> Result<Box<dyn PdfSetBack
             let setname = if let Ok(lhaid) = name.parse::<i32>() {
                 lhapdf::lookup_pdf(lhaid)
                     .map(|(set, _)| set)
-                    .ok_or_else(|| anyhow!("no PDF set found for LHAID = {lhaid}"))?
+                    .ok_or_else(|| anyhow!("no convolution function for LHAID = `{lhaid}` found"))?
             } else {
                 name.to_owned()
             };
