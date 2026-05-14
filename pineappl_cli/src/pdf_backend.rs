@@ -5,29 +5,29 @@
 //! and provides type-safe access to PDF metadata.
 
 use anyhow::{Context, Result, anyhow};
-use std::fmt;
+// use std::fmt;
 use std::str::FromStr;
 
 pub use neopdf::uncertainty::CL_1_SIGMA;
 
-/// The type of PDF set (space-like for PDFs, time-like for FFs).
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
-pub enum SetType {
-    /// Space-like PDF (standard parton distribution function).
-    #[default]
-    SpaceLike,
-    /// Time-like PDF (fragmentation function).
-    TimeLike,
-}
+// /// The type of PDF set (space-like for PDFs, time-like for FFs).
+// #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+// pub enum SetType {
+//     /// Space-like PDF (standard parton distribution function).
+//     #[default]
+//     SpaceLike,
+//     /// Time-like PDF (fragmentation function).
+//     TimeLike,
+// }
 
-impl fmt::Display for SetType {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::SpaceLike => write!(f, "SpaceLike"),
-            Self::TimeLike => write!(f, "TimeLike"),
-        }
-    }
-}
+// impl fmt::Display for SetType {
+//     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+//         match self {
+//             Self::SpaceLike => write!(f, "SpaceLike"),
+//             Self::TimeLike => write!(f, "TimeLike"),
+//         }
+//     }
+// }
 
 /// Method for handling negative PDF values.
 #[derive(Clone, Copy, Debug, Default)]
@@ -64,14 +64,14 @@ impl FromStr for Backend {
     }
 }
 
-impl fmt::Display for Backend {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::Lhapdf => write!(f, "lhapdf"),
-            Self::Neopdf => write!(f, "neopdf"),
-        }
-    }
-}
+// impl fmt::Display for Backend {
+//     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+//         match self {
+//             Self::Lhapdf => write!(f, "lhapdf"),
+//             Self::Neopdf => write!(f, "neopdf"),
+//         }
+//     }
+// }
 
 /// Unified PDF backend interface.
 ///
@@ -104,23 +104,23 @@ pub trait PdfBackend: Send {
     /// Returns the hadron particle ID (PDG code).
     fn particle_id(&self) -> i32;
 
-    /// Returns whether this is a polarized PDF.
-    fn is_polarized(&self) -> bool;
+    // /// Returns whether this is a polarized PDF.
+    // fn is_polarized(&self) -> bool;
 
-    /// Returns the PDF set type (space-like or time-like).
-    fn set_type(&self) -> SetType;
+    // /// Returns the PDF set type (space-like or time-like).
+    // fn set_type(&self) -> SetType;
 
     /// Sets the method for handling negative PDF values.
     fn set_force_positive(&mut self, method: ForcePositive);
 
-    /// Returns the error type of the PDF set (e.g., "replicas", "hessian").
-    fn error_type(&self) -> String;
+    // /// Returns the error type of the PDF set (e.g., "replicas", "hessian").
+    // fn error_type(&self) -> String;
 }
 
 /// Unified PDF set interface for uncertainty calculations.
 pub trait PdfSetBackend {
-    /// Returns the number of members in this set.
-    fn num_members(&self) -> usize;
+    // /// Returns the number of members in this set.
+    // fn num_members(&self) -> usize;
 
     /// Creates all PDF members in the set.
     fn mk_pdfs(&self) -> Result<Vec<Box<dyn PdfBackend>>>;
@@ -193,25 +193,25 @@ impl PdfBackend for LhapdfPdf {
             .unwrap_or(2212)
     }
 
-    fn is_polarized(&self) -> bool {
-        self.pdf
-            .set()
-            .entry("Polarized")
-            .is_some_and(|s| s.eq_ignore_ascii_case("true"))
-    }
+    // fn is_polarized(&self) -> bool {
+    //     self.pdf
+    //         .set()
+    //         .entry("Polarized")
+    //         .is_some_and(|s| s.eq_ignore_ascii_case("true"))
+    // }
 
-    fn set_type(&self) -> SetType {
-        self.pdf
-            .set()
-            .entry("SetType")
-            .map_or(SetType::SpaceLike, |s| {
-                if s.eq_ignore_ascii_case("timelike") {
-                    SetType::TimeLike
-                } else {
-                    SetType::SpaceLike
-                }
-            })
-    }
+    // fn set_type(&self) -> SetType {
+    //     self.pdf
+    //         .set()
+    //         .entry("SetType")
+    //         .map_or(SetType::SpaceLike, |s| {
+    //             if s.eq_ignore_ascii_case("timelike") {
+    //                 SetType::TimeLike
+    //             } else {
+    //                 SetType::SpaceLike
+    //             }
+    //         })
+    // }
 
     fn set_force_positive(&mut self, method: ForcePositive) {
         match method {
@@ -220,13 +220,13 @@ impl PdfBackend for LhapdfPdf {
         }
     }
 
-    fn error_type(&self) -> String {
-        self.pdf
-            .set()
-            .entry("ErrorType")
-            .map(|s| s.to_owned())
-            .unwrap_or_default()
-    }
+    // fn error_type(&self) -> String {
+    //     self.pdf
+    //         .set()
+    //         .entry("ErrorType")
+    //         .map(|s| s.to_owned())
+    //         .unwrap_or_default()
+    // }
 }
 
 /// LHAPDF set wrapper.
@@ -245,12 +245,12 @@ impl LhapdfSet {
 }
 
 impl PdfSetBackend for LhapdfSet {
-    fn num_members(&self) -> usize {
-        self.set
-            .entry("NumMembers")
-            .and_then(|s| s.parse().ok())
-            .unwrap_or(1)
-    }
+    // fn num_members(&self) -> usize {
+    //     self.set
+    //         .entry("NumMembers")
+    //         .and_then(|s| s.parse().ok())
+    //         .unwrap_or(1)
+    // }
 
     fn mk_pdfs(&self) -> Result<Vec<Box<dyn PdfBackend>>> {
         let pdfs = self.set.mk_pdfs()?;
@@ -309,16 +309,16 @@ impl PdfBackend for NeopdfPdf {
         self.pdf.metadata().hadron_pid
     }
 
-    fn is_polarized(&self) -> bool {
-        self.pdf.metadata().polarised
-    }
+    // fn is_polarized(&self) -> bool {
+    //     self.pdf.metadata().polarised
+    // }
 
-    fn set_type(&self) -> SetType {
-        match self.pdf.metadata().set_type {
-            neopdf::metadata::SetType::SpaceLike => SetType::SpaceLike,
-            neopdf::metadata::SetType::TimeLike => SetType::TimeLike,
-        }
-    }
+    // fn set_type(&self) -> SetType {
+    //     match self.pdf.metadata().set_type {
+    //         neopdf::metadata::SetType::SpaceLike => SetType::SpaceLike,
+    //         neopdf::metadata::SetType::TimeLike => SetType::TimeLike,
+    //     }
+    // }
 
     fn set_force_positive(&mut self, method: ForcePositive) {
         match method {
@@ -333,15 +333,15 @@ impl PdfBackend for NeopdfPdf {
         }
     }
 
-    fn error_type(&self) -> String {
-        self.pdf.metadata().error_type.clone()
-    }
+    // fn error_type(&self) -> String {
+    //     self.pdf.metadata().error_type.clone()
+    // }
 }
 
 /// `NeoPDF` set wrapper.
 pub struct NeopdfSet {
     pdf_name: String,
-    num_members: usize,
+    // num_members: usize,
     error_type: String,
 }
 
@@ -354,16 +354,16 @@ impl NeopdfSet {
 
         Self {
             pdf_name: pdf_name.to_owned(),
-            num_members: metadata.num_members as usize,
+            // num_members: metadata.num_members as usize,
             error_type: metadata.error_type.clone(),
         }
     }
 }
 
 impl PdfSetBackend for NeopdfSet {
-    fn num_members(&self) -> usize {
-        self.num_members
-    }
+    // fn num_members(&self) -> usize {
+    //     self.num_members
+    // }
 
     fn mk_pdfs(&self) -> Result<Vec<Box<dyn PdfBackend>>> {
         let pdfs = neopdf::pdf::PDF::load_pdfs(&self.pdf_name);
