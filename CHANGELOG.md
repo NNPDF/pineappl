@@ -7,10 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Changed
+### Added
 
-- Isolate PDF interpolation backend, current suppored backends include
-  LHAPDF and NeoPDF
+- added support for the [NeoPDF](https://qcdlab.github.io/neopdf/) library as
+  an alternative to LHAPDF in the CLI; using `--backend=neopdf` one can use it.
 
 ## [1.4.0] - 12/05/2026
 
