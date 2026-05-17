@@ -67,53 +67,6 @@ impl PidBasis {
         }
     }
 
-    /// Convert the PID `pid` in the basis given by `self` into a LaTeX string that represents the
-    /// particle.
-    #[must_use]
-    pub fn to_latex_str(&self, pid: i32) -> &'static str {
-        match (*self, pid) {
-            (Self::Evol | Self::Pdg, -6) => r"\bar{\mathrm{t}}",
-            (Self::Evol | Self::Pdg, -5) => r"\bar{\mathrm{b}}",
-            (Self::Evol | Self::Pdg, -4) => r"\bar{\mathrm{c}}",
-            (Self::Evol | Self::Pdg, -3) => r"\bar{\mathrm{s}}",
-            (Self::Evol | Self::Pdg, -2) => r"\bar{\mathrm{u}}",
-            (Self::Evol | Self::Pdg, -1) => r"\bar{\mathrm{d}}",
-            (Self::Evol | Self::Pdg, 1) => r"\mathrm{d}",
-            (Self::Evol | Self::Pdg, 2) => r"\mathrm{u}",
-            (Self::Evol | Self::Pdg, 3) => r"\mathrm{s}",
-            (Self::Evol | Self::Pdg, 4) => r"\mathrm{c}",
-            (Self::Evol | Self::Pdg, 5) => r"\mathrm{b}",
-            (Self::Evol | Self::Pdg, 6) => r"\mathrm{t}",
-            (Self::Evol | Self::Pdg, 21) => r"\mathrm{g}",
-            (Self::Evol | Self::Pdg, 22) => r"\gamma",
-            (Self::Evol, 100) => r"\Sigma",
-            (Self::Evol, 103) => r"\mathrm{T}_3",
-            (Self::Evol, 108) => r"\mathrm{T}_8",
-            (Self::Evol, 115) => r"\mathrm{T}_{15}",
-            (Self::Evol, 124) => r"\mathrm{T}_{24}",
-            (Self::Evol, 135) => r"\mathrm{T}_{35}",
-            (Self::Evol, 200) => r"\mathrm{V}",
-            (Self::Evol, 203) => r"\mathrm{V}_3",
-            (Self::Evol, 208) => r"\mathrm{V}_8",
-            (Self::Evol, 215) => r"\mathrm{V}_{15}",
-            (Self::Evol, 224) => r"\mathrm{V}_{24}",
-            (Self::Evol, 235) => r"\mathrm{V}_{35}",
-            _ => unimplemented!(
-                "conversion of PID `{pid}` in basis {self:?} to LaTeX string unknown"
-            ),
-        }
-    }
-
-    /// Express `channel` in the target basis `to`, mapping PDG and evolution IDs as needed.
-    #[must_use]
-    pub fn translate(&self, to: Self, channel: Channel) -> Channel {
-        match (self, to) {
-            (&Self::Pdg, Self::Pdg) | (&Self::Evol, Self::Evol) => channel,
-            (&Self::Pdg, Self::Evol) => channel.translate(&pdg_mc_pids_to_evol),
-            (&Self::Evol, Self::Pdg) => channel.translate(&evol_to_pdg_mc_ids),
-        }
-    }
-
     /// Return symmetry rules used when optimizing FK tables for the given `assumptions`.
     #[must_use]
     pub fn opt_rules(&self, assumptions: FkAssumptions) -> OptRules {
@@ -166,6 +119,53 @@ impl PidBasis {
             (Self::Pdg, FkAssumptions::Nf3Sym) => {
                 OptRules(vec![(-3, 3)], vec![-6, 6, -5, 5, -4, 4])
             }
+        }
+    }
+
+    /// Convert the PID `pid` in the basis given by `self` into a LaTeX string that represents the
+    /// particle.
+    #[must_use]
+    pub fn to_latex_str(&self, pid: i32) -> &'static str {
+        match (*self, pid) {
+            (Self::Evol | Self::Pdg, -6) => r"\bar{\mathrm{t}}",
+            (Self::Evol | Self::Pdg, -5) => r"\bar{\mathrm{b}}",
+            (Self::Evol | Self::Pdg, -4) => r"\bar{\mathrm{c}}",
+            (Self::Evol | Self::Pdg, -3) => r"\bar{\mathrm{s}}",
+            (Self::Evol | Self::Pdg, -2) => r"\bar{\mathrm{u}}",
+            (Self::Evol | Self::Pdg, -1) => r"\bar{\mathrm{d}}",
+            (Self::Evol | Self::Pdg, 1) => r"\mathrm{d}",
+            (Self::Evol | Self::Pdg, 2) => r"\mathrm{u}",
+            (Self::Evol | Self::Pdg, 3) => r"\mathrm{s}",
+            (Self::Evol | Self::Pdg, 4) => r"\mathrm{c}",
+            (Self::Evol | Self::Pdg, 5) => r"\mathrm{b}",
+            (Self::Evol | Self::Pdg, 6) => r"\mathrm{t}",
+            (Self::Evol | Self::Pdg, 21) => r"\mathrm{g}",
+            (Self::Evol | Self::Pdg, 22) => r"\gamma",
+            (Self::Evol, 100) => r"\Sigma",
+            (Self::Evol, 103) => r"\mathrm{T}_3",
+            (Self::Evol, 108) => r"\mathrm{T}_8",
+            (Self::Evol, 115) => r"\mathrm{T}_{15}",
+            (Self::Evol, 124) => r"\mathrm{T}_{24}",
+            (Self::Evol, 135) => r"\mathrm{T}_{35}",
+            (Self::Evol, 200) => r"\mathrm{V}",
+            (Self::Evol, 203) => r"\mathrm{V}_3",
+            (Self::Evol, 208) => r"\mathrm{V}_8",
+            (Self::Evol, 215) => r"\mathrm{V}_{15}",
+            (Self::Evol, 224) => r"\mathrm{V}_{24}",
+            (Self::Evol, 235) => r"\mathrm{V}_{35}",
+            _ => unimplemented!(
+                "conversion of PID `{pid}` in basis {self:?} to LaTeX string unknown"
+            ),
+        }
+    }
+
+    /// Express `channel` in the target basis `to`, mapping PDG and evolution IDs as needed.
+    #[must_use]
+    pub fn translate(&self, to: Self, channel: Channel) -> Channel {
+        match (self, to) {
+            (&Self::Pdg, Self::Pdg) | (&Self::Evol, Self::Evol) => channel,
+            (&Self::Pdg, Self::Evol) => channel.translate(&pdg_mc_pids_to_evol),
+            (&Self::Evol, Self::Pdg) => channel.translate(&evol_to_pdg_mc_ids),
         }
     }
 }

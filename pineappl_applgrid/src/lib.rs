@@ -1,6 +1,10 @@
 //! TODO.
 
 #![expect(
+    clippy::arbitrary_source_item_ordering,
+    reason = "does not work properly with cxx"
+)]
+#![expect(
     clippy::missing_errors_doc,
     reason = "seems to be a problem of the cxx crate"
 )]
@@ -8,15 +12,6 @@
     clippy::missing_safety_doc,
     reason = "adding a safety section does not seem to work"
 )]
-
-use lhapdf::Pdf;
-use std::mem;
-use std::pin::Pin;
-use std::ptr;
-use std::slice;
-use std::sync::{Mutex, OnceLock};
-
-static MUTEX: OnceLock<Mutex<()>> = OnceLock::new();
 
 /// TODO.
 #[cxx::bridge]
@@ -53,6 +48,10 @@ pub mod ffi {
         type grid;
 
         /// TODO.
+        fn Nobs_internal(&self) -> i32;
+        /// TODO.
+        fn Write(self: Pin<&mut Self>, _: &CxxString, _: &CxxString, _: &CxxString);
+        /// TODO.
         unsafe fn add_igrid(self: Pin<&mut Self>, _: i32, _: i32, _: *mut igrid);
         /// TODO.
         fn calculation(&self) -> grid_CALCULATION;
@@ -75,16 +74,12 @@ pub mod ffi {
         /// TODO.
         fn nloops(&self) -> i32;
         /// TODO.
-        fn Nobs_internal(&self) -> i32;
-        /// TODO.
         fn obslow_internal(&self, _: i32) -> f64;
         /// TODO.
         #[must_use]
         fn run(self: Pin<&mut Self>) -> &mut f64;
         /// TODO.
         fn weightgrid(&self, _: i32, _: i32) -> *const igrid;
-        /// TODO.
-        fn Write(self: Pin<&mut Self>, _: &CxxString, _: &CxxString, _: &CxxString);
     }
 
     #[namespace = "appl"]
@@ -95,17 +90,17 @@ pub mod ffi {
         type igrid;
 
         /// TODO.
-        fn getQ2(&self, _: i32) -> f64;
-        /// TODO.
-        fn getx1(&self, _: i32) -> f64;
-        /// TODO.
-        fn getx2(&self, _: i32) -> f64;
-        /// TODO.
         fn Ntau(&self) -> i32;
         /// TODO.
         fn Ny1(&self) -> i32;
         /// TODO.
         fn Ny2(&self) -> i32;
+        /// TODO.
+        fn getQ2(&self, _: i32) -> f64;
+        /// TODO.
+        fn getx1(&self, _: i32) -> f64;
+        /// TODO.
+        fn getx2(&self, _: i32) -> f64;
         /// TODO.
         fn setlimits(self: Pin<&mut Self>);
         /// TODO.
@@ -144,6 +139,28 @@ pub mod ffi {
         include!("pineappl_applgrid/src/applgrid.hpp");
 
         /// TODO.
+        fn grid_combine(_: &grid) -> Vec<i32>;
+        /// TODO.
+        unsafe fn grid_convolve_with_one(
+            _: Pin<&mut grid>,
+            _: unsafe fn(&f64, &f64, *mut f64, *mut c_void),
+            _: unsafe fn(&f64, *mut c_void) -> f64,
+            _: *mut c_void,
+            _: i32,
+            _: f64,
+            _: f64,
+            _: f64,
+        ) -> Vec<f64>;
+        /// TODO.
+        fn igrid_m_reweight(_: &igrid) -> bool;
+        /// TODO.
+        #[must_use]
+        fn igrid_weightgrid(_: Pin<&mut igrid>, _: usize) -> Pin<&mut SparseMatrix3d>;
+        /// TODO.
+        #[must_use]
+        fn make_empty_grid(_: &[f64], _: &str, _: i32, _: i32, _: &str, _: &str)
+        -> UniquePtr<grid>;
+        /// TODO.
         fn make_grid(_: &str) -> Result<UniquePtr<grid>>;
         /// TODO.
         #[must_use]
@@ -163,45 +180,27 @@ pub mod ffi {
         ) -> UniquePtr<igrid>;
         /// TODO.
         #[must_use]
-        fn make_empty_grid(_: &[f64], _: &str, _: i32, _: i32, _: &str, _: &str)
-        -> UniquePtr<grid>;
-        /// TODO.
-        #[must_use]
         fn make_lumi_pdf(_: &str, _: &[i32]) -> UniquePtr<lumi_pdf>;
-
-        /// TODO.
-        fn grid_combine(_: &grid) -> Vec<i32>;
-
-        /// TODO.
-        unsafe fn grid_convolve_with_one(
-            _: Pin<&mut grid>,
-            _: unsafe fn(&f64, &f64, *mut f64, *mut c_void),
-            _: unsafe fn(&f64, *mut c_void) -> f64,
-            _: *mut c_void,
-            _: i32,
-            _: f64,
-            _: f64,
-            _: f64,
-        ) -> Vec<f64>;
-
         /// TODO.
         fn sparse_matrix_get(_: &SparseMatrix3d, _: i32, _: i32, _: i32) -> f64;
         /// TODO.
         fn sparse_matrix_set(_: Pin<&mut SparseMatrix3d>, _: i32, _: i32, _: i32, _: f64);
-
         // TODO: class member functions aren't supported yet by cxx, see
         // https://github.com/dtolnay/cxx/issues/447
         /// TODO.
         #[must_use]
         fn weightfun(_: f64) -> f64;
-
-        /// TODO.
-        fn igrid_m_reweight(_: &igrid) -> bool;
-        /// TODO.
-        #[must_use]
-        fn igrid_weightgrid(_: Pin<&mut igrid>, _: usize) -> Pin<&mut SparseMatrix3d>;
     }
 }
+
+use lhapdf::Pdf;
+use std::mem;
+use std::pin::Pin;
+use std::ptr;
+use std::slice;
+use std::sync::{Mutex, OnceLock};
+
+static MUTEX: OnceLock<Mutex<()>> = OnceLock::new();
 
 /// TODO.
 pub fn grid_convolve_with_one(

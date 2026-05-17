@@ -42,6 +42,12 @@ pub struct Mu2 {
 /// Trait each subgrid must implement.
 #[enum_dispatch]
 pub trait Subgrid {
+    /// Return an iterator over all non-zero elements of the subgrid.
+    fn indexed_iter(&self) -> SubgridIndexedIter<'_>;
+
+    /// Returns true if `fill` was never called for this grid.
+    fn is_empty(&self) -> bool;
+
     /// Return a slice of [`Mu2`] values corresponding to the (squared) renormalization and
     /// factorization values of the grid. If the subgrid does not use a grid, this method should
     /// return an empty slice.
@@ -54,12 +60,6 @@ pub trait Subgrid {
     /// Return a slice of values of `x2`. If the subgrid does not use a grid, this method should
     /// return an empty slice.
     fn x2_grid(&self) -> Cow<'_, [f64]>;
-
-    /// Returns true if `fill` was never called for this grid.
-    fn is_empty(&self) -> bool;
-
-    /// Return an iterator over all non-zero elements of the subgrid.
-    fn indexed_iter(&self) -> SubgridIndexedIter<'_>;
 }
 
 /// Type to iterate over the non-zero contents of a subgrid. The tuple contains the indices of the

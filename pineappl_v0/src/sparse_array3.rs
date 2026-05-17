@@ -105,12 +105,6 @@ impl<T: Copy + Default + PartialEq> Iterator for IndexedIter<'_, T> {
 }
 
 impl<T: Clone + Default + PartialEq> SparseArray3<T> {
-    /// Returns `true` if the array contains no element.
-    #[must_use]
-    pub const fn is_empty(&self) -> bool {
-        self.entries.is_empty()
-    }
-
     /// Return an indexed `Iterator` over the non-zero elements of this array. The iterator element
     /// type is `((usize, usize, usize), T)`.
     #[must_use]
@@ -128,5 +122,11 @@ impl<T: Clone + Default + PartialEq> SparseArray3<T> {
         result.offset_b = result.index_iter.next();
 
         result
+    }
+
+    /// Returns `true` if the array contains no element.
+    #[must_use]
+    pub const fn is_empty(&self) -> bool {
+        self.entries.is_empty()
     }
 }

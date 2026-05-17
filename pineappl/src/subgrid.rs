@@ -8,18 +8,6 @@ use itertools::izip;
 use serde::{Deserialize, Serialize};
 use std::{iter, mem};
 
-/// Compare two node values for equality up to a fixed float tolerance.
-#[must_use]
-pub fn node_value_eq(lhs: f64, rhs: f64) -> bool {
-    approx_eq!(f64, lhs, rhs, ulps = 4096)
-}
-
-/// Like [`node_value_eq`], taking mutable references for use with `dedup_by`.
-#[must_use]
-pub fn node_value_eq_ref_mut(lhs: &mut f64, rhs: &mut f64) -> bool {
-    node_value_eq(*lhs, *rhs)
-}
-
 /// A subgrid type that is always empty.
 #[derive(Clone, Default, Deserialize, Serialize)]
 pub struct EmptySubgridV1;
@@ -29,12 +17,8 @@ impl Subgrid for EmptySubgridV1 {
         panic!("EmptySubgridV1 doesn't support the fill operation");
     }
 
-    fn node_values(&self) -> Vec<Vec<f64>> {
-        Vec::new()
-    }
-
-    fn shape(&self) -> &[usize] {
-        panic!("EmptySubgridV1 doesn't have a shape");
+    fn indexed_iter(&self) -> SubgridIndexedIter<'_> {
+        Box::new(iter::empty())
     }
 
     fn is_empty(&self) -> bool {
@@ -48,12 +32,16 @@ impl Subgrid for EmptySubgridV1 {
         );
     }
 
+    fn node_values(&self) -> Vec<Vec<f64>> {
+        Vec::new()
+    }
+
+    fn optimize_nodes(&mut self) {}
+
     fn scale(&mut self, _: f64) {}
 
-    fn symmetrize(&mut self, _: usize, _: usize) {}
-
-    fn indexed_iter(&self) -> SubgridIndexedIter<'_> {
-        Box::new(iter::empty())
+    fn shape(&self) -> &[usize] {
+        panic!("EmptySubgridV1 doesn't have a shape");
     }
 
     fn stats(&self) -> Stats {
@@ -66,7 +54,7 @@ impl Subgrid for EmptySubgridV1 {
         }
     }
 
-    fn optimize_nodes(&mut self) {}
+    fn symmetrize(&mut self, _: usize, _: usize) {}
 }
 
 /// Dense imported subgrid backed by a [`PackedArray`] and explicit node coordinates per dimension.
@@ -90,8 +78,8 @@ impl Subgrid for ImportSubgridV1 {
         panic!("ImportSubgridV1 doesn't support the fill operation");
     }
 
-    fn node_values(&self) -> Vec<Vec<f64>> {
-        self.node_values.clone()
+    fn indexed_iter(&self) -> SubgridIndexedIter<'_> {
+        Box::new(self.array.indexed_iter())
     }
 
     fn is_empty(&self) -> bool {
@@ -152,27 +140,14 @@ impl Subgrid for ImportSubgridV1 {
         }
     }
 
+    fn node_values(&self) -> Vec<Vec<f64>> {
+        self.node_values.clone()
+    }
+
+    fn optimize_nodes(&mut self) {}
+
     fn scale(&mut self, factor: f64) {
         self.array *= factor;
-    }
-
-    fn symmetrize(&mut self, a: usize, b: usize) {
-        let mut new_array = PackedArray::new(self.array.shape().to_vec());
-
-        for (mut index, sigma) in self.array.indexed_iter() {
-            // TODO: why not the other way around?
-            if index[b] < index[a] {
-                index.swap(a, b);
-            }
-
-            new_array[index.as_slice()] += sigma;
-        }
-
-        self.array = new_array;
-    }
-
-    fn indexed_iter(&self) -> SubgridIndexedIter<'_> {
-        Box::new(self.array.indexed_iter())
     }
 
     fn shape(&self) -> &[usize] {
@@ -189,7 +164,20 @@ impl Subgrid for ImportSubgridV1 {
         }
     }
 
-    fn optimize_nodes(&mut self) {}
+    fn symmetrize(&mut self, a: usize, b: usize) {
+        let mut new_array = PackedArray::new(self.array.shape().to_vec());
+
+        for (mut index, sigma) in self.array.indexed_iter() {
+            // TODO: why not the other way around?
+            if index[b] < index[a] {
+                index.swap(a, b);
+            }
+
+            new_array[index.as_slice()] += sigma;
+        }
+
+        self.array = new_array;
+    }
 }
 
 impl ImportSubgridV1 {
@@ -279,16 +267,22 @@ impl Subgrid for InterpSubgridV1 {
         }
     }
 
-    fn node_values(&self) -> Vec<Vec<f64>> {
-        self.interps.iter().map(Interp::node_values).collect()
+    fn indexed_iter(&self) -> SubgridIndexedIter<'_> {
+        let nodes: Vec<_> = self.interps.iter().map(Interp::node_values).collect();
+
+        Box::new(self.array.indexed_iter().map(move |(indices, weight)| {
+            let reweight = self
+                .interps
+                .iter()
+                .enumerate()
+                .map(|(i, interp)| interp.reweight(nodes[i][indices[i]]))
+                .product::<f64>();
+            (indices, weight * reweight)
+        }))
     }
 
     fn is_empty(&self) -> bool {
         self.array.is_empty()
-    }
-
-    fn shape(&self) -> &[usize] {
-        self.array.shape()
     }
 
     fn merge_impl(&mut self, other: &SubgridEnum, transpose: Option<(usize, usize)>) {
@@ -306,47 +300,8 @@ impl Subgrid for InterpSubgridV1 {
         }
     }
 
-    fn scale(&mut self, factor: f64) {
-        self.array *= factor;
-    }
-
-    fn symmetrize(&mut self, a: usize, b: usize) {
-        let mut new_array = PackedArray::new(self.array.shape().to_vec());
-
-        for (mut index, sigma) in self.array.indexed_iter() {
-            // TODO: why not the other way around?
-            if index[b] < index[a] {
-                index.swap(a, b);
-            }
-
-            new_array[index.as_slice()] += sigma;
-        }
-
-        self.array = new_array;
-    }
-
-    fn indexed_iter(&self) -> SubgridIndexedIter<'_> {
-        let nodes: Vec<_> = self.interps.iter().map(Interp::node_values).collect();
-
-        Box::new(self.array.indexed_iter().map(move |(indices, weight)| {
-            let reweight = self
-                .interps
-                .iter()
-                .enumerate()
-                .map(|(i, interp)| interp.reweight(nodes[i][indices[i]]))
-                .product::<f64>();
-            (indices, weight * reweight)
-        }))
-    }
-
-    fn stats(&self) -> Stats {
-        Stats {
-            total: self.array.shape().iter().product(),
-            allocated: self.array.non_zeros() + self.array.explicit_zeros(),
-            zeros: self.array.explicit_zeros(),
-            overhead: self.array.overhead(),
-            bytes_per_value: mem::size_of::<f64>(),
-        }
+    fn node_values(&self) -> Vec<Vec<f64>> {
+        self.interps.iter().map(Interp::node_values).collect()
     }
 
     fn optimize_nodes(&mut self) {
@@ -409,6 +364,39 @@ impl Subgrid for InterpSubgridV1 {
             };
         }
     }
+
+    fn scale(&mut self, factor: f64) {
+        self.array *= factor;
+    }
+
+    fn shape(&self) -> &[usize] {
+        self.array.shape()
+    }
+
+    fn stats(&self) -> Stats {
+        Stats {
+            total: self.array.shape().iter().product(),
+            allocated: self.array.non_zeros() + self.array.explicit_zeros(),
+            zeros: self.array.explicit_zeros(),
+            overhead: self.array.overhead(),
+            bytes_per_value: mem::size_of::<f64>(),
+        }
+    }
+
+    fn symmetrize(&mut self, a: usize, b: usize) {
+        let mut new_array = PackedArray::new(self.array.shape().to_vec());
+
+        for (mut index, sigma) in self.array.indexed_iter() {
+            // TODO: why not the other way around?
+            if index[b] < index[a] {
+                index.swap(a, b);
+            }
+
+            new_array[index.as_slice()] += sigma;
+        }
+
+        self.array = new_array;
+    }
 }
 
 /// Enum which lists all possible `Subgrid` variants possible.
@@ -470,13 +458,13 @@ pub struct Stats {
 /// Trait each subgrid must implement.
 #[enum_dispatch]
 pub trait Subgrid {
-    /// Node coordinates for each kinematic dimension (same order as the grid kinematics).
-    fn node_values(&self) -> Vec<Vec<f64>>;
-
     /// Fill the subgrid with `weight` that is being interpolated with `interps` using the
     /// kinematic information in `ntuple`. The parameter `ntuple` assumes the same ordering given
     /// by `kinematics` in [`Grid::new`](super::grid::Grid::new) that was used to create the grid.
     fn fill(&mut self, interps: &[Interp], ntuple: &[f64], weight: f64);
+
+    /// Return an iterator over all non-zero elements of the subgrid.
+    fn indexed_iter(&self) -> SubgridIndexedIter<'_>;
 
     /// Returns true if `fill` was never called for this grid.
     fn is_empty(&self) -> bool;
@@ -485,29 +473,41 @@ pub trait Subgrid {
     /// `transpose`.
     fn merge_impl(&mut self, other: &SubgridEnum, transpose: Option<(usize, usize)>);
 
+    /// Node coordinates for each kinematic dimension (same order as the grid kinematics).
+    fn node_values(&self) -> Vec<Vec<f64>>;
+
+    /// Try to collapse a static scale dimension into fewer nodes where possible.
+    fn optimize_nodes(&mut self);
+
     /// Scale the subgrid by `factor`.
     fn scale(&mut self, factor: f64);
 
     /// Return the shape of the subgrid.
     fn shape(&self) -> &[usize];
 
-    /// Assume that the convolution functions for indices `a` and `b` for this grid are the same
-    /// and use this to optimize the size of the grid.
-    fn symmetrize(&mut self, a: usize, b: usize);
-
-    /// Return an iterator over all non-zero elements of the subgrid.
-    fn indexed_iter(&self) -> SubgridIndexedIter<'_>;
-
     /// Return statistics for this subgrid.
     fn stats(&self) -> Stats;
 
-    /// Try to collapse a static scale dimension into fewer nodes where possible.
-    fn optimize_nodes(&mut self);
+    /// Assume that the convolution functions for indices `a` and `b` for this grid are the same
+    /// and use this to optimize the size of the grid.
+    fn symmetrize(&mut self, a: usize, b: usize);
 }
 
 /// Type to iterate over the non-zero contents of a subgrid. The tuple contains the indices of the
 /// `mu2_grid`, the `x1_grid` and finally the `x2_grid`.
 pub type SubgridIndexedIter<'a> = Box<dyn Iterator<Item = (Vec<usize>, f64)> + 'a>;
+
+/// Compare two node values for equality up to a fixed float tolerance.
+#[must_use]
+pub fn node_value_eq(lhs: f64, rhs: f64) -> bool {
+    approx_eq!(f64, lhs, rhs, ulps = 4096)
+}
+
+/// Like [`node_value_eq`], taking mutable references for use with `dedup_by`.
+#[must_use]
+pub fn node_value_eq_ref_mut(lhs: &mut f64, rhs: &mut f64) -> bool {
+    node_value_eq(*lhs, *rhs)
+}
 
 #[cfg(test)]
 mod tests {

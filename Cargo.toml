@@ -86,6 +86,7 @@ unreadable-literal = "allow"
 # restriction lints
 allow_attributes = "deny"
 allow_attributes_without_reason = "deny"
+arbitrary_source_item_ordering = "warn"
 doc_paragraphs_missing_punctuation = "warn"
 non_ascii_literal = "warn"
 str_to_string = "warn"

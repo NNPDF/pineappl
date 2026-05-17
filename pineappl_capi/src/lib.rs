@@ -95,6 +95,69 @@ pub const PINEAPPL_GOF_STRIP_EMPTY_CHANNELS: GridOptFlags = GridOptFlags::STRIP_
 
 // TODO: make sure no `panic` calls leave functions marked as `extern "C"`
 
+/// Type for defining a Channel function.
+#[derive(Clone)]
+pub struct Channels {
+    channels: Vec<Channel>,
+    convolutions: usize,
+}
+
+/// Type for defining the interpolation object.
+#[repr(C)]
+pub struct Interp {
+    /// Physical lower edge of the interpolation range (before internal mapping).
+    pub min: f64,
+    /// Physical upper edge of the interpolation range (before internal mapping).
+    pub max: f64,
+    /// Number of support nodes.
+    pub nodes: usize,
+    /// Polynomial interpolation order.
+    pub order: usize,
+    /// Reweighting mode in the physical variable.
+    pub reweight: ReweightMeth,
+    /// Map between physical variable and internal coordinate.
+    pub map: Map,
+    /// Interpolation kernel (Lagrange, ...).
+    pub interp_meth: InterpMeth,
+}
+
+/// Key-value storage for passing optional information during grid creation with
+/// `pineappl_grid_new`.
+#[derive(Default)]
+pub struct KeyVal {
+    bools: HashMap<String, bool>,
+    doubles: HashMap<String, f64>,
+    ints: HashMap<String, i32>,
+    strings: HashMap<String, CString>,
+}
+
+/// Type for defining a luminosity function.
+#[derive(Default)]
+pub struct Lumi(Vec<Channel>);
+
+/// Type alias for the operator callback.
+pub type OperatorCallback = unsafe extern "C" fn(
+    usize,        // index which selects Evolution parameters
+    f64,          // squared process scale (fac or frg)
+    *const i32,   // `pids_in`
+    *const f64,   // `x_in`
+    *const i32,   // `pids_out`
+    *const f64,   // `x_out`
+    *const usize, // shape of the EKO
+    *mut f64,     // Evolution Operator data buffer
+    *mut c_void,  // Callable state of parameters
+);
+
+/// Type for defining the Operator info.
+#[repr(C)]
+#[derive(Debug)]
+pub struct OperatorInfo {
+    fac0: f64,
+    fac1: f64,
+    pid_basis: PidBasis,
+    conv_type: ConvType,
+}
+
 fn grid_interpolation_params(key_vals: Option<&KeyVal>) -> Vec<InterpMain> {
     let mut q2_min = 1e2;
     let mut q2_max = 1e8;
@@ -246,10 +309,6 @@ fn grid_interpolation_params(key_vals: Option<&KeyVal>) -> Vec<InterpMain> {
         ),
     ]
 }
-
-/// Type for defining a luminosity function.
-#[derive(Default)]
-pub struct Lumi(Vec<Channel>);
 
 /// Returns the number of bins in `grid`.
 ///
@@ -1307,16 +1366,6 @@ pub extern "C" fn pineappl_lumi_new() -> Box<Lumi> {
     Box::default()
 }
 
-/// Key-value storage for passing optional information during grid creation with
-/// `pineappl_grid_new`.
-#[derive(Default)]
-pub struct KeyVal {
-    bools: HashMap<String, bool>,
-    doubles: HashMap<String, f64>,
-    ints: HashMap<String, i32>,
-    strings: HashMap<String, CString>,
-}
-
 /// Delete the previously created object pointed to by `key_vals`.
 #[deprecated(since = "1.0.0", note = "")]
 #[unsafe(no_mangle)]
@@ -1504,42 +1553,6 @@ pub unsafe extern "C" fn pineappl_string_delete(string: *mut c_char) {
 }
 
 // Here starts the generalized C-API interface.
-
-/// Type for defining a Channel function.
-#[derive(Clone)]
-pub struct Channels {
-    channels: Vec<Channel>,
-    convolutions: usize,
-}
-
-/// Type for defining the interpolation object.
-#[repr(C)]
-pub struct Interp {
-    /// Physical lower edge of the interpolation range (before internal mapping).
-    pub min: f64,
-    /// Physical upper edge of the interpolation range (before internal mapping).
-    pub max: f64,
-    /// Number of support nodes.
-    pub nodes: usize,
-    /// Polynomial interpolation order.
-    pub order: usize,
-    /// Reweighting mode in the physical variable.
-    pub reweight: ReweightMeth,
-    /// Map between physical variable and internal coordinate.
-    pub map: Map,
-    /// Interpolation kernel (Lagrange, ...).
-    pub interp_meth: InterpMeth,
-}
-
-/// Type for defining the Operator info.
-#[repr(C)]
-#[derive(Debug)]
-pub struct OperatorInfo {
-    fac0: f64,
-    fac1: f64,
-    pid_basis: PidBasis,
-    conv_type: ConvType,
-}
 
 /// An exact duplicate of `pineappl_lumi_new` to make naming (lumi -> channel) consistent.
 /// should be deleted using `pineappl_channels_delete`.
@@ -2364,19 +2377,6 @@ pub unsafe extern "C" fn pineappl_grid_evolve_info(
     x1.copy_from_slice(&grid.evolve_info(order_mask).x1);
     ren1.copy_from_slice(&grid.evolve_info(order_mask).ren1);
 }
-
-/// Type alias for the operator callback.
-pub type OperatorCallback = unsafe extern "C" fn(
-    usize,        // index which selects Evolution parameters
-    f64,          // squared process scale (fac or frg)
-    *const i32,   // `pids_in`
-    *const f64,   // `x_in`
-    *const i32,   // `pids_out`
-    *const f64,   // `x_out`
-    *const usize, // shape of the EKO
-    *mut f64,     // Evolution Operator data buffer
-    *mut c_void,  // Callable state of parameters
-);
 
 /// Evolve a grid with an evolution operator and dump the resulting FK table.
 ///

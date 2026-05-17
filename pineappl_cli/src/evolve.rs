@@ -1,13 +1,3 @@
-use super::helpers::{self, ConvFuns, ConvoluteMode};
-use super::{GlobalConfiguration, Subcommand};
-use anyhow::{Result, anyhow};
-use clap::{Parser, ValueHint};
-use lhapdf::Pdf;
-use pineappl::fk_table::FkTable;
-use pineappl::grid::Grid;
-use std::path::{Path, PathBuf};
-use std::process::ExitCode;
-
 #[cfg(feature = "evolve")]
 mod eko {
     use anyhow::{Result, anyhow};
@@ -33,70 +23,7 @@ mod eko {
     use std::slice::Iter;
     use tar::{Archive, Entries};
 
-    #[derive(Deserialize)]
-    struct MetadataV0 {
-        #[serde(rename = "Q2grid")]
-        q2_grid: Vec<f64>,
-        inputgrid: Vec<f64>,
-        inputpids: Vec<i32>,
-        q2_ref: f64,
-        targetgrid: Vec<f64>,
-        targetpids: Vec<i32>,
-    }
-
-    #[derive(Deserialize)]
-    struct Rotations {
-        #[serde(alias = "_inputgrid")]
-        inputgrid: Option<Vec<f64>>,
-        #[serde(alias = "_inputpids", with = "either::serde_untagged_optional")]
-        inputpids: Option<Either<Vec<Vec<f64>>, Vec<i32>>>,
-        #[serde(alias = "_targetgrid")]
-        targetgrid: Option<Vec<f64>>,
-        #[serde(alias = "_targetpids")]
-        targetpids: Option<Vec<i32>>,
-        pids: Vec<i32>,
-        xgrid: Vec<f64>,
-    }
-
-    #[derive(Deserialize)]
-    struct MetadataV1 {
-        mu20: f64,
-        rotations: Rotations,
-    }
-
-    #[derive(Deserialize)]
-    #[serde(untagged)]
-    enum Metadata {
-        V0(MetadataV0),
-        V1(MetadataV1),
-        V2(MetadataV2),
-        V3(MetadataV3), // v0.15 - v????
-    }
-
     const BASES_V1_DEFAULT_PIDS: [i32; 14] = [22, -6, -5, -4, -3, -2, -1, 21, 1, 2, 3, 4, 5, 6];
-
-    #[derive(Deserialize)]
-    struct OperatorConfigsV1 {
-        polarized: bool,
-        time_like: bool,
-    }
-
-    #[derive(Deserialize)]
-    struct OperatorV1 {
-        mu0: f64,
-        configs: OperatorConfigsV1,
-    }
-
-    #[derive(Deserialize)]
-    struct OperatorV2 {
-        init: Vec<f64>,
-        configs: OperatorConfigsV1,
-    }
-
-    #[derive(Deserialize)]
-    struct OperatorInfoV1 {
-        scale: f64,
-    }
 
     #[derive(Deserialize)]
     struct BasesV1 {
@@ -104,16 +31,6 @@ mod eko {
         inputpids: Option<Vec<Vec<f64>>>,
         targetgrid: Option<Vec<f64>>,
         targetpids: Option<Vec<i32>>,
-        xgrid: Vec<f64>,
-    }
-
-    #[derive(Deserialize)]
-    struct MetadataV2 {
-        bases: BasesV1,
-    }
-
-    #[derive(Deserialize)]
-    struct MetadataV3 {
         xgrid: Vec<f64>,
     }
 
@@ -132,6 +49,43 @@ mod eko {
     }
 
     impl EkoSlices {
+        pub fn iter_mut(&mut self) -> EkoSlicesIter<'_> {
+            match self {
+                Self::V0 {
+                    fac1,
+                    info,
+                    operator,
+                } => EkoSlicesIter::V0 {
+                    info: info.clone(),
+                    iter: fac1.iter().zip(operator.axis_iter(Axis(0))),
+                },
+                Self::V2 {
+                    fac1,
+                    info,
+                    archive,
+                } => {
+                    EkoSlicesIter::V2 {
+                        fac1: fac1.clone(),
+                        info: info.clone(),
+                        // UNWRAP: short of changing the return type of this method we can't
+                        // propagate the error, so we must panic here
+                        entries: archive.entries_with_seek().unwrap(),
+                    }
+                }
+            }
+        }
+
+        pub fn new(eko_path: &Path) -> Result<Self> {
+            let metadata = Self::read_metadata(eko_path)?;
+
+            match metadata {
+                Metadata::V0(v0) => Self::with_v0(v0, eko_path),
+                Metadata::V1(v1) => Self::with_v1(v1, eko_path),
+                Metadata::V2(v2) => Self::with_v2(v2, eko_path),
+                Metadata::V3(v3) => Self::with_v3(v3, eko_path),
+            }
+        }
+
         /// Read the EKO at `eko_path` and return the contents of the `metadata.yaml` file
         /// deserialized into a [`Metadata`] object.
         fn read_metadata(eko_path: &Path) -> Result<Metadata> {
@@ -145,17 +99,6 @@ mod eko {
             }
 
             Err(anyhow!("no file 'metadata.yaml' in EKO archive found"))
-        }
-
-        pub fn new(eko_path: &Path) -> Result<Self> {
-            let metadata = Self::read_metadata(eko_path)?;
-
-            match metadata {
-                Metadata::V0(v0) => Self::with_v0(v0, eko_path),
-                Metadata::V1(v1) => Self::with_v1(v1, eko_path),
-                Metadata::V2(v2) => Self::with_v2(v2, eko_path),
-                Metadata::V3(v3) => Self::with_v3(v3, eko_path),
-            }
         }
 
         fn with_v0(metadata: MetadataV0, eko_path: &Path) -> Result<Self> {
@@ -382,37 +325,11 @@ mod eko {
                 archive: Archive::new(File::open(eko_path)?),
             })
         }
-
-        pub fn iter_mut(&mut self) -> EkoSlicesIter<'_> {
-            match self {
-                Self::V0 {
-                    fac1,
-                    info,
-                    operator,
-                } => EkoSlicesIter::V0 {
-                    info: info.clone(),
-                    iter: fac1.iter().zip(operator.axis_iter(Axis(0))),
-                },
-                Self::V2 {
-                    fac1,
-                    info,
-                    archive,
-                } => {
-                    EkoSlicesIter::V2 {
-                        fac1: fac1.clone(),
-                        info: info.clone(),
-                        // UNWRAP: short of changing the return type of this method we can't
-                        // propagate the error, so we must panic here
-                        entries: archive.entries_with_seek().unwrap(),
-                    }
-                }
-            }
-        }
     }
 
     impl<'a> IntoIterator for &'a mut EkoSlices {
-        type Item = Result<(OperatorSliceInfo, CowArray<'a, f64, Ix4>)>;
         type IntoIter = EkoSlicesIter<'a>;
+        type Item = Result<(OperatorSliceInfo, CowArray<'a, f64, Ix4>)>;
 
         fn into_iter(self) -> Self::IntoIter {
             self.iter_mut()
@@ -491,56 +408,90 @@ mod eko {
             }
         }
     }
+
+    #[derive(Deserialize)]
+    #[serde(untagged)]
+    enum Metadata {
+        V0(MetadataV0),
+        V1(MetadataV1),
+        V2(MetadataV2),
+        V3(MetadataV3), // v0.15 - v????
+    }
+
+    #[derive(Deserialize)]
+    struct MetadataV0 {
+        #[serde(rename = "Q2grid")]
+        q2_grid: Vec<f64>,
+        inputgrid: Vec<f64>,
+        inputpids: Vec<i32>,
+        q2_ref: f64,
+        targetgrid: Vec<f64>,
+        targetpids: Vec<i32>,
+    }
+
+    #[derive(Deserialize)]
+    struct MetadataV1 {
+        mu20: f64,
+        rotations: Rotations,
+    }
+
+    #[derive(Deserialize)]
+    struct MetadataV2 {
+        bases: BasesV1,
+    }
+
+    #[derive(Deserialize)]
+    struct MetadataV3 {
+        xgrid: Vec<f64>,
+    }
+
+    #[derive(Deserialize)]
+    struct OperatorConfigsV1 {
+        polarized: bool,
+        time_like: bool,
+    }
+
+    #[derive(Deserialize)]
+    struct OperatorV1 {
+        mu0: f64,
+        configs: OperatorConfigsV1,
+    }
+
+    #[derive(Deserialize)]
+    struct OperatorV2 {
+        init: Vec<f64>,
+        configs: OperatorConfigsV1,
+    }
+
+    #[derive(Deserialize)]
+    struct OperatorInfoV1 {
+        scale: f64,
+    }
+
+    #[derive(Deserialize)]
+    struct Rotations {
+        #[serde(alias = "_inputgrid")]
+        inputgrid: Option<Vec<f64>>,
+        #[serde(alias = "_inputpids", with = "either::serde_untagged_optional")]
+        inputpids: Option<Either<Vec<Vec<f64>>, Vec<i32>>>,
+        #[serde(alias = "_targetgrid")]
+        targetgrid: Option<Vec<f64>>,
+        #[serde(alias = "_targetpids")]
+        targetpids: Option<Vec<i32>>,
+        pids: Vec<i32>,
+        xgrid: Vec<f64>,
+    }
 }
 
-#[cfg(feature = "evolve")]
-fn evolve_grid(
-    grid: &Grid,
-    ekos: &[&Path],
-    use_alphas_from: &Pdf,
-    orders: &[(u8, u8)],
-    xir: f64,
-    xif: f64,
-    xia: f64,
-) -> Result<FkTable> {
-    use eko::EkoSlices;
-    use pineappl::evolution::AlphasTable;
-
-    let order_mask: Vec<_> = grid
-        .orders()
-        .iter()
-        .map(|order| {
-            orders.is_empty()
-                || orders
-                    .iter()
-                    .any(|other| (order.alphas == other.0) && (order.alpha == other.1))
-        })
-        .collect();
-
-    let mut eko_slices: Vec<_> = ekos
-        .iter()
-        .map(|eko| EkoSlices::new(eko))
-        .collect::<Result<_, _>>()?;
-    let eko_slices: Vec<_> = eko_slices.iter_mut().collect();
-    let alphas_table = AlphasTable::from_grid(grid, xir, &|q2| use_alphas_from.alphas_q2(q2));
-
-    Ok(grid.evolve(eko_slices, &order_mask, (xir, xif, xia), &alphas_table)?)
-}
-
-#[cfg(not(feature = "evolve"))]
-fn evolve_grid(
-    _: &Grid,
-    _: &[&Path],
-    _: &Pdf,
-    _: &[(u8, u8)],
-    _: f64,
-    _: f64,
-    _: f64,
-) -> Result<FkTable> {
-    Err(anyhow!(
-        "you need to install `pineappl` with feature `evolve`"
-    ))
-}
+use super::helpers::{self, ConvFuns, ConvoluteMode};
+use super::{GlobalConfiguration, Subcommand};
+use anyhow::{Result, anyhow};
+use clap::{Parser, ValueHint};
+use lhapdf::Pdf;
+use pineappl::fk_table::FkTable;
+use pineappl::grid::Grid;
+use std::path::{Path, PathBuf};
+use std::process::ExitCode;
 
 /// Evolve a grid with an evolution kernel operator to an FK table.
 #[derive(Parser)]
@@ -662,4 +613,53 @@ impl Subcommand for Opts {
             helpers::write_grid(&self.output, fk_table.grid())
         }
     }
+}
+
+#[cfg(feature = "evolve")]
+fn evolve_grid(
+    grid: &Grid,
+    ekos: &[&Path],
+    use_alphas_from: &Pdf,
+    orders: &[(u8, u8)],
+    xir: f64,
+    xif: f64,
+    xia: f64,
+) -> Result<FkTable> {
+    use eko::EkoSlices;
+    use pineappl::evolution::AlphasTable;
+
+    let order_mask: Vec<_> = grid
+        .orders()
+        .iter()
+        .map(|order| {
+            orders.is_empty()
+                || orders
+                    .iter()
+                    .any(|other| (order.alphas == other.0) && (order.alpha == other.1))
+        })
+        .collect();
+
+    let mut eko_slices: Vec<_> = ekos
+        .iter()
+        .map(|eko| EkoSlices::new(eko))
+        .collect::<Result<_, _>>()?;
+    let eko_slices: Vec<_> = eko_slices.iter_mut().collect();
+    let alphas_table = AlphasTable::from_grid(grid, xir, &|q2| use_alphas_from.alphas_q2(q2));
+
+    Ok(grid.evolve(eko_slices, &order_mask, (xir, xif, xia), &alphas_table)?)
+}
+
+#[cfg(not(feature = "evolve"))]
+fn evolve_grid(
+    _: &Grid,
+    _: &[&Path],
+    _: &Pdf,
+    _: &[(u8, u8)],
+    _: f64,
+    _: f64,
+    _: f64,
+) -> Result<FkTable> {
+    Err(anyhow!(
+        "you need to install `pineappl` with feature `evolve`"
+    ))
 }

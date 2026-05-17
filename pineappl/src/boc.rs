@@ -14,6 +14,33 @@ use std::cmp::Ordering;
 use std::ops::Range;
 use std::str::FromStr;
 
+/// Helper macro to quickly generate a `Channel` at compile time.
+///
+/// # Examples
+///
+/// In the following example `entry1` and `entry2` represent the same values:
+///
+/// ```rust
+/// use pineappl::channel;
+///
+/// let entry1 = channel![1.0 * (2, 2) + 1.0 * (4, 4)];
+/// let entry2 = channel![1.0 * (4, 4) + 1.0 * (2, 2)];
+///
+/// assert_eq!(entry1, entry2);
+/// ```
+#[macro_export]
+macro_rules! channel {
+    ($factor:literal * ($($pids:expr),+) $(+ $more_factors:literal * ($($more_pids:expr),+))*) => {
+        $crate::boc::Channel::new(
+            vec![
+                (vec![$($pids),+], $factor) $(,
+                (vec![$($more_pids),+], $more_factors)
+                )*
+            ]
+        )
+    };
+}
+
 /// Defines the kinematic variables stored in each subgrid of a [`crate::grid::Grid`].
 ///
 /// A grid with two convolutions for instance will need exactly two `X`-type kinematic
@@ -260,6 +287,18 @@ pub struct Bin {
 }
 
 impl Bin {
+    /// Return the number of dimensions of this bin.
+    #[must_use]
+    pub const fn dimensions(&self) -> usize {
+        self.limits.len()
+    }
+
+    /// Return the per-dimension bin limits.
+    #[must_use]
+    pub fn limits(&self) -> &[(f64, f64)] {
+        &self.limits
+    }
+
     /// Construct a new bin.
     ///
     /// # Panics
@@ -277,22 +316,10 @@ impl Bin {
         }
     }
 
-    /// Return the number of dimensions of this bin.
-    #[must_use]
-    pub const fn dimensions(&self) -> usize {
-        self.limits.len()
-    }
-
     /// Return the bin normalization.
     #[must_use]
     pub const fn normalization(&self) -> f64 {
         self.normalization
-    }
-
-    /// Return the per-dimension bin limits.
-    #[must_use]
-    pub fn limits(&self) -> &[(f64, f64)] {
-        &self.limits
     }
 
     /// Compare two bins approximately (ULP-based comparison for floating point values).
@@ -316,30 +343,52 @@ pub struct BinsWithFillLimits {
 }
 
 impl BinsWithFillLimits {
-    /// Construct from explicit bins and fill limits.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if the number of bins does not match the number of fill limits
-    /// minus one.
-    pub fn new(bins: Vec<Bin>, fill_limits: Vec<f64>) -> Result<Self> {
-        // TODO: validate the bins
+    /// Return the underlying bins.
+    #[must_use]
+    pub fn bins(&self) -> &[Bin] {
+        &self.bins
+    }
 
-        // - there must be at least one bin
-        // - all fill limits must be ascending
-        // - all dimensions must be the same
-        // - limits must not overlap
+    /// Compare two `BinsWithFillLimits` approximately (ULP-based comparison of bin contents).
+    #[must_use]
+    pub fn bins_partial_eq_with_ulps(&self, other: &Self, ulps: i64) -> bool {
+        (self.bins.len() == other.bins.len())
+            && self
+                .bins
+                .iter()
+                .zip(other.bins())
+                .all(|(lhs, rhs)| lhs.partial_eq_with_ulps(rhs, ulps))
+    }
 
-        let fill_limits_len = fill_limits.len();
-        let bins_len_p1 = bins.len() + 1;
+    /// Return the number of dimensions (taken from the first bin).
+    #[must_use]
+    pub fn dimensions(&self) -> usize {
+        self.bins
+            .first()
+            // UNWRAP: `Bin::new` should guarantee that there's at least one bin
+            .unwrap_or_else(|| unreachable!())
+            .dimensions()
+    }
 
-        if fill_limits_len != bins_len_p1 {
-            return Err(Error::General(
-                "number of bins must agree with the number of fill limits plus 1".to_owned(),
-            ));
+    /// Return the bin index corresponding to `value` in fill-limit space.
+    #[must_use]
+    pub fn fill_index(&self, value: f64) -> Option<usize> {
+        match self
+            .fill_limits
+            .binary_search_by(|left| left.total_cmp(&value))
+        {
+            Err(0) => None,
+            Err(index) if index == self.fill_limits.len() => None,
+            Ok(index) if index == (self.fill_limits.len() - 1) => None,
+            Ok(index) => Some(index),
+            Err(index) => Some(index - 1),
         }
+    }
 
-        Ok(Self { bins, fill_limits })
+    /// Return the fill limits.
+    #[must_use]
+    pub fn fill_limits(&self) -> &[f64] {
+        &self.fill_limits
     }
 
     /// Construct a 1D binning from fill limits.
@@ -389,76 +438,10 @@ impl BinsWithFillLimits {
         Self::new(bins, fill_limits)
     }
 
-    /// Return slices that partition the bins into simply-connected blocks.
-    ///
-    /// For one-dimensional binning this returns a single slice spanning all bins.
-    pub fn slices(&self) -> Vec<Range<usize>> {
-        if self.dimensions() == 1 {
-            // TODO: check that bins are contiguous
-            vec![0..self.len()]
-        } else {
-            self.bins()
-                .iter()
-                .flat_map(Bin::limits)
-                .enumerate()
-                .filter_map(|(index, x)| {
-                    ((index % self.dimensions()) != (self.dimensions() - 1)).then_some(x)
-                })
-                .collect::<Vec<_>>()
-                .chunks_exact(self.dimensions() - 1)
-                .enumerate()
-                .dedup_by_with_count(|(_, x), (_, y)| x == y)
-                .map(|(count, (index, _))| index..index + count)
-                .collect()
-        }
-    }
-
-    /// Return the underlying bins.
-    #[must_use]
-    pub fn bins(&self) -> &[Bin] {
-        &self.bins
-    }
-
     /// Return the number of bins.
     #[must_use]
     pub const fn len(&self) -> usize {
         self.bins.len()
-    }
-
-    /// Return the number of dimensions (taken from the first bin).
-    #[must_use]
-    pub fn dimensions(&self) -> usize {
-        self.bins
-            .first()
-            // UNWRAP: `Bin::new` should guarantee that there's at least one bin
-            .unwrap_or_else(|| unreachable!())
-            .dimensions()
-    }
-
-    /// Return the bin index corresponding to `value` in fill-limit space.
-    #[must_use]
-    pub fn fill_index(&self, value: f64) -> Option<usize> {
-        match self
-            .fill_limits
-            .binary_search_by(|left| left.total_cmp(&value))
-        {
-            Err(0) => None,
-            Err(index) if index == self.fill_limits.len() => None,
-            Ok(index) if index == (self.fill_limits.len() - 1) => None,
-            Ok(index) => Some(index),
-            Err(index) => Some(index - 1),
-        }
-    }
-
-    /// Return the fill limits.
-    #[must_use]
-    pub fn fill_limits(&self) -> &[f64] {
-        &self.fill_limits
-    }
-
-    /// Return the bin normalizations.
-    pub fn normalizations(&self) -> Vec<f64> {
-        self.bins.iter().map(Bin::normalization).collect()
     }
 
     /// Merge a contiguous range of bins.
@@ -501,6 +484,37 @@ impl BinsWithFillLimits {
         )
     }
 
+    /// Construct from explicit bins and fill limits.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the number of bins does not match the number of fill limits
+    /// minus one.
+    pub fn new(bins: Vec<Bin>, fill_limits: Vec<f64>) -> Result<Self> {
+        // TODO: validate the bins
+
+        // - there must be at least one bin
+        // - all fill limits must be ascending
+        // - all dimensions must be the same
+        // - limits must not overlap
+
+        let fill_limits_len = fill_limits.len();
+        let bins_len_p1 = bins.len() + 1;
+
+        if fill_limits_len != bins_len_p1 {
+            return Err(Error::General(
+                "number of bins must agree with the number of fill limits plus 1".to_owned(),
+            ));
+        }
+
+        Ok(Self { bins, fill_limits })
+    }
+
+    /// Return the bin normalizations.
+    pub fn normalizations(&self) -> Vec<f64> {
+        self.bins.iter().map(Bin::normalization).collect()
+    }
+
     /// Remove a bin by index.
     ///
     /// # Panics
@@ -513,15 +527,28 @@ impl BinsWithFillLimits {
         self.bins.remove(index)
     }
 
-    /// Compare two `BinsWithFillLimits` approximately (ULP-based comparison of bin contents).
-    #[must_use]
-    pub fn bins_partial_eq_with_ulps(&self, other: &Self, ulps: i64) -> bool {
-        (self.bins.len() == other.bins.len())
-            && self
-                .bins
+    /// Return slices that partition the bins into simply-connected blocks.
+    ///
+    /// For one-dimensional binning this returns a single slice spanning all bins.
+    pub fn slices(&self) -> Vec<Range<usize>> {
+        if self.dimensions() == 1 {
+            // TODO: check that bins are contiguous
+            vec![0..self.len()]
+        } else {
+            self.bins()
                 .iter()
-                .zip(other.bins())
-                .all(|(lhs, rhs)| lhs.partial_eq_with_ulps(rhs, ulps))
+                .flat_map(Bin::limits)
+                .enumerate()
+                .filter_map(|(index, x)| {
+                    ((index % self.dimensions()) != (self.dimensions() - 1)).then_some(x)
+                })
+                .collect::<Vec<_>>()
+                .chunks_exact(self.dimensions() - 1)
+                .enumerate()
+                .dedup_by_with_count(|(_, x), (_, y)| x == y)
+                .map(|(count, (index, _))| index..index + count)
+                .collect()
+        }
     }
 }
 
@@ -771,19 +798,6 @@ impl PartialOrd for Order {
 }
 
 impl Order {
-    /// Constructor. This function mainly exists to have a way of constructing `Order` that is less
-    /// verbose.
-    #[must_use]
-    pub const fn new(alphas: u8, alpha: u8, logxir: u8, logxif: u8, logxia: u8) -> Self {
-        Self {
-            alphas,
-            alpha,
-            logxir,
-            logxif,
-            logxia,
-        }
-    }
-
     /// Return a mask suitable to pass as the `order_mask` parameter of [`Grid::convolve`],
     /// [`Grid::evolve`] or [`Grid::evolve_info`]. The selection of `orders` is controlled using
     /// the `max_as` and `max_al` parameters, for instance setting `max_as = 1` and `max_al = 0`
@@ -933,6 +947,19 @@ impl Order {
             )
             .collect()
     }
+
+    /// Constructor. This function mainly exists to have a way of constructing `Order` that is less
+    /// verbose.
+    #[must_use]
+    pub const fn new(alphas: u8, alpha: u8, logxir: u8, logxif: u8, logxia: u8) -> Self {
+        Self {
+            alphas,
+            alpha,
+            logxir,
+            logxif,
+            logxia,
+        }
+    }
 }
 
 /// This structure represents the channel object.
@@ -946,6 +973,111 @@ pub struct Channel {
 }
 
 impl Channel {
+    /// If `other` is the same channel when only comparing PIDs and neglecting the factors, return
+    /// the number `f1 / f2`, where `f1` is the factor from `self` and `f2` is the factor from
+    /// `other`.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use pineappl::channel;
+    ///
+    /// let ch1 = channel![2.0 * (2, 2) + 2.0 * (4, 4)];
+    /// let ch2 = channel![1.0 * (4, 4) + 1.0 * (2, 2)];
+    /// let ch3 = channel![1.0 * (3, 4) + 1.0 * (2, 2)];
+    /// let ch4 = channel![1.0 * (4, 3) + 2.0 * (2, 3)];
+    /// let ch5 = channel![1.0 * (2, 2) + 2.0 * (4, 4)];
+    ///
+    /// // ch1 is ch2 multiplied by two
+    /// assert_eq!(ch1.common_factor(&ch2), Some(2.0));
+    /// // ch1 isn't similar to ch3
+    /// assert_eq!(ch1.common_factor(&ch3), None);
+    /// // ch1 isn't similar to ch4 either
+    /// assert_eq!(ch1.common_factor(&ch4), None);
+    /// // ch1 is similar to ch5, but they don't share a common factor
+    /// assert_eq!(ch1.common_factor(&ch5), None);
+    /// ```
+    #[must_use]
+    pub fn common_factor(&self, other: &Self) -> Option<f64> {
+        if self.entry.len() != other.entry.len() {
+            return None;
+        }
+
+        let result: Option<Vec<_>> = self
+            .entry
+            .iter()
+            .zip(&other.entry)
+            .map(|((pids_a, fa), (pids_b, fb))| (pids_a == pids_b).then_some(fa / fb))
+            .collect();
+
+        result.and_then(|factors| {
+            if factors
+                .windows(2)
+                .all(|win| approx_eq!(f64, win[0], win[1], ulps = 4))
+            {
+                factors.first().copied()
+            } else {
+                None
+            }
+        })
+    }
+
+    /// Returns a tuple representation of this entry.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use pineappl::channel;
+    /// use pineappl::boc::Channel;
+    ///
+    /// let entry = channel![1.0 * (4, 4) + 1.0 * (2, 2)];
+    ///
+    /// assert_eq!(entry.entry(), [(vec![2, 2], 1.0), (vec![4, 4], 1.0)]);
+    /// ```
+    #[must_use]
+    pub fn entry(&self) -> &[(Vec<i32>, f64)] {
+        &self.entry
+    }
+
+    /// Finds the factor with the smallest absolute value in the channel and
+    /// divides all coefficients by this value.
+    ///
+    /// # Returns
+    ///
+    /// A tuple containing:
+    /// - the factored-out coefficient
+    /// - a new `Channel` with all coefficients divided by the factored value
+    ///
+    /// # Panics
+    ///
+    /// Panics if any luminosity coefficient is not comparable (for example NaN), or if the
+    /// channel has no entries (should not occur for a well-formed grid).
+    #[must_use]
+    pub fn factor(&self) -> (f64, Self) {
+        let factor = self
+            .entry
+            .iter()
+            .map(|(_, f)| *f)
+            .min_by(|a, b| {
+                a.abs()
+                    .partial_cmp(&b.abs())
+                    // UNWRAP: if we can't compare the numbers the data structure is bugged
+                    .unwrap()
+            })
+            // UNWRAP: every `Channel` has at least one entry
+            .unwrap();
+
+        let new_channel = Self::new(
+            self.entry
+                .iter()
+                .cloned()
+                .map(|(e, f)| (e, f / factor))
+                .collect(),
+        );
+
+        (factor, new_channel)
+    }
+
     /// Constructor for `Channel`. Note that `entry` must be non-empty, otherwise this function
     /// panics.
     ///
@@ -1055,23 +1187,6 @@ impl Channel {
         Self::new(result)
     }
 
-    /// Returns a tuple representation of this entry.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use pineappl::channel;
-    /// use pineappl::boc::Channel;
-    ///
-    /// let entry = channel![1.0 * (4, 4) + 1.0 * (2, 2)];
-    ///
-    /// assert_eq!(entry.entry(), [(vec![2, 2], 1.0), (vec![4, 4], 1.0)]);
-    /// ```
-    #[must_use]
-    pub fn entry(&self) -> &[(Vec<i32>, f64)] {
-        &self.entry
-    }
-
     /// Create a new object with the PIDs at index `i` and `j` transposed.
     #[must_use]
     pub fn transpose(&self, i: usize, j: usize) -> Self {
@@ -1085,94 +1200,6 @@ impl Channel {
                 })
                 .collect(),
         )
-    }
-
-    /// If `other` is the same channel when only comparing PIDs and neglecting the factors, return
-    /// the number `f1 / f2`, where `f1` is the factor from `self` and `f2` is the factor from
-    /// `other`.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use pineappl::channel;
-    ///
-    /// let ch1 = channel![2.0 * (2, 2) + 2.0 * (4, 4)];
-    /// let ch2 = channel![1.0 * (4, 4) + 1.0 * (2, 2)];
-    /// let ch3 = channel![1.0 * (3, 4) + 1.0 * (2, 2)];
-    /// let ch4 = channel![1.0 * (4, 3) + 2.0 * (2, 3)];
-    /// let ch5 = channel![1.0 * (2, 2) + 2.0 * (4, 4)];
-    ///
-    /// // ch1 is ch2 multiplied by two
-    /// assert_eq!(ch1.common_factor(&ch2), Some(2.0));
-    /// // ch1 isn't similar to ch3
-    /// assert_eq!(ch1.common_factor(&ch3), None);
-    /// // ch1 isn't similar to ch4 either
-    /// assert_eq!(ch1.common_factor(&ch4), None);
-    /// // ch1 is similar to ch5, but they don't share a common factor
-    /// assert_eq!(ch1.common_factor(&ch5), None);
-    /// ```
-    #[must_use]
-    pub fn common_factor(&self, other: &Self) -> Option<f64> {
-        if self.entry.len() != other.entry.len() {
-            return None;
-        }
-
-        let result: Option<Vec<_>> = self
-            .entry
-            .iter()
-            .zip(&other.entry)
-            .map(|((pids_a, fa), (pids_b, fb))| (pids_a == pids_b).then_some(fa / fb))
-            .collect();
-
-        result.and_then(|factors| {
-            if factors
-                .windows(2)
-                .all(|win| approx_eq!(f64, win[0], win[1], ulps = 4))
-            {
-                factors.first().copied()
-            } else {
-                None
-            }
-        })
-    }
-
-    /// Finds the factor with the smallest absolute value in the channel and
-    /// divides all coefficients by this value.
-    ///
-    /// # Returns
-    ///
-    /// A tuple containing:
-    /// - the factored-out coefficient
-    /// - a new `Channel` with all coefficients divided by the factored value
-    ///
-    /// # Panics
-    ///
-    /// Panics if any luminosity coefficient is not comparable (for example NaN), or if the
-    /// channel has no entries (should not occur for a well-formed grid).
-    #[must_use]
-    pub fn factor(&self) -> (f64, Self) {
-        let factor = self
-            .entry
-            .iter()
-            .map(|(_, f)| *f)
-            .min_by(|a, b| {
-                a.abs()
-                    .partial_cmp(&b.abs())
-                    // UNWRAP: if we can't compare the numbers the data structure is bugged
-                    .unwrap()
-            })
-            // UNWRAP: every `Channel` has at least one entry
-            .unwrap();
-
-        let new_channel = Self::new(
-            self.entry
-                .iter()
-                .cloned()
-                .map(|(e, f)| (e, f / factor))
-                .collect(),
-        );
-
-        (factor, new_channel)
     }
 }
 
@@ -1219,33 +1246,6 @@ impl FromStr for Channel {
 
         Ok(Self::new(result))
     }
-}
-
-/// Helper macro to quickly generate a `Channel` at compile time.
-///
-/// # Examples
-///
-/// In the following example `entry1` and `entry2` represent the same values:
-///
-/// ```rust
-/// use pineappl::channel;
-///
-/// let entry1 = channel![1.0 * (2, 2) + 1.0 * (4, 4)];
-/// let entry2 = channel![1.0 * (4, 4) + 1.0 * (2, 2)];
-///
-/// assert_eq!(entry1, entry2);
-/// ```
-#[macro_export]
-macro_rules! channel {
-    ($factor:literal * ($($pids:expr),+) $(+ $more_factors:literal * ($($more_pids:expr),+))*) => {
-        $crate::boc::Channel::new(
-            vec![
-                (vec![$($pids),+], $factor) $(,
-                (vec![$($more_pids),+], $more_factors)
-                )*
-            ]
-        )
-    };
 }
 
 #[cfg(test)]

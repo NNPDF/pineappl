@@ -1,3 +1,5 @@
-doc-valid-idents = ["APPLgrid", "PineAPPL", "PyO3", ".."]
-too-many-arguments-threshold = 12
 allowed-duplicate-crates = ["pineappl"]
+doc-valid-idents = ["APPLgrid", "PineAPPL", "PyO3", ".."]
+# do not sort enums and structs, because it breaks the file format
+source-item-ordering = ["impl", "module", "trait"]
+too-many-arguments-threshold = 12

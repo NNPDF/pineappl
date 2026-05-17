@@ -104,6 +104,16 @@ b   APPLgrid    PineAPPL     rel. diff
 44 3.9803998e0 3.9803998e0  2.2204460e-16
 ";
 
+#[cfg(feature = "applgrid")]
+const EXPORT_NNLO_AK5_PTJ_STR: &str = "b   APPLgrid     PineAPPL    rel. diff
+-+------------+------------+------------
+0 6.7833493e-4 6.7833993e-4 7.3775731e-6
+";
+
+#[cfg(feature = "applgrid")]
+const EXPORT_NNLO_AK5_PTJ_NO_DISCARD_FAILS_STR: &str = "Error: factorization scale muf2 = 46548084.443279915 not found in APPLgrid; try exporting with `--discard-non-matching-values`
+";
+
 #[test]
 fn help() {
     Command::cargo_bin("pineappl")
@@ -131,16 +141,6 @@ fn export_applgrid() {
         .success()
         .stdout(predicates::str::ends_with(EXPORT_APPLGRID_STR));
 }
-
-#[cfg(feature = "applgrid")]
-const EXPORT_NNLO_AK5_PTJ_STR: &str = "b   APPLgrid     PineAPPL    rel. diff
--+------------+------------+------------
-0 6.7833493e-4 6.7833993e-4 7.3775731e-6
-";
-
-#[cfg(feature = "applgrid")]
-const EXPORT_NNLO_AK5_PTJ_NO_DISCARD_FAILS_STR: &str = "Error: factorization scale muf2 = 46548084.443279915 not found in APPLgrid; try exporting with `--discard-non-matching-values`
-";
 
 #[test]
 #[cfg(feature = "applgrid")]

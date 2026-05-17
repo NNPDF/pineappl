@@ -1,3 +1,6 @@
+#[cfg(feature = "applgrid")]
+mod applgrid;
+
 use super::helpers::{self, ConvFuns, ConvoluteMode};
 use super::{GlobalConfiguration, Subcommand};
 use anyhow::{Result, anyhow};
@@ -8,55 +11,6 @@ use pineappl::boc::Order;
 use pineappl::grid::Grid;
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
-
-#[cfg(feature = "applgrid")]
-mod applgrid;
-
-#[cfg(feature = "applgrid")]
-fn convert_into_applgrid(
-    output: &Path,
-    grid: &mut Grid,
-    conv_funs: &mut [Pdf],
-    _: usize,
-    discard_non_matching_values: bool,
-) -> Result<(&'static str, Vec<f64>, usize, Vec<bool>)> {
-    // TODO: check also scale-varied results
-
-    let (mut applgrid, order_mask) =
-        applgrid::convert_into_applgrid(grid, output, discard_non_matching_values)?;
-    let results = applgrid::convolve_applgrid(applgrid.pin_mut(), conv_funs);
-
-    Ok(("APPLgrid", results, 1, order_mask))
-}
-
-#[cfg(not(feature = "applgrid"))]
-fn convert_into_applgrid(
-    _: &Path,
-    _: &mut Grid,
-    _: &mut [Pdf],
-    _: usize,
-    _: bool,
-) -> Result<(&'static str, Vec<f64>, usize, Vec<bool>)> {
-    Err(anyhow!(
-        "you need to install `pineappl` with feature `applgrid`"
-    ))
-}
-
-fn convert_into_grid(
-    output: &Path,
-    grid: &mut Grid,
-    conv_funs: &mut [Pdf],
-    scales: usize,
-    discard_non_matching_values: bool,
-) -> Result<(&'static str, Vec<f64>, usize, Vec<bool>)> {
-    if let Some(extension) = output.extension()
-        && (extension == "appl" || extension == "root")
-    {
-        return convert_into_applgrid(output, grid, conv_funs, scales, discard_non_matching_values);
-    }
-
-    Err(anyhow!("could not detect file format"))
-}
 
 /// Converts PineAPPL grids to APPLgrid files.
 #[derive(Parser)]
@@ -230,4 +184,50 @@ impl Subcommand for Opts {
             Ok(ExitCode::SUCCESS)
         }
     }
+}
+
+#[cfg(feature = "applgrid")]
+fn convert_into_applgrid(
+    output: &Path,
+    grid: &mut Grid,
+    conv_funs: &mut [Pdf],
+    _: usize,
+    discard_non_matching_values: bool,
+) -> Result<(&'static str, Vec<f64>, usize, Vec<bool>)> {
+    // TODO: check also scale-varied results
+
+    let (mut applgrid, order_mask) =
+        applgrid::convert_into_applgrid(grid, output, discard_non_matching_values)?;
+    let results = applgrid::convolve_applgrid(applgrid.pin_mut(), conv_funs);
+
+    Ok(("APPLgrid", results, 1, order_mask))
+}
+
+#[cfg(not(feature = "applgrid"))]
+fn convert_into_applgrid(
+    _: &Path,
+    _: &mut Grid,
+    _: &mut [Pdf],
+    _: usize,
+    _: bool,
+) -> Result<(&'static str, Vec<f64>, usize, Vec<bool>)> {
+    Err(anyhow!(
+        "you need to install `pineappl` with feature `applgrid`"
+    ))
+}
+
+fn convert_into_grid(
+    output: &Path,
+    grid: &mut Grid,
+    conv_funs: &mut [Pdf],
+    scales: usize,
+    discard_non_matching_values: bool,
+) -> Result<(&'static str, Vec<f64>, usize, Vec<bool>)> {
+    if let Some(extension) = output.extension()
+        && (extension == "appl" || extension == "root")
+    {
+        return convert_into_applgrid(output, grid, conv_funs, scales, discard_non_matching_values);
+    }
+
+    Err(anyhow!("could not detect file format"))
 }

@@ -1,12 +1,13 @@
 //! TODO.
 
 #![expect(
+    clippy::arbitrary_source_item_ordering,
+    reason = "does not work properly with cxx"
+)]
+#![expect(
     clippy::missing_safety_doc,
     reason = "adding a safety section does not seem to work"
 )]
-
-use std::str::FromStr;
-use thiserror::Error;
 
 /// TODO.
 #[cxx::bridge]
@@ -81,13 +82,13 @@ pub mod ffi {
         type fastNLOCoeffAddBase;
 
         /// TODO.
-        fn GetNevt(&self, _: i32, _: i32) -> f64;
-        /// TODO.
         fn GetNObsBin(&self) -> i32;
         /// TODO.
         fn GetNPDF(&self) -> i32;
         /// TODO.
         fn GetNSubproc(&self) -> i32;
+        /// TODO.
+        fn GetNevt(&self, _: i32, _: i32) -> f64;
         /// TODO.
         fn GetNpow(&self) -> i32;
     }
@@ -148,25 +149,19 @@ pub mod ffi {
 
         /// TODO.
         fn CalcCrossSection(self: Pin<&mut fastNLOReader>);
-
         /// TODO.
         unsafe fn GetIsFlexibleScaleTable(&self, _: *mut fastNLOCoeffAddBase) -> bool;
-
-        /// TODO.
-        fn GetMuRFunctionalForm(&self) -> EScaleFunctionalForm;
-
         /// TODO.
         fn GetMuFFunctionalForm(&self) -> EScaleFunctionalForm;
-
+        /// TODO.
+        fn GetMuRFunctionalForm(&self) -> EScaleFunctionalForm;
+        /// TODO.
+        fn SetMuFFunctionalForm(self: Pin<&mut fastNLOReader>, _: EScaleFunctionalForm);
+        /// TODO.
+        fn SetMuRFunctionalForm(self: Pin<&mut fastNLOReader>, _: EScaleFunctionalForm);
         /// TODO.
         #[must_use]
         fn SetScaleFactorsMuRMuF(self: Pin<&mut Self>, _: f64, _: f64) -> bool;
-
-        /// TODO.
-        fn SetMuRFunctionalForm(self: Pin<&mut fastNLOReader>, _: EScaleFunctionalForm);
-
-        /// TODO.
-        fn SetMuFFunctionalForm(self: Pin<&mut fastNLOReader>, _: EScaleFunctionalForm);
     }
 
     unsafe extern "C++" {
@@ -210,20 +205,15 @@ pub mod ffi {
             _: &[f64],
             _: bool,
         ) -> Vec<f64>;
-
         /// TODO.
         #[must_use]
         fn GetCrossSection(_: Pin<&mut fastNLOReader>, _: bool) -> Vec<f64>;
         /// TODO.
-        fn GetNx(_: &fastNLOCoeffAddFlex, _: usize) -> usize;
-        /// TODO.
         fn GetDimLabels(_: &fastNLOTable) -> Vec<String>;
         /// TODO.
+        fn GetNx(_: &fastNLOCoeffAddFlex, _: usize) -> usize;
+        /// TODO.
         fn GetObsBinDimBounds(_: &fastNLOTable, _: u32, _: u32) -> pair_double_double;
-        /// TODO.
-        fn GetScDescr(_: &fastNLOTable) -> Vec<String>;
-        /// TODO.
-        fn GetXSDescr(_: &fastNLOTable) -> String;
         /// TODO.
         fn GetPDFCoeff(_: &fastNLOCoeffAddBase, index: usize) -> Vec<pair_int_int>;
         /// TODO.
@@ -235,9 +225,7 @@ pub mod ffi {
         /// TODO.
         fn GetScaleNodes2(_: &fastNLOCoeffAddFlex, _: i32) -> Vec<f64>;
         /// TODO.
-        fn GetXNodes1(_: &fastNLOCoeffAddBase, _: i32) -> Vec<f64>;
-        /// TODO.
-        fn GetXNodes2(_: &fastNLOCoeffAddBase, _: i32) -> Vec<f64>;
+        fn GetScDescr(_: &fastNLOTable) -> Vec<String>;
         /// TODO.
         fn GetSigmaTilde(
             _: &fastNLOCoeffAddFlex,
@@ -248,7 +236,12 @@ pub mod ffi {
             _: usize,
             _: i32,
         ) -> f64;
-
+        /// TODO.
+        fn GetXNodes1(_: &fastNLOCoeffAddBase, _: i32) -> Vec<f64>;
+        /// TODO.
+        fn GetXNodes2(_: &fastNLOCoeffAddBase, _: i32) -> Vec<f64>;
+        /// TODO.
+        fn GetXSDescr(_: &fastNLOTable) -> String;
         /// TODO.
         fn downcast_coeff_add_fix_to_base(_: &fastNLOCoeffAddFix) -> &fastNLOCoeffAddBase;
         /// TODO.
@@ -264,7 +257,6 @@ pub mod ffi {
         fn downcast_reader_to_pdf_linear_combinations(
             _: &fastNLOReader,
         ) -> &fastNLOPDFLinearCombinations;
-
         /// TODO.
         unsafe fn dynamic_cast_coeff_add_fix(
             _: *const fastNLOCoeffBase,
@@ -273,7 +265,6 @@ pub mod ffi {
         unsafe fn dynamic_cast_coeff_add_flex(
             _: *const fastNLOCoeffBase,
         ) -> *const fastNLOCoeffAddFlex;
-
         /// TODO.
         #[must_use]
         fn make_fastnlo_lhapdf_with_name_file_set(
@@ -283,6 +274,9 @@ pub mod ffi {
         ) -> UniquePtr<fastNLOLHAPDF>;
     }
 }
+
+use std::str::FromStr;
+use thiserror::Error;
 
 /// TODO.
 #[derive(Debug, Error)]

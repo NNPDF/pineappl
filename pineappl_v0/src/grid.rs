@@ -74,34 +74,10 @@ pub struct Grid {
 }
 
 impl Grid {
-    /// Return by which convention the particle IDs are encoded.
+    /// Returns all information about the bins in this grid.
     #[must_use]
-    pub fn pid_basis(&self) -> PidBasis {
-        if let Some(key_values) = self.key_values()
-            && let Some(lumi_id_types) = key_values.get("lumi_id_types")
-        {
-            match lumi_id_types.as_str() {
-                "pdg_mc_ids" => return PidBasis::Pdg,
-                "evol" => return PidBasis::Evol,
-                _ => unimplemented!("unknown particle ID convention {lumi_id_types}"),
-            }
-        }
-
-        // if there's no basis explicitly set we're assuming to use PDG IDs
-        PidBasis::Pdg
-    }
-
-    /// Construct a `Grid` by deserializing it from `reader`.
-    ///
-    /// # Errors
-    ///
-    /// If reading from the compressed or uncompressed stream fails an error is returned.
-    ///
-    /// # Panics
-    ///
-    /// Panics if the grid version is not `0`.
-    pub fn read_uncompressed(reader: impl BufRead) -> Result<Self, GridError> {
-        bincode::deserialize_from(reader).map_err(GridError::ReadFailure)
+    pub const fn bin_info(&self) -> BinInfo<'_> {
+        BinInfo::new(&self.bin_limits, self.remapper())
     }
 
     /// Return the channels for this `Grid`.
@@ -190,16 +166,50 @@ impl Grid {
         )
     }
 
+    /// Returns a map with key-value pairs, if there are any stored in this grid.
+    #[must_use]
+    pub const fn key_values(&self) -> Option<&HashMap<String, String>> {
+        match &self.more_members {
+            MoreMembers::V3(mmv3) => Some(&mmv3.key_value_db),
+            MoreMembers::V2(mmv2) => Some(&mmv2.key_value_db),
+            MoreMembers::V1(_) => None,
+        }
+    }
+
     /// Returns the subgrid parameters.
     #[must_use]
     pub fn orders(&self) -> &[Order] {
         &self.orders
     }
 
-    /// Return all subgrids as an `ArrayView3`.
+    /// Return by which convention the particle IDs are encoded.
     #[must_use]
-    pub fn subgrids(&self) -> ArrayView3<'_, SubgridEnum> {
-        self.subgrids.view()
+    pub fn pid_basis(&self) -> PidBasis {
+        if let Some(key_values) = self.key_values()
+            && let Some(lumi_id_types) = key_values.get("lumi_id_types")
+        {
+            match lumi_id_types.as_str() {
+                "pdg_mc_ids" => return PidBasis::Pdg,
+                "evol" => return PidBasis::Evol,
+                _ => unimplemented!("unknown particle ID convention {lumi_id_types}"),
+            }
+        }
+
+        // if there's no basis explicitly set we're assuming to use PDG IDs
+        PidBasis::Pdg
+    }
+
+    /// Construct a `Grid` by deserializing it from `reader`.
+    ///
+    /// # Errors
+    ///
+    /// If reading from the compressed or uncompressed stream fails an error is returned.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the grid version is not `0`.
+    pub fn read_uncompressed(reader: impl BufRead) -> Result<Self, GridError> {
+        bincode::deserialize_from(reader).map_err(GridError::ReadFailure)
     }
 
     /// Return the currently set remapper, if there is any.
@@ -212,19 +222,9 @@ impl Grid {
         }
     }
 
-    /// Returns all information about the bins in this grid.
+    /// Return all subgrids as an `ArrayView3`.
     #[must_use]
-    pub const fn bin_info(&self) -> BinInfo<'_> {
-        BinInfo::new(&self.bin_limits, self.remapper())
-    }
-
-    /// Returns a map with key-value pairs, if there are any stored in this grid.
-    #[must_use]
-    pub const fn key_values(&self) -> Option<&HashMap<String, String>> {
-        match &self.more_members {
-            MoreMembers::V3(mmv3) => Some(&mmv3.key_value_db),
-            MoreMembers::V2(mmv2) => Some(&mmv2.key_value_db),
-            MoreMembers::V1(_) => None,
-        }
+    pub fn subgrids(&self) -> ArrayView3<'_, SubgridEnum> {
+        self.subgrids.view()
     }
 }

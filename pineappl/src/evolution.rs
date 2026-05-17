@@ -112,6 +112,11 @@ impl AlphasTable {
     }
 }
 
+type Pid01IndexTuples = Vec<(usize, usize)>;
+type Pid01Tuples = Vec<(i32, i32)>;
+
+type X1aX1bOpDTuple = (Vec<Vec<f64>>, Option<ArrayD<f64>>);
+
 fn gluon_has_pid_zero(grid: &Grid) -> bool {
     // if there are any PID zero particles ...
     grid.channels()
@@ -120,9 +125,6 @@ fn gluon_has_pid_zero(grid: &Grid) -> bool {
         // and if the particle IDs are encoded using PDG MC IDs
         && *grid.pid_basis() == PidBasis::Pdg
 }
-
-type Pid01IndexTuples = Vec<(usize, usize)>;
-type Pid01Tuples = Vec<(i32, i32)>;
 
 fn pid_slices(
     operator: &ArrayView4<f64>,
@@ -205,8 +207,6 @@ fn operator_slices(
 
     Ok(operators)
 }
-
-type X1aX1bOpDTuple = (Vec<Vec<f64>>, Option<ArrayD<f64>>);
 
 fn ndarray_from_subgrid_orders_slice(
     grid: &Grid,
