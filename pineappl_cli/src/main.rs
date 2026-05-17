@@ -1,4 +1,4 @@
-#![allow(missing_docs)]
+//! TODO.
 
 use clap::Parser;
 use pineappl_cli::{Opts, Subcommand};

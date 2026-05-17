@@ -1,7 +1,7 @@
-#![allow(clippy::missing_errors_doc)]
 #![allow(clippy::struct_excessive_bools)]
 #![allow(clippy::too_many_arguments)]
-#![allow(missing_docs)]
+
+//! TODO.
 
 mod analyze;
 mod channels;
@@ -27,6 +27,7 @@ use enum_dispatch::enum_dispatch;
 use git_version::git_version;
 use std::process::ExitCode;
 
+/// TODO.
 #[derive(Parser)]
 pub struct GlobalConfiguration {
     /// Allow LHAPDF to print banners.
@@ -43,32 +44,56 @@ pub struct GlobalConfiguration {
     pub use_alphas_from: usize,
 }
 
+/// TODO.
 #[enum_dispatch]
 pub trait Subcommand {
+    /// TODO.
+    ///
+    /// # Errors
+    ///
+    /// TODO.
     fn run(&self, cfg: &GlobalConfiguration) -> Result<ExitCode>;
 }
 
+/// TODO.
 #[enum_dispatch(Subcommand)]
 #[derive(Parser)]
 pub enum SubcommandEnum {
+    /// TODO.
     Analyze(analyze::Opts),
+    /// TODO.
     Channels(channels::Opts),
+    /// TODO.
     Convolve(convolve::Opts),
+    /// TODO.
     Diff(diff::Opts),
+    /// TODO.
     Evolve(evolve::Opts),
+    /// TODO.
     Export(export::Opts),
+    /// TODO.
     Help(help::Opts),
+    /// TODO.
     Import(import::Opts),
+    /// TODO.
     Merge(merge::Opts),
+    /// TODO.
     Orders(orders::Opts),
+    /// TODO.
     Plot(plot::Opts),
+    /// TODO.
     Pull(pull::Opts),
+    /// TODO.
     Read(read::Opts),
+    /// TODO.
     Subgrids(subgrids::Opts),
+    /// TODO.
     Uncert(uncert::Opts),
+    /// TODO.
     Write(write::Opts),
 }
 
+/// TODO.
 #[derive(Parser)]
 #[command(
     arg_required_else_help = true,
@@ -83,8 +108,10 @@ pub enum SubcommandEnum {
     )
 )]
 pub struct Opts {
+    /// TODO.
     #[command(flatten)]
     pub configuration: GlobalConfiguration,
+    /// TODO.
     #[command(subcommand)]
     pub subcommand: SubcommandEnum,
 }
