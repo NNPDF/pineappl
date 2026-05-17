@@ -6,7 +6,6 @@
 #![allow(clippy::multiple_inherent_impl)]
 // doesn't work with cxx
 #![allow(clippy::multiple_unsafe_ops_per_block)]
-#![allow(clippy::must_use_candidate)]
 #![allow(clippy::too_many_arguments)]
 #![allow(missing_docs)]
 
@@ -59,6 +58,7 @@ pub mod ffi {
         fn nloops(&self) -> i32;
         fn Nobs_internal(&self) -> i32;
         fn obslow_internal(&self, _: i32) -> f64;
+        #[must_use]
         fn run(self: Pin<&mut Self>) -> &mut f64;
         fn weightgrid(&self, _: i32, _: i32) -> *const igrid;
         fn Write(self: Pin<&mut Self>, _: &CxxString, _: &CxxString, _: &CxxString);
@@ -106,6 +106,7 @@ pub mod ffi {
         include!("pineappl_applgrid/src/applgrid.hpp");
 
         fn make_grid(_: &str) -> Result<UniquePtr<grid>>;
+        #[must_use]
         fn make_igrid(
             _: i32,
             _: f64,
@@ -120,8 +121,10 @@ pub mod ffi {
             _: i32,
             _: bool,
         ) -> UniquePtr<igrid>;
+        #[must_use]
         fn make_empty_grid(_: &[f64], _: &str, _: i32, _: i32, _: &str, _: &str)
         -> UniquePtr<grid>;
+        #[must_use]
         fn make_lumi_pdf(_: &str, _: &[i32]) -> UniquePtr<lumi_pdf>;
 
         fn grid_combine(_: &grid) -> Vec<i32>;
@@ -142,9 +145,11 @@ pub mod ffi {
 
         // TODO: class member functions aren't supported yet by cxx, see
         // https://github.com/dtolnay/cxx/issues/447
+        #[must_use]
         fn weightfun(_: f64) -> f64;
 
         fn igrid_m_reweight(_: &igrid) -> bool;
+        #[must_use]
         fn igrid_weightgrid(_: Pin<&mut igrid>, _: usize) -> Pin<&mut SparseMatrix3d>;
     }
 }

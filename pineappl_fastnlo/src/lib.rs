@@ -5,7 +5,6 @@
 #![allow(clippy::multiple_inherent_impl)]
 // doesn't work with cxx
 #![allow(clippy::multiple_unsafe_ops_per_block)]
-#![allow(clippy::must_use_candidate)]
 #![allow(missing_docs)]
 
 use std::str::FromStr;
@@ -108,6 +107,7 @@ pub mod ffi {
         unsafe fn GetIsFlexibleScaleTable(&self, _: *mut fastNLOCoeffAddBase) -> bool;
         fn GetMuRFunctionalForm(&self) -> EScaleFunctionalForm;
         fn GetMuFFunctionalForm(&self) -> EScaleFunctionalForm;
+        #[must_use]
         fn SetScaleFactorsMuRMuF(self: Pin<&mut Self>, _: f64, _: f64) -> bool;
         fn SetMuRFunctionalForm(self: Pin<&mut fastNLOReader>, _: EScaleFunctionalForm);
         fn SetMuFFunctionalForm(self: Pin<&mut fastNLOReader>, _: EScaleFunctionalForm);
@@ -145,6 +145,7 @@ pub mod ffi {
             _: bool,
         ) -> Vec<f64>;
 
+        #[must_use]
         fn GetCrossSection(_: Pin<&mut fastNLOReader>, _: bool) -> Vec<f64>;
         fn GetNx(_: &fastNLOCoeffAddFlex, _: usize) -> usize;
         fn GetDimLabels(_: &fastNLOTable) -> Vec<String>;
@@ -171,6 +172,7 @@ pub mod ffi {
         fn downcast_coeff_add_fix_to_base(_: &fastNLOCoeffAddFix) -> &fastNLOCoeffAddBase;
         fn downcast_coeff_add_flex_to_base(_: &fastNLOCoeffAddFlex) -> &fastNLOCoeffAddBase;
         fn downcast_lhapdf_to_reader(_: &fastNLOLHAPDF) -> &fastNLOReader;
+        #[must_use]
         fn downcast_lhapdf_to_reader_mut(_: Pin<&mut fastNLOLHAPDF>) -> Pin<&mut fastNLOReader>;
         fn downcast_lhapdf_to_table(_: &fastNLOLHAPDF) -> &fastNLOTable;
         fn downcast_reader_to_pdf_linear_combinations(
@@ -184,6 +186,7 @@ pub mod ffi {
             _: *const fastNLOCoeffBase,
         ) -> *const fastNLOCoeffAddFlex;
 
+        #[must_use]
         fn make_fastnlo_lhapdf_with_name_file_set(
             _: &str,
             _: &str,
@@ -224,6 +227,7 @@ impl FromStr for ffi::EScaleFunctionalForm {
 }
 
 impl ffi::EScaleFunctionalForm {
+    #[must_use]
     pub fn compute_scale(self, s1: f64, s2: f64) -> f64 {
         match self {
             Self::kScale1 => s1 * s1,
