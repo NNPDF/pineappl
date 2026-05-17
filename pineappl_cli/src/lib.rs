@@ -53,40 +53,28 @@ pub trait Subcommand {
 }
 
 /// TODO.
+#[expect(
+    missing_docs,
+    reason = "documenting the enum variants will overwrite the documentation from `*::Opts`"
+)]
 #[enum_dispatch(Subcommand)]
 #[derive(Parser)]
 pub enum SubcommandEnum {
-    /// TODO.
     Analyze(analyze::Opts),
-    /// TODO.
     Channels(channels::Opts),
-    /// TODO.
     Convolve(convolve::Opts),
-    /// TODO.
     Diff(diff::Opts),
-    /// TODO.
     Evolve(evolve::Opts),
-    /// TODO.
     Export(export::Opts),
-    /// TODO.
     Help(help::Opts),
-    /// TODO.
     Import(import::Opts),
-    /// TODO.
     Merge(merge::Opts),
-    /// TODO.
     Orders(orders::Opts),
-    /// TODO.
     Plot(plot::Opts),
-    /// TODO.
     Pull(pull::Opts),
-    /// TODO.
     Read(read::Opts),
-    /// TODO.
     Subgrids(subgrids::Opts),
-    /// TODO.
     Uncert(uncert::Opts),
-    /// TODO.
     Write(write::Opts),
 }
 
