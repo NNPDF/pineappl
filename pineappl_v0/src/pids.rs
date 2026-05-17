@@ -1,4 +1,4 @@
-//! TODO
+//! TODO.
 
 /// Particle ID bases. In `PineAPPL` every particle is identified using a particle identifier
 /// (PID), which is represented as an `i32`. The values of this `enum` specify how this value is

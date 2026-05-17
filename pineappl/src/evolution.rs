@@ -56,7 +56,7 @@ pub struct OperatorSliceInfo {
     pub fac0: f64,
     /// Particle identifiers of the `FkTable`.
     pub pids0: Vec<i32>,
-    /// `x`-grid coordinates of the `FkTable`
+    /// `x`-grid coordinates of the `FkTable`.
     pub x0: Vec<f64>,
     /// Squared factorization/fragmentation scale of the slice of `Grid` that should be evolved.
     pub fac1: f64,

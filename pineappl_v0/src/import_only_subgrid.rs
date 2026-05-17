@@ -1,11 +1,11 @@
-//! TODO
+//! TODO.
 
 use super::sparse_array3::SparseArray3;
 use super::subgrid::{Mu2, Subgrid, SubgridIndexedIter};
 use serde::Deserialize;
 use std::borrow::Cow;
 
-/// TODO
+/// TODO.
 #[derive(Deserialize)]
 pub struct ImportOnlySubgridV1 {
     array: SparseArray3<f64>,
@@ -40,7 +40,7 @@ impl Subgrid for ImportOnlySubgridV1 {
     }
 }
 
-/// TODO
+/// TODO.
 #[derive(Deserialize)]
 pub struct ImportOnlySubgridV2 {
     array: SparseArray3<f64>,

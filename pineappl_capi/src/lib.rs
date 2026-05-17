@@ -2,7 +2,7 @@
 //!
 //! The `PineAPPL` Application Programming Interface for the C language (CAPI) defines types and
 //! functions that allow `PineAPPL` to be used without having to write Rust code, and instead
-//! offering
+//! offering:
 //!
 //! * C or C++, or
 //! * Fortran as programming languages. Fortran is supported using the `iso_c_binding` module to
@@ -26,7 +26,7 @@
 //! ```
 //!
 //! This will read `PineAPPL`'s `.pc` file and print the neccessary `CFLAGS` (`--cflags`) and
-//! linker flags (`--libs`). This procedure is supported by many build systems, such as
+//! linker flags (`--libs`). This procedure is supported by many build systems, such as:
 //!
 //! * [Autoconf]/[Automake], using the `PKG_CHECK_MODULES` macro, see the [Autotools mythbuster]
 //!   page for correct usage,
@@ -1503,7 +1503,7 @@ pub struct Channels {
     convolutions: usize,
 }
 
-/// Type for defining the interpolation object
+/// Type for defining the interpolation object.
 #[repr(C)]
 pub struct Interp {
     /// Physical lower edge of the interpolation range (before internal mapping).
@@ -2353,7 +2353,7 @@ pub unsafe extern "C" fn pineappl_grid_evolve_info(
     ren1.copy_from_slice(&grid.evolve_info(order_mask).ren1);
 }
 
-/// Type alias for the operator callback
+/// Type alias for the operator callback.
 pub type OperatorCallback = unsafe extern "C" fn(
     usize,        // index which selects Evolution parameters
     f64,          // squared process scale (fac or frg)

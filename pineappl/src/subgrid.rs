@@ -488,7 +488,7 @@ pub trait Subgrid {
     /// Scale the subgrid by `factor`.
     fn scale(&mut self, factor: f64);
 
-    /// Return the shape of the subgrid
+    /// Return the shape of the subgrid.
     fn shape(&self) -> &[usize];
 
     /// Assume that the convolution functions for indices `a` and `b` for this grid are the same

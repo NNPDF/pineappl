@@ -1,4 +1,4 @@
-//! TODO
+//! TODO.
 
 use super::subgrid::{Mu2, Subgrid, SubgridIndexedIter};
 use serde::Deserialize;

@@ -1,4 +1,4 @@
-//! TODO
+//! TODO.
 
 #![expect(
     clippy::missing_safety_doc,

@@ -1,4 +1,4 @@
-//! Module that contains helpers for binning observables
+//! Module that contains helpers for binning observables.
 
 use super::convert::f64_from_usize;
 use serde::Deserialize;
