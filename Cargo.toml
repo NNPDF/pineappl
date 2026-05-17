@@ -87,6 +87,7 @@ unreadable-literal = "allow"
 allow_attributes = "deny"
 allow_attributes_without_reason = "deny"
 doc_paragraphs_missing_punctuation = "warn"
+non_ascii_literal = "warn"
 str_to_string = "warn"
 
 [workspace.lints.rust]
