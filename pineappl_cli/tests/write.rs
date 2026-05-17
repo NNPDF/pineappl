@@ -1,7 +1,7 @@
 #![expect(missing_docs, reason = "non-public items will not be documented")]
 
 use assert_cmd::Command;
-use assert_fs::{NamedTempFile, fixture::FileWriteStr};
+use assert_fs::{NamedTempFile, fixture::FileWriteStr as _};
 
 const HELP_STR: &str = "Write a grid modified by various operations
 

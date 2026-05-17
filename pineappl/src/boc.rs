@@ -7,7 +7,7 @@
 use super::convert;
 use super::error::{Error, Result};
 use float_cmp::approx_eq;
-use itertools::{Itertools, izip};
+use itertools::{Itertools as _, izip};
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 use std::cmp::Ordering;

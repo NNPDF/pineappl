@@ -1,8 +1,8 @@
 //! TODO.
 
-use clap::Parser;
-use pineappl_cli::{Opts, Subcommand};
-use std::process::{ExitCode, Termination};
+use clap::Parser as _;
+use pineappl_cli::{Opts, Subcommand as _};
+use std::process::{ExitCode, Termination as _};
 
 fn main() -> ExitCode {
     let opts = Opts::parse();
@@ -23,7 +23,7 @@ mod tests {
 
     #[test]
     fn verify_command() {
-        use clap::CommandFactory;
+        use clap::CommandFactory as _;
         Opts::command().debug_assert();
     }
 }

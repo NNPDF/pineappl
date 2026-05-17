@@ -16,9 +16,11 @@ use super::v0;
 use bitflags::bitflags;
 use float_cmp::approx_eq;
 use git_version::git_version;
-use itertools::Itertools;
+use itertools::Itertools as _;
 use lz4_flex::frame::{FrameDecoder, FrameEncoder};
-use ndarray::{Array2, Array3, ArrayView3, ArrayViewMut3, Axis, CowArray, Dimension, Ix4, Zip, s};
+use ndarray::{
+    Array2, Array3, ArrayView3, ArrayViewMut3, Axis, CowArray, Dimension as _, Ix4, Zip, s,
+};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::io::{BufRead, BufReader, BufWriter, Read, Write};

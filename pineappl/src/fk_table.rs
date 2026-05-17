@@ -5,7 +5,7 @@ use super::convolutions::ConvolutionCache;
 use super::error::{Error, Result};
 use super::grid::{Grid, GridOptFlags};
 use super::pids::{OptRules, PidBasis};
-use super::subgrid::{self, EmptySubgridV1, Subgrid};
+use super::subgrid::{self, EmptySubgridV1, Subgrid as _};
 use ndarray::{ArrayD, s};
 use std::collections::BTreeMap;
 use std::fmt::{self, Display, Formatter};

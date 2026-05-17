@@ -2,7 +2,7 @@ use super::helpers;
 use super::{GlobalConfiguration, Subcommand};
 use anyhow::Result;
 use clap::{Args, Parser, ValueHint};
-use itertools::Itertools;
+use itertools::Itertools as _;
 use pineappl::boc::Order;
 use pineappl::fk_table::FkTable;
 use prettytable::{Row, cell, row};

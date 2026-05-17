@@ -11,7 +11,7 @@ use std::process::ExitCode;
 #[cfg(feature = "evolve")]
 mod eko {
     use anyhow::{Result, anyhow};
-    use base64::Engine;
+    use base64::Engine as _;
     use base64::alphabet::URL_SAFE;
     use base64::engine::GeneralPurpose;
     use base64::engine::general_purpose::PAD;
@@ -19,7 +19,7 @@ mod eko {
     use lz4_flex::frame::FrameDecoder;
     use ndarray::iter::AxisIter;
     use ndarray::{Array4, Array5, Axis, CowArray, Ix4};
-    use ndarray_npy::{NpzReader, ReadNpyExt};
+    use ndarray_npy::{NpzReader, ReadNpyExt as _};
     use pineappl::convolutions::ConvType;
     use pineappl::evolution::OperatorSliceInfo;
     use pineappl::pids::{self, PidBasis};
@@ -27,7 +27,7 @@ mod eko {
     use std::collections::HashMap;
     use std::ffi::OsString;
     use std::fs::File;
-    use std::io::{BufReader, Cursor, Read};
+    use std::io::{BufReader, Cursor, Read as _};
     use std::iter::Zip;
     use std::path::Path;
     use std::slice::Iter;

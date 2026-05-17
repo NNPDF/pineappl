@@ -6,16 +6,18 @@ use super::error::{Error, Result};
 use super::grid::Grid;
 use super::packed_array::PackedArray;
 use super::pids::PidBasis;
-use super::subgrid::{self, ImportSubgridV1, Subgrid, SubgridEnum};
+use super::subgrid::{self, ImportSubgridV1, Subgrid as _, SubgridEnum};
 use float_cmp::approx_eq;
-use itertools::Itertools;
+use itertools::Itertools as _;
 use itertools::izip;
 use ndarray::linalg;
 use ndarray::{
     Array1, Array2, Array3, ArrayD, ArrayView1, ArrayView4, ArrayViewD, ArrayViewMutD, Axis, Ix1,
     Ix2, s,
 };
-use rayon::iter::{IndexedParallelIterator, IntoParallelRefMutIterator, ParallelIterator};
+use rayon::iter::{
+    IndexedParallelIterator as _, IntoParallelRefMutIterator as _, ParallelIterator as _,
+};
 use std::iter;
 
 /// This structure captures the information needed to create an evolution kernel operator (EKO) for

@@ -311,7 +311,7 @@ pub fn interpolate(
     weight: f64,
     array: &mut PackedArray<f64>,
 ) -> bool {
-    use itertools::Itertools;
+    use itertools::Itertools as _;
 
     if weight == 0.0 {
         return false;
@@ -366,7 +366,7 @@ pub fn interpolate(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use float_cmp::Ulps;
+    use float_cmp::Ulps as _;
     use float_cmp::assert_approx_eq;
 
     #[test]

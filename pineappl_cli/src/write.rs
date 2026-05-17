@@ -1,7 +1,7 @@
 use super::helpers;
 use super::{GlobalConfiguration, Subcommand};
-use anyhow::{Context, Result};
-use clap::builder::{PossibleValuesParser, TypedValueParser};
+use anyhow::{Context as _, Result};
+use clap::builder::{PossibleValuesParser, TypedValueParser as _};
 use clap::{
     Arg, ArgAction, ArgMatches, Args, Command, Error, FromArgMatches, Parser, ValueHint,
     value_parser,

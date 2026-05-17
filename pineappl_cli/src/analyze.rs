@@ -1,7 +1,7 @@
 use super::helpers::{self, ConvFuns, ConvoluteMode};
 use super::{GlobalConfiguration, Subcommand};
 use anyhow::Result;
-use clap::builder::TypedValueParser;
+use clap::builder::TypedValueParser as _;
 use clap::{Parser, ValueHint, value_parser};
 use prettytable::{Row, cell};
 use std::path::PathBuf;

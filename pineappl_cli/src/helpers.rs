@@ -1,6 +1,6 @@
 use super::GlobalConfiguration;
-use anyhow::{Context, Error, Result, anyhow, bail};
-use itertools::Itertools;
+use anyhow::{Context as _, Error, Result, anyhow, bail};
+use itertools::Itertools as _;
 use lhapdf::{Pdf, PdfSet};
 use pineappl::boc::{ScaleFuncForm, Scales};
 use pineappl::convolutions::{Conv, ConvType, ConvolutionCache};

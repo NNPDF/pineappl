@@ -20,7 +20,7 @@ use super::boc::Kinematics;
 use super::boc::Scales;
 use super::grid::Grid;
 use super::pids;
-use super::subgrid::{self, Subgrid, SubgridEnum};
+use super::subgrid::{self, Subgrid as _, SubgridEnum};
 use itertools::izip;
 use rustc_hash::FxHashMap;
 use serde::{Deserialize, Serialize};

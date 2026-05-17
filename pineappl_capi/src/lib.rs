@@ -55,7 +55,7 @@
 //!
 //! [translation tables]: https://github.com/eqrion/cbindgen/blob/master/docs.md#std-types
 
-use itertools::{Itertools, izip};
+use itertools::{Itertools as _, izip};
 use ndarray::{Array4, CowArray};
 use pineappl::boc::{Bin, BinsWithFillLimits, Channel, Kinematics, Order, ScaleFuncForm, Scales};
 use pineappl::convolutions::{Conv, ConvType, ConvolutionCache};
@@ -66,7 +66,7 @@ use pineappl::interpolation::{Interp as InterpMain, InterpMeth, Map, ReweightMet
 use pineappl::packed_array::PackedArray;
 use pineappl::packed_array::{ravel_multi_index, unravel_index};
 use pineappl::pids::PidBasis;
-use pineappl::subgrid::{ImportSubgridV1, Subgrid};
+use pineappl::subgrid::{ImportSubgridV1, Subgrid as _};
 use std::collections::HashMap;
 use std::ffi::{CStr, CString};
 use std::fs::File;

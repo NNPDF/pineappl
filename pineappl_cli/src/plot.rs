@@ -1,13 +1,13 @@
 use super::helpers::{self, ConvFuns, ConvoluteMode};
 use super::{GlobalConfiguration, Subcommand};
 use anyhow::Result;
-use clap::builder::{PossibleValuesParser, TypedValueParser};
+use clap::builder::{PossibleValuesParser, TypedValueParser as _};
 use clap::{Parser, ValueHint};
-use itertools::Itertools;
+use itertools::Itertools as _;
 use pineappl::boc::Channel;
 use pineappl::grid::Grid;
 use rayon::{ThreadPoolBuilder, prelude::*};
-use std::fmt::Write;
+use std::fmt::Write as _;
 use std::num::NonZeroUsize;
 use std::ops::Range;
 use std::path::{Path, PathBuf};
