@@ -9,8 +9,10 @@ use std::borrow::Cow;
 use std::iter;
 
 fn weightfun(x: f64) -> f64 {
-    // we rely on the following expression to be exactly as it is
-    #[allow(clippy::suboptimal_flops)]
+    #[expect(
+        clippy::suboptimal_flops,
+        reason = "we rely on the following expression to be exactly as it is"
+    )]
     (x.sqrt() / (1.0 - 0.99 * x)).powi(3)
 }
 
@@ -19,14 +21,18 @@ fn fx(y: f64) -> f64 {
 
     for _ in 0..100 {
         let x = (-yp).exp();
-        // we rely on the following expression to be exactly as it is
-        #[allow(clippy::suboptimal_flops)]
+        #[expect(
+            clippy::suboptimal_flops,
+            reason = "we rely on the following expression to be exactly as it is"
+        )]
         let delta = y - yp - 5.0 * (1.0 - x);
         if (delta).abs() < 1e-12 {
             return x;
         }
-        // we rely on the following expression to be exactly as it is
-        #[allow(clippy::suboptimal_flops)]
+        #[expect(
+            clippy::suboptimal_flops,
+            reason = "we rely on the following expression to be exactly as it is"
+        )]
         let deriv = -1.0 - 5.0 * x;
         yp -= delta / deriv;
     }
@@ -155,6 +161,7 @@ impl LagrangeSubgridV2 {
     }
 
     fn gety1(&self, iy: usize) -> f64 {
+        #[expect(clippy::float_cmp, reason = "here we really need an exact comparison")]
         if self.y1min == self.y1max {
             debug_assert_eq!(iy, 0);
             self.y1min
@@ -164,6 +171,7 @@ impl LagrangeSubgridV2 {
     }
 
     fn gety2(&self, iy: usize) -> f64 {
+        #[expect(clippy::float_cmp, reason = "here we really need an exact comparison")]
         if self.y2min == self.y2max {
             debug_assert_eq!(iy, 0);
             self.y2min
@@ -173,6 +181,7 @@ impl LagrangeSubgridV2 {
     }
 
     fn gettau(&self, iy: usize) -> f64 {
+        #[expect(clippy::float_cmp, reason = "here we really need an exact comparison")]
         if self.taumin == self.taumax {
             debug_assert_eq!(iy, 0);
             self.taumin

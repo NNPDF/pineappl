@@ -303,9 +303,10 @@ impl Subcommand for Opts {
                     .iter()
                     .zip(two)
                     .map(|(&a, &b)| {
-                        // ALLOW: here we really need an exact comparison
-                        // TODO: change allow to `expect` if MSRV >= 1.81.0
-                        #[allow(clippy::float_cmp)]
+                        #[expect(
+                            clippy::float_cmp,
+                            reason = "here we really need an exact comparison"
+                        )]
                         if a == b { 0.0 } else { b / a - 1.0 }
                     })
                     .collect();

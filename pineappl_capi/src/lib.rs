@@ -599,7 +599,7 @@ pub unsafe extern "C" fn pineappl_grid_dedup_channels(grid: *mut Grid, ulps: i64
 
 /// Delete a grid previously created with `pineappl_grid_new`.
 #[unsafe(no_mangle)]
-#[allow(unused_variables)]
+#[expect(unused_variables, reason = "by capturing the variable it is being destroyed")]
 pub extern "C" fn pineappl_grid_delete(grid: Option<Box<Grid>>) {}
 
 /// Fill `grid` for the given momentum fractions `x1` and `x2`, at the scale `q2` for the given
@@ -1255,7 +1255,7 @@ pub const unsafe extern "C" fn pineappl_lumi_count(lumi: *const Lumi) -> usize {
 /// Delete luminosity function previously created with `pineappl_lumi_new`.
 #[deprecated(since = "1.0.0", note = "use `pineappl_channels_delete` instead")]
 #[unsafe(no_mangle)]
-#[allow(unused_variables)]
+#[expect(unused_variables, reason = "by capturing the variable it is being destroyed")]
 pub extern "C" fn pineappl_lumi_delete(lumi: Option<Box<Lumi>>) {}
 
 /// Read out the channel with index `entry` of the luminosity function `lumi`. The PDG ids and
@@ -1314,7 +1314,7 @@ pub struct KeyVal {
 /// Delete the previously created object pointed to by `key_vals`.
 #[deprecated(since = "1.0.0", note = "")]
 #[unsafe(no_mangle)]
-#[allow(unused_variables)]
+#[expect(unused_variables, reason = "by capturing the variable it is being destroyed")]
 pub extern "C" fn pineappl_keyval_delete(key_vals: Option<Box<KeyVal>>) {}
 
 /// Get the boolean-valued parameter with name `key` stored in `key_vals`.
@@ -1627,7 +1627,7 @@ pub unsafe extern "C" fn pineappl_channels_combinations(
 
 /// An exact duplicate of `pineappl_lumi_delete` to make naming (lumi -> channel) consistent.
 #[unsafe(no_mangle)]
-#[allow(unused_variables)]
+#[expect(unused_variables, reason = "by capturing the variable it is being destroyed")]
 pub extern "C" fn pineappl_channels_delete(channels: Option<Box<Channels>>) {}
 
 /// Creates a new and empty grid that can accept any number of convolutions. The creation requires

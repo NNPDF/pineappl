@@ -318,7 +318,7 @@ impl PyFkTable {
     /// numpy.ndarray(float) :
     ///     cross sections for all bins
     #[must_use]
-    #[allow(clippy::needless_pass_by_value)]
+    #[expect(clippy::needless_pass_by_value, reason = "PyO3 requires pass by value")]
     #[pyo3(signature = (pdg_convs, xfxs, bin_indices = None, channel_mask= None))]
     pub fn convolve<'py>(
         &self,
@@ -366,7 +366,7 @@ impl PyFkTable {
     /// assumptions : `PyFkAssumptions`
     ///     assumptions about the `FkTable` properties, declared by the user, deciding which
     ///     optimizations are possible
-    #[allow(clippy::needless_pass_by_value)]
+    #[expect(clippy::needless_pass_by_value, reason = "PyO3 requires pass by value")]
     pub fn optimize(&mut self, assumptions: PyRef<PyFkAssumptions>) {
         self.fk_table.optimize(assumptions.fk_assumptions);
     }

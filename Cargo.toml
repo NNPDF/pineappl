@@ -83,6 +83,10 @@ similar-names = "allow"
 too-many-lines = "allow"
 unreadable-literal = "allow"
 
+# restriction lints
+allow_attributes = "deny"
+allow_attributes_without_reason = "deny"
+
 [workspace.lints.rust]
 missing-docs = "warn"
 unsafe-op-in-unsafe-fn = "deny"

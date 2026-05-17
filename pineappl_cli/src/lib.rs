@@ -1,6 +1,3 @@
-#![allow(clippy::struct_excessive_bools)]
-#![allow(clippy::too_many_arguments)]
-
 //! TODO.
 
 mod analyze;

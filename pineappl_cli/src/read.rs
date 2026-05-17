@@ -11,6 +11,7 @@ use std::process::ExitCode;
 
 #[derive(Args)]
 #[group(multiple = false, required = true)]
+#[expect(clippy::struct_excessive_bools, reason = "clap needs bools")]
 struct Group {
     /// Show the bins of a grid.
     #[arg(long, short)]

@@ -1,4 +1,4 @@
-#![allow(missing_docs)]
+#![expect(missing_docs, reason = "non-public items will not be documented")]
 
 use cc::Build;
 use pkg_config::Config;

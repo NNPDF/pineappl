@@ -1,12 +1,13 @@
 //! TODO
 
-#![allow(clippy::missing_errors_doc)]
-#![allow(clippy::missing_safety_doc)]
-// doesn't work with cxx
-#![allow(clippy::multiple_inherent_impl)]
-// doesn't work with cxx
-#![allow(clippy::multiple_unsafe_ops_per_block)]
-#![allow(clippy::too_many_arguments)]
+#![expect(
+    clippy::missing_errors_doc,
+    reason = "seems to be a problem of the cxx crate"
+)]
+#![expect(
+    clippy::missing_safety_doc,
+    reason = "adding a safety section does not seem to work"
+)]
 
 use lhapdf::Pdf;
 use std::mem;

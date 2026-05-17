@@ -1,4 +1,4 @@
-#![allow(missing_docs)]
+#![expect(missing_docs, reason = "non-public items will not be documented")]
 
 use anyhow::Result;
 use float_cmp::assert_approx_eq;
@@ -28,8 +28,10 @@ fn int_photo(s: f64, t: f64, u: f64) -> f64 {
     alpha0.powi(2) / 2.0 / s * (t / u + u / t)
 }
 
-// ALLOW: in this example we care more about readability than floating-point accuracy
-#[allow(clippy::suboptimal_flops)]
+#[expect(
+    clippy::suboptimal_flops,
+    reason = "in this example we care more about readability than floating-point accuracy"
+)]
 // Eq. (2.12) - quark-antiquark contribution to DY lepton pair production
 fn int_quark(s: f64, t: f64, u: f64, qq: f64, i3_wq: f64) -> f64 {
     let alphagf: f64 = 1.0 / 132.30818655547878;

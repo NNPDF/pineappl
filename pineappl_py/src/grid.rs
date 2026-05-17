@@ -95,7 +95,7 @@ impl PyGrid {
     ///     `Scales` object
     #[new]
     #[must_use]
-    #[allow(clippy::needless_pass_by_value)]
+    #[expect(clippy::needless_pass_by_value, reason = "PyO3 requires pass by value")]
     pub fn new_grid(
         pid_basis: PyPidBasis,
         channels: Vec<PyRef<PyChannel>>,
@@ -143,7 +143,7 @@ impl PyGrid {
     ///     list containing information on kinematics
     /// weight : float
     ///     cross section weight
-    #[allow(clippy::needless_pass_by_value)]
+    #[expect(clippy::needless_pass_by_value, reason = "PyO3 requires pass by value")]
     pub fn fill(
         &mut self,
         order: usize,
@@ -179,7 +179,7 @@ impl PyGrid {
     ///     list of `ntuple` kinematics
     /// weights : np.array(float)
     ///     cross section weight for all events
-    #[allow(clippy::needless_pass_by_value)]
+    #[expect(clippy::needless_pass_by_value, reason = "PyO3 requires pass by value")]
     pub fn fill_array(
         &mut self,
         order: usize,
@@ -207,7 +207,7 @@ impl PyGrid {
     ///     list containing information on kinematics
     /// weights : np.array(float)
     ///     cross section weights, one for each channels
-    #[allow(clippy::needless_pass_by_value)]
+    #[expect(clippy::needless_pass_by_value, reason = "PyO3 requires pass by value")]
     pub fn fill_all_channels(
         &mut self,
         order: usize,
@@ -236,7 +236,6 @@ impl PyGrid {
     ///     channel index
     /// subgrid : `PySubgridEnum`
     ///     subgrid object
-    #[allow(clippy::needless_pass_by_value)]
     pub fn set_subgrid(
         &mut self,
         order: usize,
@@ -436,7 +435,7 @@ impl PyGrid {
     ///     cross sections for all bins, for each scale-variation tuple (first all bins, then
     ///     the scale variation)
     #[must_use]
-    #[allow(clippy::needless_pass_by_value)]
+    #[expect(clippy::needless_pass_by_value, reason = "PyO3 requires pass by value")]
     #[pyo3(signature = (pdg_convs, xfxs, alphas, order_mask = None, bin_indices = None, channel_mask = None, xi = None))]
     pub fn convolve<'py>(
         &self,
@@ -562,7 +561,7 @@ impl PyGrid {
     /// -------
     /// `PyFkTable` :
     ///     produced FK table
-    #[allow(clippy::needless_pass_by_value)]
+    #[expect(clippy::needless_pass_by_value, reason = "PyO3 requires pass by value")]
     pub fn evolve(
         &self,
         slices: Vec<Bound<PyAny>>,
@@ -824,7 +823,7 @@ impl PyGrid {
     /// ----------
     /// factors : list[float]
     ///     bin-dependent factors by which to scale
-    #[allow(clippy::needless_pass_by_value)]
+    #[expect(clippy::needless_pass_by_value, reason = "PyO3 requires pass by value")]
     pub fn scale_by_bin(&mut self, factors: Vec<f64>) {
         self.grid.scale_by_bin(&factors);
     }
@@ -863,7 +862,7 @@ impl PyGrid {
     /// ----------
     /// `order_indices` : list[int]
     ///     list of indices of orders to be removed
-    #[allow(clippy::needless_pass_by_value)]
+    #[expect(clippy::needless_pass_by_value, reason = "PyO3 requires pass by value")]
     pub fn delete_orders(&mut self, order_indices: Vec<usize>) {
         self.grid.delete_orders(&order_indices);
     }
@@ -876,7 +875,7 @@ impl PyGrid {
     /// ----------
     /// `bin_indices` : list[int]
     ///     list of indices of bins to be removed
-    #[allow(clippy::needless_pass_by_value)]
+    #[expect(clippy::needless_pass_by_value, reason = "PyO3 requires pass by value")]
     pub fn delete_bins(&mut self, bin_indices: Vec<usize>) {
         self.grid.delete_bins(&bin_indices);
     }
@@ -888,7 +887,7 @@ impl PyGrid {
     /// ----------
     /// `bin_indices` : list[int]
     ///     list of indices of bins to be removed
-    #[allow(clippy::needless_pass_by_value)]
+    #[expect(clippy::needless_pass_by_value, reason = "PyO3 requires pass by value")]
     pub fn delete_channels(&mut self, channel_indices: Vec<usize>) {
         self.grid.delete_channels(&channel_indices);
     }
