@@ -84,6 +84,7 @@ too-many-lines = "allow"
 unreadable-literal = "allow"
 
 # restriction lints
+absolute_paths = "warn"
 allow_attributes = "deny"
 allow_attributes_without_reason = "deny"
 arbitrary_source_item_ordering = "warn"

@@ -1,5 +1,6 @@
 //! Error types for the `pineappl` library.
 
+use std::result::Result as StdResult;
 use thiserror::Error;
 
 /// Catch-all error for this crate.
@@ -14,4 +15,4 @@ pub enum Error {
 }
 
 /// Convenient result type using [`Error`].
-pub type Result<T> = std::result::Result<T, Error>;
+pub type Result<T> = StdResult<T, Error>;

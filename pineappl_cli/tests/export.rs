@@ -1,6 +1,7 @@
 #![expect(missing_docs, reason = "non-public items will not be documented")]
 
 use assert_cmd::Command;
+use predicates::str as pred_str;
 
 #[cfg(feature = "applgrid")]
 use assert_fs::NamedTempFile;
@@ -139,7 +140,7 @@ fn export_applgrid() {
         ])
         .assert()
         .success()
-        .stdout(predicates::str::ends_with(EXPORT_APPLGRID_STR));
+        .stdout(pred_str::ends_with(EXPORT_APPLGRID_STR));
 }
 
 #[test]
@@ -159,7 +160,7 @@ fn export_nnlo_ak5_ptj_discard_non_matching_values() {
         ])
         .assert()
         .success()
-        .stdout(predicates::str::ends_with(EXPORT_NNLO_AK5_PTJ_STR));
+        .stdout(pred_str::ends_with(EXPORT_NNLO_AK5_PTJ_STR));
 }
 
 #[test]
@@ -179,7 +180,7 @@ fn export_nnlo_ak5_ptj_discard_non_matching_scales_alias() {
         ])
         .assert()
         .success()
-        .stdout(predicates::str::ends_with(EXPORT_NNLO_AK5_PTJ_STR));
+        .stdout(pred_str::ends_with(EXPORT_NNLO_AK5_PTJ_STR));
 }
 
 #[test]
@@ -199,7 +200,7 @@ fn export_nnlo_ak5_ptj_discard_non_matching_momentum_alias() {
         ])
         .assert()
         .success()
-        .stdout(predicates::str::ends_with(EXPORT_NNLO_AK5_PTJ_STR));
+        .stdout(pred_str::ends_with(EXPORT_NNLO_AK5_PTJ_STR));
 }
 
 #[test]
@@ -249,5 +250,5 @@ fn export_dis_applgrid() {
         ])
         .assert()
         .success()
-        .stdout(predicates::str::ends_with(EXPORT_DIS_APPLGRID_STR));
+        .stdout(pred_str::ends_with(EXPORT_DIS_APPLGRID_STR));
 }

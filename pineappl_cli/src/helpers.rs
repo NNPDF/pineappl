@@ -12,6 +12,7 @@ use std::iter;
 use std::ops::RangeInclusive;
 use std::path::Path;
 use std::process::ExitCode;
+use std::result::Result as StdResult;
 use std::str::FromStr;
 
 pub const SCALES_VECTOR_REN_FAC: [(f64, f64, f64); 9] = [
@@ -79,7 +80,7 @@ pub struct ConvFuns {
 impl FromStr for ConvFuns {
     type Err = Error;
 
-    fn from_str(arg: &str) -> std::result::Result<Self, Self::Err> {
+    fn from_str(arg: &str) -> StdResult<Self, Self::Err> {
         // split from the left, as '=' characters are allowed in labels but not in names
         let (names, label) = arg.split_once('=').unwrap_or((arg, arg));
         let (lhapdf_names, members, conv_types) = names

@@ -70,10 +70,12 @@ use pineappl::subgrid::{ImportSubgridV1, Subgrid as _};
 use std::collections::HashMap;
 use std::ffi::{CStr, CString};
 use std::fs::File;
+use std::io::Error as IoError;
 use std::mem;
 use std::os::raw::{c_char, c_void};
 use std::path::Path;
 use std::slice;
+use std::ptr;
 
 /// Select subgrid type optimization when passed to grid optimization (see `GridOptFlags::OPTIMIZE_SUBGRID_TYPE`).
 pub const PINEAPPL_GOF_OPTIMIZE_SUBGRID_TYPE: GridOptFlags = GridOptFlags::OPTIMIZE_SUBGRID_TYPE;
@@ -948,7 +950,7 @@ pub unsafe extern "C" fn pineappl_grid_delete_bins(
     bin_indices_len: usize,
 ) {
     let grid = unsafe { &mut *grid };
-    let bin_indices = unsafe { std::slice::from_raw_parts(bin_indices_ptr, bin_indices_len) };
+    let bin_indices = unsafe { slice::from_raw_parts(bin_indices_ptr, bin_indices_len) };
     grid.delete_bins(bin_indices);
 }
 
@@ -1730,7 +1732,7 @@ pub unsafe extern "C" fn pineappl_grid_new2(
     let convolutions = unsafe { slice::from_raw_parts(convolutions, nb_convolutions) }.to_vec();
 
     // Grid interpolations
-    let interp_slices = unsafe { std::slice::from_raw_parts(interps, interpolations) };
+    let interp_slices = unsafe { slice::from_raw_parts(interps, interpolations) };
     let interp_vecs: Vec<_> = interp_slices
         .iter()
         .map(|interp| {
@@ -1750,7 +1752,7 @@ pub unsafe extern "C" fn pineappl_grid_new2(
     let kinematics = unsafe { slice::from_raw_parts(kinematics, interp_vecs.len()) }.to_vec();
 
     // Scales. An array containing the values of `ScaleFuncForm` objects
-    let mu_scales = unsafe { std::slice::from_raw_parts(scales, 3) };
+    let mu_scales = unsafe { slice::from_raw_parts(scales, 3) };
 
     Box::new(Grid::new(
         bins,
@@ -1918,7 +1920,7 @@ pub unsafe extern "C" fn pineappl_grid_metadata(
 
     grid.metadata()
         .get(key.as_ref())
-        .map_or(std::ptr::null_mut(), |value| {
+        .map_or(ptr::null_mut(), |value| {
             CString::new(value.as_str()).unwrap().into_raw()
         })
 }
@@ -2492,7 +2494,7 @@ pub unsafe extern "C" fn pineappl_grid_evolve(
                 }
 
                 // we specify an arbitrary error type since we don't return an error anywhere
-                Ok::<_, std::io::Error>((operator_slice_info, array))
+                Ok::<_, IoError>((operator_slice_info, array))
             })
         })
         .collect();
@@ -2527,10 +2529,10 @@ pub unsafe extern "C" fn pineappl_grid_evolve(
 pub unsafe extern "C" fn pineappl_fktable_optimize(grid: *mut Grid, assumptions: FkAssumptions) {
     let grid = unsafe { &mut *grid };
     // SAFETY: this code has been copied from the `take_mut` crate
-    let read_grid = unsafe { std::ptr::read(grid) };
+    let read_grid = unsafe { ptr::read(grid) };
     let mut fktable = FkTable::try_from(read_grid)
         // UNWRAP: error handling in the CAPI is to abort
         .unwrap();
     fktable.optimize(assumptions);
-    unsafe { std::ptr::write(grid, fktable.into_grid()) };
+    unsafe { ptr::write(grid, fktable.into_grid()) };
 }

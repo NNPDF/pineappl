@@ -1,5 +1,6 @@
 //! TODO.
 
+#![expect(clippy::absolute_paths, reason = "does not work properly with cxx")]
 #![expect(
     clippy::arbitrary_source_item_ordering,
     reason = "does not work properly with cxx"

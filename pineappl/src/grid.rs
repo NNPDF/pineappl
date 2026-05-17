@@ -25,6 +25,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::io::{BufRead, BufReader, BufWriter, Read, Write};
 use std::ops::{Bound, RangeBounds};
+use std::result::Result as StdResult;
 use std::{iter, mem};
 
 const BIN_AXIS: Axis = Axis(1);
@@ -379,7 +380,7 @@ impl Grid {
     pub fn evolve<
         'a,
         E: Into<anyhow::Error>,
-        S: IntoIterator<Item = std::result::Result<(OperatorSliceInfo, CowArray<'a, f64, Ix4>), E>>,
+        S: IntoIterator<Item = StdResult<(OperatorSliceInfo, CowArray<'a, f64, Ix4>), E>>,
     >(
         &self,
         slices: Vec<S>,

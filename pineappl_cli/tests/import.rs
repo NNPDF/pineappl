@@ -1,6 +1,7 @@
 #![expect(missing_docs, reason = "non-public items will not be documented")]
 
 use assert_cmd::Command;
+use predicates::str as pred_str;
 
 #[cfg(any(feature = "applgrid", feature = "fastnlo", feature = "fktable"))]
 use assert_fs::NamedTempFile;
@@ -344,7 +345,7 @@ fn import_fix_grid() {
         ])
         .assert()
         .success()
-        .stdout(predicates::str::ends_with(IMPORT_FIX_GRID_STR));
+        .stdout(pred_str::ends_with(IMPORT_FIX_GRID_STR));
 }
 
 #[test]
@@ -362,7 +363,7 @@ fn import_flex_grid() {
         ])
         .assert()
         .success()
-        .stdout(predicates::str::ends_with(IMPORT_FLEX_GRID_STR));
+        .stdout(pred_str::ends_with(IMPORT_FLEX_GRID_STR));
 }
 
 #[test]
@@ -382,7 +383,7 @@ fn import_flex_grid_scale_1() {
         ])
         .assert()
         .success()
-        .stdout(predicates::str::ends_with(IMPORT_FLEX_GRID_SCALE_1_STR));
+        .stdout(pred_str::ends_with(IMPORT_FLEX_GRID_SCALE_1_STR));
 }
 
 #[test]
@@ -402,7 +403,7 @@ fn import_flex_grid_scale_2() {
         ])
         .assert()
         .success()
-        .stdout(predicates::str::ends_with(IMPORT_FLEX_GRID_SCALE_2_STR));
+        .stdout(pred_str::ends_with(IMPORT_FLEX_GRID_SCALE_2_STR));
 }
 
 #[test]
@@ -422,9 +423,7 @@ fn import_flex_grid_quadratic_sum() {
         ])
         .assert()
         .success()
-        .stdout(predicates::str::ends_with(
-            IMPORT_FLEX_GRID_QUADRATIC_SUM_STR,
-        ));
+        .stdout(pred_str::ends_with(IMPORT_FLEX_GRID_QUADRATIC_SUM_STR));
 }
 
 #[test]
@@ -444,9 +443,7 @@ fn import_flex_grid_quadratic_mean() {
         ])
         .assert()
         .success()
-        .stdout(predicates::str::ends_with(
-            IMPORT_FLEX_GRID_QUADRATIC_MEAN_STR,
-        ));
+        .stdout(pred_str::ends_with(IMPORT_FLEX_GRID_QUADRATIC_MEAN_STR));
 }
 
 #[test]
@@ -466,7 +463,7 @@ fn import_flex_grid_5() {
         ])
         .assert()
         .success()
-        .stdout(predicates::str::ends_with(IMPORT_FLEX_GRID_5_STR));
+        .stdout(pred_str::ends_with(IMPORT_FLEX_GRID_5_STR));
 }
 
 #[test]
@@ -486,7 +483,7 @@ fn import_flex_grid_6() {
         ])
         .assert()
         .success()
-        .stdout(predicates::str::ends_with(IMPORT_FLEX_GRID_6_STR));
+        .stdout(pred_str::ends_with(IMPORT_FLEX_GRID_6_STR));
 }
 
 #[test]
@@ -506,7 +503,7 @@ fn import_flex_grid_7() {
         ])
         .assert()
         .success()
-        .stdout(predicates::str::ends_with(IMPORT_FLEX_GRID_7_STR));
+        .stdout(pred_str::ends_with(IMPORT_FLEX_GRID_7_STR));
 }
 
 #[test]
@@ -526,7 +523,7 @@ fn import_flex_grid_8() {
         ])
         .assert()
         .success()
-        .stdout(predicates::str::ends_with(IMPORT_FLEX_GRID_8_STR));
+        .stdout(pred_str::ends_with(IMPORT_FLEX_GRID_8_STR));
 }
 
 #[test]
@@ -546,7 +543,7 @@ fn import_flex_grid_9() {
         ])
         .assert()
         .success()
-        .stdout(predicates::str::ends_with(IMPORT_FLEX_GRID_9_STR));
+        .stdout(pred_str::ends_with(IMPORT_FLEX_GRID_9_STR));
 }
 
 #[test]
@@ -566,7 +563,7 @@ fn import_flex_grid_10() {
         ])
         .assert()
         .success()
-        .stdout(predicates::str::ends_with(IMPORT_FLEX_GRID_10_STR));
+        .stdout(pred_str::ends_with(IMPORT_FLEX_GRID_10_STR));
 }
 
 #[test]
@@ -586,7 +583,7 @@ fn import_flex_grid_11() {
         ])
         .assert()
         .success()
-        .stdout(predicates::str::ends_with(IMPORT_FLEX_GRID_11_STR));
+        .stdout(pred_str::ends_with(IMPORT_FLEX_GRID_11_STR));
 }
 
 #[test]
@@ -606,7 +603,7 @@ fn import_flex_grid_12() {
         ])
         .assert()
         .success()
-        .stdout(predicates::str::ends_with(IMPORT_FLEX_GRID_12_STR));
+        .stdout(pred_str::ends_with(IMPORT_FLEX_GRID_12_STR));
 }
 
 #[test]
@@ -626,7 +623,7 @@ fn import_flex_grid_13() {
         ])
         .assert()
         .success()
-        .stdout(predicates::str::ends_with(IMPORT_FLEX_GRID_13_STR));
+        .stdout(pred_str::ends_with(IMPORT_FLEX_GRID_13_STR));
 }
 
 #[test]
@@ -646,7 +643,7 @@ fn import_flex_grid_14() {
         ])
         .assert()
         .success()
-        .stdout(predicates::str::ends_with(IMPORT_FLEX_GRID_14_STR));
+        .stdout(pred_str::ends_with(IMPORT_FLEX_GRID_14_STR));
 }
 
 #[test]
@@ -666,7 +663,7 @@ fn import_flex_grid_15() {
         ])
         .assert()
         .success()
-        .stdout(predicates::str::ends_with(IMPORT_FLEX_GRID_15_STR));
+        .stdout(pred_str::ends_with(IMPORT_FLEX_GRID_15_STR));
 }
 
 #[test]
@@ -1196,7 +1193,7 @@ fn import_photon_grid() {
         ])
         .assert()
         .success()
-        .stdout(predicates::str::ends_with(IMPORT_PHOTON_GRID_STR));
+        .stdout(pred_str::ends_with(IMPORT_PHOTON_GRID_STR));
 }
 
 #[test]
@@ -1214,7 +1211,7 @@ fn import_applgrid() {
         ])
         .assert()
         .success()
-        .stdout(predicates::str::ends_with(IMPORT_APPLGRID_STR));
+        .stdout(pred_str::ends_with(IMPORT_APPLGRID_STR));
 }
 
 #[test]
@@ -1232,7 +1229,7 @@ fn import_new_applgrid() {
         ])
         .assert()
         .success()
-        .stdout(predicates::str::ends_with(IMPORT_NEW_APPLGRID_STR));
+        .stdout(pred_str::ends_with(IMPORT_NEW_APPLGRID_STR));
 }
 
 #[test]
@@ -1265,7 +1262,7 @@ fn import_grid_comparison_failure() {
         .assert()
         .failure()
         .stderr(IMPORT_GRID_COMPARISON_FAILURE_STR)
-        .stdout(predicates::str::ends_with(IMPORT_FIX_GRID_STR));
+        .stdout(pred_str::ends_with(IMPORT_FIX_GRID_STR));
 }
 
 #[test]
@@ -1283,7 +1280,7 @@ fn import_dis_applgrid() {
         ])
         .assert()
         .success()
-        .stdout(predicates::str::ends_with(IMPORT_DIS_APPLGRID_STR));
+        .stdout(pred_str::ends_with(IMPORT_DIS_APPLGRID_STR));
 }
 
 #[test]
@@ -1301,9 +1298,7 @@ fn import_double_hadronic_fastnlo() {
         ])
         .assert()
         .success()
-        .stdout(predicates::str::ends_with(
-            IMPORT_DOUBLE_HADRONIC_FASTNLO_STR,
-        ));
+        .stdout(pred_str::ends_with(IMPORT_DOUBLE_HADRONIC_FASTNLO_STR));
 }
 
 #[test]
@@ -1321,5 +1316,5 @@ fn import_npdfdim_2_table() {
         ])
         .assert()
         .success()
-        .stdout(predicates::str::ends_with(IMPORT_NPDFDIM_2_TABLE_STR));
+        .stdout(pred_str::ends_with(IMPORT_NPDFDIM_2_TABLE_STR));
 }
