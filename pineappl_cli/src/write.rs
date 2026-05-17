@@ -229,7 +229,7 @@ impl FromArgMatches for MoreArgs {
                         let s = &arg[0];
                         let (conv_idx_str, pdf) = s.split_once(':').unwrap();
                         let conv_idx = conv_idx_str.parse::<usize>().unwrap();
-                        args[index] = Some(OpsArg::FixConvolution((conv_idx, pdf.to_string())));
+                        args[index] = Some(OpsArg::FixConvolution((conv_idx, pdf.to_owned())));
                     }
                 }
                 "rotate_pid_basis" => {

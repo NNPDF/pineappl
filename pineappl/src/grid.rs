@@ -1483,7 +1483,7 @@ impl Grid {
     ) -> Result<Self> {
         if self.convolutions.len() <= 1 {
             return Err(Error::General(
-                "cannot fix the last convolution".to_string(),
+                "cannot fix the last convolution".to_owned(),
             ));
         }
 

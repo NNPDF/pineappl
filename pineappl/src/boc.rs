@@ -461,7 +461,7 @@ impl BinsWithFillLimits {
             .iter()
             .any(|&Range { start, end }| (start <= range.start) && (range.end <= end))
         {
-            return Err(Error::General("bins are not simply connected".to_string()));
+            return Err(Error::General("bins are not simply connected".to_owned()));
         }
 
         let mut limits: Vec<_> = self.bins.iter().map(|bin| bin.limits().to_vec()).collect();

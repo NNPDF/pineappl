@@ -86,6 +86,7 @@ unreadable-literal = "allow"
 # restriction lints
 allow_attributes = "deny"
 allow_attributes_without_reason = "deny"
+str_to_string = "warn"
 
 [workspace.lints.rust]
 missing-docs = "warn"
