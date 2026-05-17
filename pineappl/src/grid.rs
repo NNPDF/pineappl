@@ -791,15 +791,12 @@ impl Grid {
 
     fn optimize_subgrid_type(&mut self) {
         for subgrid in &mut self.subgrids {
-            match subgrid {
+            if subgrid.is_empty() {
                 // replace empty subgrids of any type with `EmptySubgridV1`
-                _ if subgrid.is_empty() => {
-                    *subgrid = EmptySubgridV1.into();
-                }
-                _ => {
-                    // TODO: check if we should remove this
-                    *subgrid = ImportSubgridV1::from(&*subgrid).into();
-                }
+                *subgrid = EmptySubgridV1.into();
+            } else {
+                // TODO: check if we should remove this
+                *subgrid = ImportSubgridV1::from(&*subgrid).into();
             }
         }
     }

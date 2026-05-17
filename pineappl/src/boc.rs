@@ -129,7 +129,7 @@ impl ScaleFuncForm {
                     Self::ExpProd2(_, _) => {
                         |(s1, s2)| (s1.sqrt() * (0.3 * s2.sqrt()).exp()).powi(2)
                     }
-                    _ => unreachable!(),
+                    Self::NoScale | Self::Scale(_) => unreachable!(),
                 };
 
                 let scales1 = &node_values[kinematics
@@ -227,7 +227,20 @@ impl Scales {
                 | ScaleFuncForm::ExpProd2(idx1, idx2)
                     if kinematics.contains(&Kinematics::Scale(idx1))
                         && kinematics.contains(&Kinematics::Scale(idx2)) => {}
-                _ => return false,
+                ScaleFuncForm::Scale(_)
+                | ScaleFuncForm::QuadraticSum(..)
+                | ScaleFuncForm::QuadraticMean(..)
+                | ScaleFuncForm::QuadraticSumOver4(..)
+                | ScaleFuncForm::LinearMean(..)
+                | ScaleFuncForm::LinearSum(..)
+                | ScaleFuncForm::ScaleMax(..)
+                | ScaleFuncForm::ScaleMin(..)
+                | ScaleFuncForm::Prod(..)
+                | ScaleFuncForm::S2plusS1half(..)
+                | ScaleFuncForm::Pow4Sum(..)
+                | ScaleFuncForm::WgtAvg(..)
+                | ScaleFuncForm::S2plusS1fourth(..)
+                | ScaleFuncForm::ExpProd2(..) => return false,
             }
         }
 

@@ -300,7 +300,7 @@ fn read_fktable(reader: impl BufRead) -> Result<Grid> {
                         }
                     }
                 }
-                _ => {}
+                FkTableSection::Sof | FkTableSection::GridDesc | FkTableSection::VersionInfo => {}
             },
         }
     }
