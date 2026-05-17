@@ -981,7 +981,10 @@ impl Grid {
     }
 
     /// Upgrades the internal data structures to their latest versions.
-    #[expect(clippy::missing_const_for_fn, reason = "this method may have an actual implementation in the future which will not allow const")]
+    #[expect(
+        clippy::missing_const_for_fn,
+        reason = "this method may have an actual implementation in the future which will not allow const"
+    )]
     pub fn upgrade(&mut self) {}
 
     /// Return the metadata of this grid.
@@ -1482,9 +1485,7 @@ impl Grid {
         xi: f64,
     ) -> Result<Self> {
         if self.convolutions.len() <= 1 {
-            return Err(Error::General(
-                "cannot fix the last convolution".to_owned(),
-            ));
+            return Err(Error::General("cannot fix the last convolution".to_owned()));
         }
 
         if conv_idx >= self.convolutions.len() {

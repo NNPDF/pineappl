@@ -50,7 +50,10 @@ struct Mmv3 {
     _subgrid_template: SubgridEnum,
 }
 
-#[expect(clippy::large_enum_variant, reason = "fixing the warning will break the file format")]
+#[expect(
+    clippy::large_enum_variant,
+    reason = "fixing the warning will break the file format"
+)]
 #[derive(Deserialize)]
 enum MoreMembers {
     V1(Mmv1),
