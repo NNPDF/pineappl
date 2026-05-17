@@ -461,7 +461,6 @@ impl BinsWithFillLimits {
             .iter()
             .any(|&Range { start, end }| (start <= range.start) && (range.end <= end))
         {
-            // TODO: implement proper error handling
             return Err(Error::General("bins are not simply connected".to_string()));
         }
 
@@ -1560,6 +1559,26 @@ mod tests {
     }
 
     #[test]
+    fn bwfl_new_err() {
+        assert_eq!(
+            BinsWithFillLimits::new(Vec::new(), vec![0.0, 0.1])
+                .unwrap_err()
+                .to_string(),
+            "number of bins must agree with the number of fill limits plus 1"
+        );
+    }
+
+    #[test]
+    fn bwfl_from_limits_and_normalizations() {
+        assert_eq!(
+            BinsWithFillLimits::from_limits_and_normalizations(Vec::new(), vec![1.0])
+                .unwrap_err()
+                .to_string(),
+            "number of limits be the same as the number of normalizations"
+        );
+    }
+
+    #[test]
     fn bwfl_limit_parsing_failure() {
         assert_eq!(
             BinsWithFillLimits::from_str("0,1,2,x")
@@ -1636,6 +1655,18 @@ mod tests {
                 .unwrap_err()
                 .to_string(),
             "missing '|' specification: number of variants too small"
+        );
+    }
+
+    #[test]
+    fn bwfl_merge_err() {
+        assert_eq!(
+            BinsWithFillLimits::from_str("0,1,2;0,1,2")
+                .unwrap()
+                .merge(1..3)
+                .unwrap_err()
+                .to_string(),
+            "bins are not simply connected"
         );
     }
 }
