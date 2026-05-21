@@ -64,6 +64,7 @@ Here are some examples of high-energy physics tools that use PineAPPL:
 |------|-------------|
 | [MadGraph5_aMC@NLO](https://github.com/mg5amcnlo/mg5amcnlo) | Multi-purpose event generator for LO and NLO calculations. |
 | [MATRIX](https://matrix.hepforge.org/) | Parton-level event generator for fully-differential cross sections at NNLO. |
+| [MaunaKea](https://github.com/felixhekhorn/MaunaKea) | Computes fully-inclusive heavy quark cross sections at NNLO in hadron colliders. |
 | [nCTEQ](https://ncteq.hepforge.org/) | Framework for extracting nuclear parton distribution functions. |
 | [NNLOJet](https://nnlojet.hepforge.org/index.html) | Parton-level event generator for jet cross sections at NNLO QCD accuracy. |
 | [NNPDF](https://github.com/NNPDF/nnpdf) | Machine learning framework for global PDF analyses. |
