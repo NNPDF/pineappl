@@ -816,11 +816,7 @@ impl Grid {
         let (new_orders, order_map) = {
             let mut unique_orders = Vec::new();
 
-            let other_conv_idx_opt = if self.convolutions.len() == 2 {
-                Some(1 - conv_idx)
-            } else {
-                None
-            };
+            let other_conv_idx_opt = (self.convolutions.len() == 2).then(|| 1 - conv_idx);
 
             let map: Vec<usize> = self
                 .orders
