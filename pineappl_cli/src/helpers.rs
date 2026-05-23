@@ -426,17 +426,17 @@ pub fn convolve_limits(grid: &Grid, bins: &[usize], mode: ConvoluteMode) -> Vec<
 pub fn parse_integer_range(range: &str) -> Result<RangeInclusive<usize>> {
     if let Some(at) = range.find('-') {
         let (left, right) = range.split_at(at);
-        let left = str::parse::<usize>(left).context(format!(
+        let left: usize = str::parse(left).context(format!(
             "unable to parse integer range '{range}'; couldn't convert '{left}'"
         ))?;
-        let right = str::parse::<usize>(&right[1..]).context(format!(
+        let right: usize = str::parse(&right[1..]).context(format!(
             "unable to parse integer range '{range}'; couldn't convert '{right}'"
         ))?;
 
         Ok(left..=right)
     } else {
-        let value =
-            str::parse::<usize>(range).context(format!("unable to parse integer '{range}'"))?;
+        let value: usize =
+            str::parse(range).context(format!("unable to parse integer '{range}'"))?;
 
         Ok(value..=value)
     }
