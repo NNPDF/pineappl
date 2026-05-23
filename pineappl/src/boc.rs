@@ -1003,23 +1003,21 @@ impl Channel {
             return None;
         }
 
-        let result: Option<Vec<_>> = self
+        let result: Vec<_> = self
             .entry
             .iter()
             .zip(&other.entry)
             .map(|((pids_a, fa), (pids_b, fb))| (pids_a == pids_b).then_some(fa / fb))
-            .collect();
+            .collect::<Option<_>>()?;
 
-        result.and_then(|factors| {
-            if factors
-                .windows(2)
-                .all(|win| approx_eq!(f64, win[0], win[1], ulps = 4))
-            {
-                factors.first().copied()
-            } else {
-                None
-            }
-        })
+        if result
+            .windows(2)
+            .all(|win| approx_eq!(f64, win[0], win[1], ulps = 4))
+        {
+            result.first().copied()
+        } else {
+            None
+        }
     }
 
     /// Returns a tuple representation of this entry.
