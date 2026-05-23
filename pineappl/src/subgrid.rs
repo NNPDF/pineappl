@@ -25,9 +25,9 @@ impl Subgrid for EmptySubgridV1 {
         true
     }
 
-    fn merge_impl(&mut self, subgrid: &SubgridEnum, _: Option<(usize, usize)>) {
+    fn merge_impl(&mut self, other: &SubgridEnum, _: Option<(usize, usize)>) {
         assert!(
-            subgrid.is_empty(),
+            other.is_empty(),
             "EmptySubgridV1 doesn't support the merge operation for non-empty subgrids"
         );
     }
