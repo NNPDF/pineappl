@@ -93,6 +93,7 @@ if_then_some_else_none = "warn"
 non_ascii_literal = "warn"
 return_and_then = "warn"
 str_to_string = "warn"
+string_slice = "warn"
 unused_trait_names = "warn"
 wildcard_enum_match_arm = "warn"
 
