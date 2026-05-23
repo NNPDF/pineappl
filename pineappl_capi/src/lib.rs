@@ -74,8 +74,8 @@ use std::io::Error as IoError;
 use std::mem;
 use std::os::raw::{c_char, c_void};
 use std::path::Path;
-use std::slice;
 use std::ptr;
+use std::slice;
 
 /// Select subgrid type optimization when passed to grid optimization (see `GridOptFlags::OPTIMIZE_SUBGRID_TYPE`).
 pub const PINEAPPL_GOF_OPTIMIZE_SUBGRID_TYPE: GridOptFlags = GridOptFlags::OPTIMIZE_SUBGRID_TYPE;
@@ -2534,5 +2534,7 @@ pub unsafe extern "C" fn pineappl_fktable_optimize(grid: *mut Grid, assumptions:
         // UNWRAP: error handling in the CAPI is to abort
         .unwrap();
     fktable.optimize(assumptions);
-    unsafe { ptr::write(grid, fktable.into_grid()); }
+    unsafe {
+        ptr::write(grid, fktable.into_grid());
+    }
 }
