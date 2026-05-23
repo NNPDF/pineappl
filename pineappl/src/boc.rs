@@ -440,6 +440,7 @@ impl BinsWithFillLimits {
 
     /// Return the number of bins.
     #[must_use]
+    #[expect(clippy::len_without_is_empty, reason = "BinsWithFillLimits can not be empty")]
     pub const fn len(&self) -> usize {
         self.bins.len()
     }
@@ -530,6 +531,7 @@ impl BinsWithFillLimits {
     /// Return slices that partition the bins into simply-connected blocks.
     ///
     /// For one-dimensional binning this returns a single slice spanning all bins.
+    #[expect(clippy::single_range_in_vec_init, reason = "we want to return a vector of a range")]
     pub fn slices(&self) -> Vec<Range<usize>> {
         if self.dimensions() == 1 {
             // TODO: check that bins are contiguous
