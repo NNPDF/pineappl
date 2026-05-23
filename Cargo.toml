@@ -40,7 +40,7 @@ lhapdf = { package = "managed-lhapdf", version = "0.4.1" }
 lz4_flex = "0.13.0"
 ndarray = { version = "0.17.2" }
 ndarray-npy = { default-features = false, features = ["npz"], version = "0.10.0" }
-neopdf = "0.3.3"
+neopdf = { git = "https://github.com/QCDLab/neopdf.git", branch = "review-schwan" }
 num-complex = "0.4.4"
 numpy = "0.28.0"
 pkg-config = "0.3.26"
