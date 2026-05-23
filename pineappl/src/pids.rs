@@ -673,7 +673,7 @@ mod tests {
     }
 
     #[test]
-    fn test_pdg_mc_ids_to_evol() {
+    fn call_pdg_mc_ids_to_evol() {
         assert_eq!(pdg_mc_ids_to_evol(&[]), None);
 
         // check photon
