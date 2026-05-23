@@ -2534,5 +2534,5 @@ pub unsafe extern "C" fn pineappl_fktable_optimize(grid: *mut Grid, assumptions:
         // UNWRAP: error handling in the CAPI is to abort
         .unwrap();
     fktable.optimize(assumptions);
-    unsafe { ptr::write(grid, fktable.into_grid()) };
+    unsafe { ptr::write(grid, fktable.into_grid()); }
 }
