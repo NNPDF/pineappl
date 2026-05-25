@@ -2,7 +2,7 @@ use super::GlobalConfiguration;
 use super::pdf_backend::{self, Backend, ForcePositive, PdfBackend, PdfSetBackend};
 use anyhow::{Context as _, Error, Result, anyhow, bail};
 use itertools::Itertools as _;
-use lhapdf::{Pdf, PdfSet};
+use lhapdf::Pdf;
 use pineappl::boc::{ScaleFuncForm, Scales};
 use pineappl::convolutions::{Conv, ConvType, ConvolutionCache};
 use pineappl::grid::Grid;
@@ -170,44 +170,10 @@ pub fn create_conv_funs_with_backend(
         .collect()
 }
 
-/// Creates convolution functions for a PDF set using LHAPDF backend (legacy).
-pub fn create_conv_funs_for_set(
-    funs: &ConvFuns,
-    index_of_set: usize,
-) -> Result<(PdfSet, Vec<Vec<Pdf>>)> {
-    let setname = &funs.lhapdf_names[index_of_set];
-    let set = setname.parse().map_or_else(
-        |_| Ok::<_, Error>(PdfSet::new(setname)?),
-        |lhaid| {
-            Ok(PdfSet::new(
-                &lhapdf::lookup_pdf(lhaid)
-                    .map(|(set, _)| set)
-                    .ok_or_else(|| {
-                        anyhow!("no convolution function for LHAID = `{lhaid}` found")
-                    })?,
-            )?)
-        },
-    )?;
-
-    let conv_funs = set
-        .mk_pdfs()?
-        .into_iter()
-        .map(|conv_fun| {
-            // TODO: do not create objects that are getting overwritten in any case
-            let mut conv_funs = create_conv_funs(funs)?;
-            conv_funs[index_of_set] = conv_fun;
-
-            Ok::<_, Error>(conv_funs)
-        })
-        .collect::<Result<_, _>>()?;
-
-    Ok((set, conv_funs))
-}
-
 /// Creates convolution functions for a PDF set using the specified backend.
 ///
 /// Returns a tuple of (`PdfSetBackend`, Vec<Vec<Box<dyn PdfBackend>>>).
-pub fn create_conv_funs_for_set_with_backend(
+pub fn create_conv_funs_for_set(
     funs: &ConvFuns,
     index_of_set: usize,
     backend: Backend,

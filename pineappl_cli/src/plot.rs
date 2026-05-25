@@ -177,7 +177,7 @@ impl Subcommand for Opts {
 
                         Ok(vec![results; 3])
                     } else {
-                        let (set, funs) = helpers::create_conv_funs_for_set_with_backend(
+                        let (set, funs) = helpers::create_conv_funs_for_set(
                             conv_funs,
                             self.conv_fun_uncert_from,
                             cfg.pdf_backend,

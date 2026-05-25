@@ -117,11 +117,8 @@ impl Subcommand for Opts {
             .conv_fun
             .iter()
             .map(|&index| {
-                let (set, funs) = helpers::create_conv_funs_for_set_with_backend(
-                    &self.conv_funs,
-                    index,
-                    cfg.pdf_backend,
-                )?;
+                let (set, funs) =
+                    helpers::create_conv_funs_for_set(&self.conv_funs, index, cfg.pdf_backend)?;
                 let results: Vec<_> = funs
                     .into_par_iter()
                     .map(|mut funs| {

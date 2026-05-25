@@ -52,16 +52,10 @@ impl Subcommand for Opts {
     fn run(&self, cfg: &GlobalConfiguration) -> Result<ExitCode> {
         let grid = helpers::read_grid(&self.input)?;
 
-        let (set1, mut conv_funs1) = helpers::create_conv_funs_for_set_with_backend(
-            &self.conv_funs1,
-            self.pull_from,
-            cfg.pdf_backend,
-        )?;
-        let (set2, mut conv_funs2) = helpers::create_conv_funs_for_set_with_backend(
-            &self.conv_funs2,
-            self.pull_from,
-            cfg.pdf_backend,
-        )?;
+        let (set1, mut conv_funs1) =
+            helpers::create_conv_funs_for_set(&self.conv_funs1, self.pull_from, cfg.pdf_backend)?;
+        let (set2, mut conv_funs2) =
+            helpers::create_conv_funs_for_set(&self.conv_funs2, self.pull_from, cfg.pdf_backend)?;
 
         ThreadPoolBuilder::new()
             .num_threads(self.threads)
