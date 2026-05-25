@@ -1,4 +1,4 @@
-#![allow(missing_docs)]
+#![expect(missing_docs, reason = "non-public items will not be documented")]
 
 use assert_cmd::Command;
 use predicates::str;

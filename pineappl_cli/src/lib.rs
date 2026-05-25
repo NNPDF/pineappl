@@ -1,7 +1,4 @@
-#![allow(clippy::missing_errors_doc)]
-#![allow(clippy::struct_excessive_bools)]
-#![allow(clippy::too_many_arguments)]
-#![allow(missing_docs)]
+//! TODO.
 
 mod analyze;
 mod channels;
@@ -28,6 +25,7 @@ use enum_dispatch::enum_dispatch;
 use git_version::git_version;
 use std::process::ExitCode;
 
+/// TODO.
 #[derive(Parser)]
 pub struct GlobalConfiguration {
     /// Allow LHAPDF to print banners.
@@ -47,11 +45,22 @@ pub struct GlobalConfiguration {
     pub pdf_backend: pdf_backend::Backend,
 }
 
+/// TODO.
 #[enum_dispatch]
 pub trait Subcommand {
+    /// TODO.
+    ///
+    /// # Errors
+    ///
+    /// TODO.
     fn run(&self, cfg: &GlobalConfiguration) -> Result<ExitCode>;
 }
 
+/// TODO.
+#[expect(
+    missing_docs,
+    reason = "documenting the enum variants will overwrite the documentation from `*::Opts`"
+)]
 #[enum_dispatch(Subcommand)]
 #[derive(Parser)]
 pub enum SubcommandEnum {
@@ -73,6 +82,7 @@ pub enum SubcommandEnum {
     Write(write::Opts),
 }
 
+/// TODO.
 #[derive(Parser)]
 #[command(
     arg_required_else_help = true,
@@ -87,8 +97,10 @@ pub enum SubcommandEnum {
     )
 )]
 pub struct Opts {
+    /// TODO.
     #[command(flatten)]
     pub configuration: GlobalConfiguration,
+    /// TODO.
     #[command(subcommand)]
     pub subcommand: SubcommandEnum,
 }

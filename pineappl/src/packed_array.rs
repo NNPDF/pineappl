@@ -26,42 +26,11 @@ pub struct PackedArray<T> {
 }
 
 impl<T: Copy + Default + PartialEq> PackedArray<T> {
-    /// Constructs a new and empty `PackedArray` of shape `shape`.
-    #[must_use]
-    pub const fn new(shape: Vec<usize>) -> Self {
-        Self {
-            entries: Vec::new(),
-            start_indices: Vec::new(),
-            lengths: Vec::new(),
-            shape,
-        }
-    }
-
-    /// Returns `true` if the array contains no element.
-    #[must_use]
-    pub const fn is_empty(&self) -> bool {
-        self.entries.is_empty()
-    }
-
-    /// Returns the shape of the array.
-    #[must_use]
-    pub fn shape(&self) -> &[usize] {
-        &self.shape
-    }
-
     /// Clears the contents of the array.
     pub fn clear(&mut self) {
         self.entries.clear();
         self.start_indices.clear();
         self.lengths.clear();
-    }
-
-    /// Returns the overhead of storing the `start_indices` and the `lengths` of the groups, in
-    /// units of `f64`.
-    #[must_use]
-    pub const fn overhead(&self) -> usize {
-        ((self.start_indices.len() + self.lengths.len()) * mem::size_of::<usize>())
-            / mem::size_of::<f64>()
     }
 
     /// Returns the number of default (zero) elements that are explicitly stored in `entries`. If
@@ -71,12 +40,6 @@ impl<T: Copy + Default + PartialEq> PackedArray<T> {
     #[must_use]
     pub fn explicit_zeros(&self) -> usize {
         self.entries.iter().filter(|x| **x == T::default()).count()
-    }
-
-    /// Returns the number of non-default (non-zero) elements stored in the array.
-    #[must_use]
-    pub fn non_zeros(&self) -> usize {
-        self.entries.iter().filter(|x| **x != T::default()).count()
     }
 
     /// Iterator over non-default stored elements as `(multi_index, value)`.
@@ -90,6 +53,43 @@ impl<T: Copy + Default + PartialEq> PackedArray<T> {
             .zip(&self.entries)
             .filter(|&(_, entry)| *entry != Default::default())
             .map(|(indices, entry)| (indices, *entry))
+    }
+
+    /// Returns `true` if the array contains no element.
+    #[must_use]
+    pub const fn is_empty(&self) -> bool {
+        self.entries.is_empty()
+    }
+
+    /// Constructs a new and empty `PackedArray` of shape `shape`.
+    #[must_use]
+    pub const fn new(shape: Vec<usize>) -> Self {
+        Self {
+            entries: Vec::new(),
+            start_indices: Vec::new(),
+            lengths: Vec::new(),
+            shape,
+        }
+    }
+
+    /// Returns the number of non-default (non-zero) elements stored in the array.
+    #[must_use]
+    pub fn non_zeros(&self) -> usize {
+        self.entries.iter().filter(|x| **x != T::default()).count()
+    }
+
+    /// Returns the overhead of storing the `start_indices` and the `lengths` of the groups, in
+    /// units of `f64`.
+    #[must_use]
+    pub const fn overhead(&self) -> usize {
+        ((self.start_indices.len() + self.lengths.len()) * mem::size_of::<usize>())
+            / mem::size_of::<f64>()
+    }
+
+    /// Returns the shape of the array.
+    #[must_use]
+    pub fn shape(&self) -> &[usize] {
+        &self.shape
     }
 
     /// Flat index into `self` for a sub-block starting at `start_index` with shape `fill_shape`,
@@ -172,37 +172,6 @@ impl<T: Copy + Default + PartialEq> From<ArrayViewD<'_, T>> for PackedArray<T> {
 
         result
     }
-}
-
-/// Converts a `multi_index` into a flat index (row-major).
-///
-/// # Panics
-///
-/// Panics if `multi_index` and `shape` have different lengths.
-#[must_use]
-pub fn ravel_multi_index(multi_index: &[usize], shape: &[usize]) -> usize {
-    assert_eq!(multi_index.len(), shape.len());
-
-    multi_index
-        .iter()
-        .zip(shape)
-        .fold(0, |acc, (i, d)| acc * d + i)
-}
-
-/// Converts a flat `index` into a multi-index for `shape` (row-major).
-///
-/// # Panics
-///
-/// Panics if `index` is not strictly less than the product of `shape`.
-#[must_use]
-pub fn unravel_index(mut index: usize, shape: &[usize]) -> Vec<usize> {
-    assert!(index < shape.iter().product());
-    let mut indices = vec![0; shape.len()];
-    for (i, d) in indices.iter_mut().zip(shape).rev() {
-        *i = index % d;
-        index /= d;
-    }
-    indices
 }
 
 impl<T: Copy + Default + PartialEq, const D: usize> Index<[usize; D]> for PackedArray<T> {
@@ -521,6 +490,37 @@ impl<T: Clone + Copy + Default + PartialEq, const D: usize> IndexMut<[usize; D]>
     fn index_mut(&mut self, index: [usize; D]) -> &mut Self::Output {
         &mut self[index.as_slice()]
     }
+}
+
+/// Converts a `multi_index` into a flat index (row-major).
+///
+/// # Panics
+///
+/// Panics if `multi_index` and `shape` have different lengths.
+#[must_use]
+pub fn ravel_multi_index(multi_index: &[usize], shape: &[usize]) -> usize {
+    assert_eq!(multi_index.len(), shape.len());
+
+    multi_index
+        .iter()
+        .zip(shape)
+        .fold(0, |acc, (i, d)| acc * d + i)
+}
+
+/// Converts a flat `index` into a multi-index for `shape` (row-major).
+///
+/// # Panics
+///
+/// Panics if `index` is not strictly less than the product of `shape`.
+#[must_use]
+pub fn unravel_index(mut index: usize, shape: &[usize]) -> Vec<usize> {
+    assert!(index < shape.iter().product());
+    let mut indices = vec![0; shape.len()];
+    for (i, d) in indices.iter_mut().zip(shape).rev() {
+        *i = index % d;
+        index /= d;
+    }
+    indices
 }
 
 #[cfg(test)]

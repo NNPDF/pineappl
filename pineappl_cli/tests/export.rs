@@ -1,6 +1,7 @@
-#![allow(missing_docs)]
+#![expect(missing_docs, reason = "non-public items will not be documented")]
 
 use assert_cmd::Command;
+use predicates::str as pred_str;
 
 #[cfg(feature = "applgrid")]
 use assert_fs::NamedTempFile;
@@ -104,6 +105,16 @@ b   APPLgrid    PineAPPL     rel. diff
 44 3.9803998e0 3.9803998e0  2.2204460e-16
 ";
 
+#[cfg(feature = "applgrid")]
+const EXPORT_NNLO_AK5_PTJ_STR: &str = "b   APPLgrid     PineAPPL    rel. diff
+-+------------+------------+------------
+0 6.7833493e-4 6.7833993e-4 7.3775731e-6
+";
+
+#[cfg(feature = "applgrid")]
+const EXPORT_NNLO_AK5_PTJ_NO_DISCARD_FAILS_STR: &str = "Error: factorization scale muf2 = 46548084.443279915 not found in APPLgrid; try exporting with `--discard-non-matching-values`
+";
+
 #[test]
 fn help() {
     Command::cargo_bin("pineappl")
@@ -129,18 +140,8 @@ fn export_applgrid() {
         ])
         .assert()
         .success()
-        .stdout(predicates::str::ends_with(EXPORT_APPLGRID_STR));
+        .stdout(pred_str::ends_with(EXPORT_APPLGRID_STR));
 }
-
-#[cfg(feature = "applgrid")]
-const EXPORT_NNLO_AK5_PTJ_STR: &str = "b   APPLgrid     PineAPPL    rel. diff
--+------------+------------+------------
-0 6.7833493e-4 6.7833993e-4 7.3775731e-6
-";
-
-#[cfg(feature = "applgrid")]
-const EXPORT_NNLO_AK5_PTJ_NO_DISCARD_FAILS_STR: &str = "Error: factorization scale muf2 = 46548084.443279915 not found in APPLgrid; try exporting with `--discard-non-matching-values`
-";
 
 #[test]
 #[cfg(feature = "applgrid")]
@@ -159,7 +160,7 @@ fn export_nnlo_ak5_ptj_discard_non_matching_values() {
         ])
         .assert()
         .success()
-        .stdout(predicates::str::ends_with(EXPORT_NNLO_AK5_PTJ_STR));
+        .stdout(pred_str::ends_with(EXPORT_NNLO_AK5_PTJ_STR));
 }
 
 #[test]
@@ -179,7 +180,7 @@ fn export_nnlo_ak5_ptj_discard_non_matching_scales_alias() {
         ])
         .assert()
         .success()
-        .stdout(predicates::str::ends_with(EXPORT_NNLO_AK5_PTJ_STR));
+        .stdout(pred_str::ends_with(EXPORT_NNLO_AK5_PTJ_STR));
 }
 
 #[test]
@@ -199,7 +200,7 @@ fn export_nnlo_ak5_ptj_discard_non_matching_momentum_alias() {
         ])
         .assert()
         .success()
-        .stdout(predicates::str::ends_with(EXPORT_NNLO_AK5_PTJ_STR));
+        .stdout(pred_str::ends_with(EXPORT_NNLO_AK5_PTJ_STR));
 }
 
 #[test]
@@ -249,5 +250,5 @@ fn export_dis_applgrid() {
         ])
         .assert()
         .success()
-        .stdout(predicates::str::ends_with(EXPORT_DIS_APPLGRID_STR));
+        .stdout(pred_str::ends_with(EXPORT_DIS_APPLGRID_STR));
 }

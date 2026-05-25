@@ -180,9 +180,7 @@ impl Subcommand for Opts {
                 let result1 = result1 * self.scale1;
                 let result2 = result2 * self.scale2;
 
-                // ALLOW: here we really need an exact comparison
-                // TODO: change allow to `expect` if MSRV >= 1.81.0
-                #[allow(clippy::float_cmp)]
+                #[expect(clippy::float_cmp, reason = "here we really need an exact comparison")]
                 let diff = if result1 == result2 {
                     0.0
                 } else {
@@ -250,9 +248,7 @@ impl Subcommand for Opts {
                     let result1 = result1[bin] * self.scale1;
                     let result2 = result2[bin] * self.scale2;
 
-                    // ALLOW: here we really need an exact comparison
-                    // TODO: change allow to `expect` if MSRV >= 1.81.0
-                    #[allow(clippy::float_cmp)]
+                    #[expect(clippy::float_cmp, reason = "here we really need an exact comparison")]
                     let diff = if result1 == result2 {
                         0.0
                     } else {

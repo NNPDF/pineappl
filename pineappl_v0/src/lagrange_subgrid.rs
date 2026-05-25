@@ -8,36 +8,6 @@ use serde::Deserialize;
 use std::borrow::Cow;
 use std::iter;
 
-fn weightfun(x: f64) -> f64 {
-    // we rely on the following expression to be exactly as it is
-    #[allow(clippy::suboptimal_flops)]
-    (x.sqrt() / (1.0 - 0.99 * x)).powi(3)
-}
-
-fn fx(y: f64) -> f64 {
-    let mut yp = y;
-
-    for _ in 0..100 {
-        let x = (-yp).exp();
-        // we rely on the following expression to be exactly as it is
-        #[allow(clippy::suboptimal_flops)]
-        let delta = y - yp - 5.0 * (1.0 - x);
-        if (delta).abs() < 1e-12 {
-            return x;
-        }
-        // we rely on the following expression to be exactly as it is
-        #[allow(clippy::suboptimal_flops)]
-        let deriv = -1.0 - 5.0 * x;
-        yp -= delta / deriv;
-    }
-
-    unreachable!();
-}
-
-fn fq2(tau: f64) -> f64 {
-    0.0625 * tau.exp().exp()
-}
-
 /// Subgrid which uses Lagrange-interpolation.
 #[derive(Deserialize)]
 pub struct LagrangeSubgridV1 {
@@ -56,45 +26,24 @@ pub struct LagrangeSubgridV1 {
 }
 
 impl LagrangeSubgridV1 {
-    fn deltay(&self) -> f64 {
-        (self.ymax - self.ymin) / f64_from_usize(self.ny - 1)
-    }
-
     fn deltatau(&self) -> f64 {
         (self.taumax - self.taumin) / f64_from_usize(self.ntau - 1)
     }
 
-    fn gety(&self, iy: usize) -> f64 {
-        f64_from_usize(iy).mul_add(self.deltay(), self.ymin)
+    fn deltay(&self) -> f64 {
+        (self.ymax - self.ymin) / f64_from_usize(self.ny - 1)
     }
 
     fn gettau(&self, iy: usize) -> f64 {
         f64_from_usize(iy).mul_add(self.deltatau(), self.taumin)
     }
+
+    fn gety(&self, iy: usize) -> f64 {
+        f64_from_usize(iy).mul_add(self.deltay(), self.ymin)
+    }
 }
 
 impl Subgrid for LagrangeSubgridV1 {
-    fn mu2_grid(&self) -> Cow<'_, [Mu2]> {
-        (0..self.ntau)
-            .map(|itau| {
-                let q2 = fq2(self.gettau(itau));
-                Mu2 { ren: q2, fac: q2 }
-            })
-            .collect()
-    }
-
-    fn x1_grid(&self) -> Cow<'_, [f64]> {
-        (0..self.ny).map(|iy| fx(self.gety(iy))).collect()
-    }
-
-    fn x2_grid(&self) -> Cow<'_, [f64]> {
-        self.x1_grid()
-    }
-
-    fn is_empty(&self) -> bool {
-        self.grid.is_none()
-    }
-
     fn indexed_iter(&self) -> SubgridIndexedIter<'_> {
         self.grid.as_ref().map_or_else(
             || Box::new(iter::empty()) as Box<dyn Iterator<Item = ((usize, usize, usize), f64)>>,
@@ -115,6 +64,27 @@ impl Subgrid for LagrangeSubgridV1 {
                 ))
             },
         )
+    }
+
+    fn is_empty(&self) -> bool {
+        self.grid.is_none()
+    }
+
+    fn mu2_grid(&self) -> Cow<'_, [Mu2]> {
+        (0..self.ntau)
+            .map(|itau| {
+                let q2 = fq2(self.gettau(itau));
+                Mu2 { ren: q2, fac: q2 }
+            })
+            .collect()
+    }
+
+    fn x1_grid(&self) -> Cow<'_, [f64]> {
+        (0..self.ny).map(|iy| fx(self.gety(iy))).collect()
+    }
+
+    fn x2_grid(&self) -> Cow<'_, [f64]> {
+        self.x1_grid()
     }
 }
 
@@ -138,10 +108,14 @@ pub struct LagrangeSubgridV2 {
     y2max: f64,
     taumin: f64,
     taumax: f64,
-    pub(crate) _static_q2: f64,
+    _static_q2: f64,
 }
 
 impl LagrangeSubgridV2 {
+    fn deltatau(&self) -> f64 {
+        (self.taumax - self.taumin) / f64_from_usize(self.ntau - 1)
+    }
+
     fn deltay1(&self) -> f64 {
         (self.y1max - self.y1min) / f64_from_usize(self.ny1 - 1)
     }
@@ -150,11 +124,18 @@ impl LagrangeSubgridV2 {
         (self.y1max - self.y2min) / f64_from_usize(self.ny2 - 1)
     }
 
-    fn deltatau(&self) -> f64 {
-        (self.taumax - self.taumin) / f64_from_usize(self.ntau - 1)
+    fn gettau(&self, iy: usize) -> f64 {
+        #[expect(clippy::float_cmp, reason = "here we really need an exact comparison")]
+        if self.taumin == self.taumax {
+            debug_assert_eq!(iy, 0);
+            self.taumin
+        } else {
+            f64_from_usize(iy).mul_add(self.deltatau(), self.taumin)
+        }
     }
 
     fn gety1(&self, iy: usize) -> f64 {
+        #[expect(clippy::float_cmp, reason = "here we really need an exact comparison")]
         if self.y1min == self.y1max {
             debug_assert_eq!(iy, 0);
             self.y1min
@@ -164,6 +145,7 @@ impl LagrangeSubgridV2 {
     }
 
     fn gety2(&self, iy: usize) -> f64 {
+        #[expect(clippy::float_cmp, reason = "here we really need an exact comparison")]
         if self.y2min == self.y2max {
             debug_assert_eq!(iy, 0);
             self.y2min
@@ -171,39 +153,9 @@ impl LagrangeSubgridV2 {
             f64_from_usize(iy).mul_add(self.deltay2(), self.y2min)
         }
     }
-
-    fn gettau(&self, iy: usize) -> f64 {
-        if self.taumin == self.taumax {
-            debug_assert_eq!(iy, 0);
-            self.taumin
-        } else {
-            f64_from_usize(iy).mul_add(self.deltatau(), self.taumin)
-        }
-    }
 }
 
 impl Subgrid for LagrangeSubgridV2 {
-    fn mu2_grid(&self) -> Cow<'_, [Mu2]> {
-        (0..self.ntau)
-            .map(|itau| {
-                let q2 = fq2(self.gettau(itau));
-                Mu2 { ren: q2, fac: q2 }
-            })
-            .collect()
-    }
-
-    fn x1_grid(&self) -> Cow<'_, [f64]> {
-        (0..self.ny1).map(|iy| fx(self.gety1(iy))).collect()
-    }
-
-    fn x2_grid(&self) -> Cow<'_, [f64]> {
-        (0..self.ny2).map(|iy| fx(self.gety2(iy))).collect()
-    }
-
-    fn is_empty(&self) -> bool {
-        self.grid.is_none()
-    }
-
     fn indexed_iter(&self) -> SubgridIndexedIter<'_> {
         self.grid.as_ref().map_or_else(
             || Box::new(iter::empty()) as Box<dyn Iterator<Item = ((usize, usize, usize), f64)>>,
@@ -229,6 +181,27 @@ impl Subgrid for LagrangeSubgridV2 {
             },
         )
     }
+
+    fn is_empty(&self) -> bool {
+        self.grid.is_none()
+    }
+
+    fn mu2_grid(&self) -> Cow<'_, [Mu2]> {
+        (0..self.ntau)
+            .map(|itau| {
+                let q2 = fq2(self.gettau(itau));
+                Mu2 { ren: q2, fac: q2 }
+            })
+            .collect()
+    }
+
+    fn x1_grid(&self) -> Cow<'_, [f64]> {
+        (0..self.ny1).map(|iy| fx(self.gety1(iy))).collect()
+    }
+
+    fn x2_grid(&self) -> Cow<'_, [f64]> {
+        (0..self.ny2).map(|iy| fx(self.gety2(iy))).collect()
+    }
 }
 
 /// Subgrid which uses Lagrange-interpolation, but also stores its contents in a space-efficient
@@ -248,24 +221,42 @@ pub struct LagrangeSparseSubgridV1 {
 }
 
 impl LagrangeSparseSubgridV1 {
-    fn deltay(&self) -> f64 {
-        (self.ymax - self.ymin) / f64_from_usize(self.ny - 1)
-    }
-
     fn deltatau(&self) -> f64 {
         (self.taumax - self.taumin) / f64_from_usize(self.ntau - 1)
     }
 
-    fn gety(&self, iy: usize) -> f64 {
-        f64_from_usize(iy).mul_add(self.deltay(), self.ymin)
+    fn deltay(&self) -> f64 {
+        (self.ymax - self.ymin) / f64_from_usize(self.ny - 1)
     }
 
     fn gettau(&self, iy: usize) -> f64 {
         f64_from_usize(iy).mul_add(self.deltatau(), self.taumin)
     }
+
+    fn gety(&self, iy: usize) -> f64 {
+        f64_from_usize(iy).mul_add(self.deltay(), self.ymin)
+    }
 }
 
 impl Subgrid for LagrangeSparseSubgridV1 {
+    fn indexed_iter(&self) -> SubgridIndexedIter<'_> {
+        Box::new(self.array.indexed_iter().map(|(tuple, value)| {
+            (
+                tuple,
+                value
+                    * if self.reweight {
+                        weightfun(fx(self.gety(tuple.1))) * weightfun(fx(self.gety(tuple.2)))
+                    } else {
+                        1.0
+                    },
+            )
+        }))
+    }
+
+    fn is_empty(&self) -> bool {
+        self.array.is_empty()
+    }
+
     fn mu2_grid(&self) -> Cow<'_, [Mu2]> {
         (0..self.ntau)
             .map(|itau| {
@@ -282,22 +273,40 @@ impl Subgrid for LagrangeSparseSubgridV1 {
     fn x2_grid(&self) -> Cow<'_, [f64]> {
         self.x1_grid()
     }
+}
 
-    fn is_empty(&self) -> bool {
-        self.array.is_empty()
+fn fq2(tau: f64) -> f64 {
+    0.0625 * tau.exp().exp()
+}
+
+fn fx(y: f64) -> f64 {
+    let mut yp = y;
+
+    for _ in 0..100 {
+        let x = (-yp).exp();
+        #[expect(
+            clippy::suboptimal_flops,
+            reason = "we rely on the following expression to be exactly as it is"
+        )]
+        let delta = y - yp - 5.0 * (1.0 - x);
+        if (delta).abs() < 1e-12 {
+            return x;
+        }
+        #[expect(
+            clippy::suboptimal_flops,
+            reason = "we rely on the following expression to be exactly as it is"
+        )]
+        let deriv = -1.0 - 5.0 * x;
+        yp -= delta / deriv;
     }
 
-    fn indexed_iter(&self) -> SubgridIndexedIter<'_> {
-        Box::new(self.array.indexed_iter().map(|(tuple, value)| {
-            (
-                tuple,
-                value
-                    * if self.reweight {
-                        weightfun(fx(self.gety(tuple.1))) * weightfun(fx(self.gety(tuple.2)))
-                    } else {
-                        1.0
-                    },
-            )
-        }))
-    }
+    unreachable!();
+}
+
+fn weightfun(x: f64) -> f64 {
+    #[expect(
+        clippy::suboptimal_flops,
+        reason = "we rely on the following expression to be exactly as it is"
+    )]
+    (x.sqrt() / (1.0 - 0.99 * x)).powi(3)
 }

@@ -2,7 +2,7 @@ use super::helpers;
 use super::{GlobalConfiguration, Subcommand};
 use anyhow::Result;
 use clap::{Args, Parser, ValueHint};
-use itertools::Itertools;
+use itertools::Itertools as _;
 use pineappl::boc::Order;
 use pineappl::fk_table::FkTable;
 use prettytable::{Row, cell, row};
@@ -11,6 +11,7 @@ use std::process::ExitCode;
 
 #[derive(Args)]
 #[group(multiple = false, required = true)]
+#[expect(clippy::struct_excessive_bools, reason = "clap needs bools")]
 struct Group {
     /// Show the bins of a grid.
     #[arg(long, short)]

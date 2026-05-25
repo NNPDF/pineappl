@@ -5,7 +5,7 @@ use super::convolutions::ConvolutionCache;
 use super::error::{Error, Result};
 use super::grid::{Grid, GridOptFlags};
 use super::pids::{OptRules, PidBasis};
-use super::subgrid::{self, EmptySubgridV1, Subgrid};
+use super::subgrid::{self, EmptySubgridV1, Subgrid as _};
 use ndarray::{ArrayD, s};
 use std::collections::BTreeMap;
 use std::fmt::{self, Display, Formatter};
@@ -103,6 +103,69 @@ impl FromStr for FkAssumptions {
 }
 
 impl FkTable {
+    /// Return the channel definition for this `FkTable`. All factors are `1.0`.
+    #[must_use]
+    pub fn channels(&self) -> Vec<Vec<i32>> {
+        self.grid
+            .channels()
+            .iter()
+            .map(|entry| entry.entry()[0].0.clone())
+            .collect()
+    }
+
+    /// Convolve the FK-table. This method has fewer arguments than [`Grid::convolve`], because
+    /// FK-tables have all orders merged together and do not support scale variations.
+    pub fn convolve(
+        &self,
+        convolution_cache: &mut ConvolutionCache,
+        bin_indices: &[usize],
+        channel_mask: &[bool],
+    ) -> Vec<f64> {
+        self.grid.convolve(
+            convolution_cache,
+            &[],
+            bin_indices,
+            channel_mask,
+            &[(1.0, 1.0, 1.0)],
+        )
+    }
+
+    /// Return the squared factorization scale.
+    ///
+    /// # Panics
+    ///
+    /// Every `FkTable` has either a single factorization scale or none, otherwise panic.
+    #[must_use]
+    pub fn fac0(&self) -> Option<f64> {
+        let fac1 = self.grid.evolve_info(&[true]).fac1;
+
+        if let [fac0] = fac1[..] {
+            Some(fac0)
+        } else {
+            assert!(fac1.is_empty());
+
+            None
+        }
+    }
+
+    /// Return the squared fragmentation scale.
+    ///
+    /// # Panics
+    ///
+    /// Every `FkTable` has either a single fragmentation scale or none, otherwise panic.
+    #[must_use]
+    pub fn frg0(&self) -> Option<f64> {
+        let frg1 = self.grid.evolve_info(&[true]).frg1;
+
+        if let [frg0] = frg1[..] {
+            Some(frg0)
+        } else {
+            assert!(frg1.is_empty());
+
+            None
+        }
+    }
+
     /// Returns the [`Grid`] object for this `FkTable`.
     #[must_use]
     pub const fn grid(&self) -> &Grid {
@@ -117,6 +180,55 @@ impl FkTable {
     #[must_use]
     pub fn into_grid(self) -> Grid {
         self.grid
+    }
+
+    /// Return the metadata of this FK-table.
+    pub const fn metadata_mut(&mut self) -> &mut BTreeMap<String, String> {
+        self.grid.metadata_mut()
+    }
+
+    /// Optimize the size of this FK-table by throwing away heavy quark flavors assumed to be zero
+    /// at the FK-table's scales and calling [`Grid::optimize`].
+    pub fn optimize(&mut self, assumptions: FkAssumptions) {
+        let OptRules(sum, delete) = self.grid.pid_basis().opt_rules(assumptions);
+
+        for idx in 0..self.grid.channels().len() {
+            let &[(ref pids, factor)] = self.grid.channels()[idx].entry() else {
+                // every FK-table must have a trivial channel definition
+                unreachable!()
+            };
+            let mut pids = pids.clone();
+
+            for pid in &mut pids {
+                if delete.contains(pid) {
+                    for subgrid in self.grid.subgrids_mut().slice_mut(s![.., .., idx]) {
+                        *subgrid = EmptySubgridV1.into();
+                    }
+                } else if let Some(replace) = sum
+                    .iter()
+                    .find_map(|&(search, replace)| (*pid == search).then_some(replace))
+                {
+                    *pid = replace;
+                }
+            }
+
+            self.grid.channels_mut()[idx] = Channel::new(vec![(pids, factor)]);
+        }
+
+        self.grid.optimize();
+
+        // store the assumption so that we can check it later on
+        self.grid
+            .metadata_mut()
+            .insert("fk_assumptions".to_owned(), assumptions.to_string());
+    }
+
+    /// Rotate the FK Table into the specified basis.
+    pub fn rotate_pid_basis(&mut self, pid_basis: PidBasis) {
+        self.grid.rotate_pid_basis(pid_basis);
+        self.grid.split_channels();
+        self.grid.merge_channel_factors();
+        self.grid.optimize_using(GridOptFlags::all());
     }
 
     /// Return the FK-table represented as an n-dimensional array indexed by `bin`, `channel`
@@ -183,122 +295,10 @@ impl FkTable {
         result
     }
 
-    /// Return the channel definition for this `FkTable`. All factors are `1.0`.
-    #[must_use]
-    pub fn channels(&self) -> Vec<Vec<i32>> {
-        self.grid
-            .channels()
-            .iter()
-            .map(|entry| entry.entry()[0].0.clone())
-            .collect()
-    }
-
-    /// Return the squared factorization scale.
-    ///
-    /// # Panics
-    ///
-    /// Every `FkTable` has either a single factorization scale or none, otherwise panic.
-    #[must_use]
-    pub fn fac0(&self) -> Option<f64> {
-        let fac1 = self.grid.evolve_info(&[true]).fac1;
-
-        if let [fac0] = fac1[..] {
-            Some(fac0)
-        } else {
-            assert!(fac1.is_empty());
-
-            None
-        }
-    }
-
-    /// Return the squared fragmentation scale.
-    ///
-    /// # Panics
-    ///
-    /// Every `FkTable` has either a single fragmentation scale or none, otherwise panic.
-    #[must_use]
-    pub fn frg0(&self) -> Option<f64> {
-        let frg1 = self.grid.evolve_info(&[true]).frg1;
-
-        if let [frg0] = frg1[..] {
-            Some(frg0)
-        } else {
-            assert!(frg1.is_empty());
-
-            None
-        }
-    }
-
-    /// Return the metadata of this FK-table.
-    pub const fn metadata_mut(&mut self) -> &mut BTreeMap<String, String> {
-        self.grid.metadata_mut()
-    }
-
     /// Returns the x grid that all subgrids for all hadronic initial states share.
     #[must_use]
     pub fn x_grid(&self) -> Vec<f64> {
         self.grid.evolve_info(&[true]).x1
-    }
-
-    /// Convolve the FK-table. This method has fewer arguments than [`Grid::convolve`], because
-    /// FK-tables have all orders merged together and do not support scale variations.
-    pub fn convolve(
-        &self,
-        convolution_cache: &mut ConvolutionCache,
-        bin_indices: &[usize],
-        channel_mask: &[bool],
-    ) -> Vec<f64> {
-        self.grid.convolve(
-            convolution_cache,
-            &[],
-            bin_indices,
-            channel_mask,
-            &[(1.0, 1.0, 1.0)],
-        )
-    }
-
-    /// Rotate the FK Table into the specified basis.
-    pub fn rotate_pid_basis(&mut self, pid_basis: PidBasis) {
-        self.grid.rotate_pid_basis(pid_basis);
-        self.grid.split_channels();
-        self.grid.merge_channel_factors();
-        self.grid.optimize_using(GridOptFlags::all());
-    }
-
-    /// Optimize the size of this FK-table by throwing away heavy quark flavors assumed to be zero
-    /// at the FK-table's scales and calling [`Grid::optimize`].
-    pub fn optimize(&mut self, assumptions: FkAssumptions) {
-        let OptRules(sum, delete) = self.grid.pid_basis().opt_rules(assumptions);
-
-        for idx in 0..self.grid.channels().len() {
-            let &[(ref pids, factor)] = self.grid.channels()[idx].entry() else {
-                // every FK-table must have a trivial channel definition
-                unreachable!()
-            };
-            let mut pids = pids.clone();
-
-            for pid in &mut pids {
-                if delete.contains(pid) {
-                    for subgrid in self.grid.subgrids_mut().slice_mut(s![.., .., idx]) {
-                        *subgrid = EmptySubgridV1.into();
-                    }
-                } else if let Some(replace) = sum
-                    .iter()
-                    .find_map(|&(search, replace)| (*pid == search).then_some(replace))
-                {
-                    *pid = replace;
-                }
-            }
-
-            self.grid.channels_mut()[idx] = Channel::new(vec![(pids, factor)]);
-        }
-
-        self.grid.optimize();
-
-        // store the assumption so that we can check it later on
-        self.grid
-            .metadata_mut()
-            .insert("fk_assumptions".to_owned(), assumptions.to_string());
     }
 }
 

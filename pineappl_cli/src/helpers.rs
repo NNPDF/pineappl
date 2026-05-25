@@ -1,7 +1,7 @@
 use super::GlobalConfiguration;
 use super::pdf_backend::{self, Backend, ForcePositive, PdfBackend, PdfSetBackend};
-use anyhow::{Context, Error, Result, anyhow, bail};
-use itertools::Itertools;
+use anyhow::{Context as _, Error, Result, anyhow, bail};
+use itertools::Itertools as _;
 use lhapdf::{Pdf, PdfSet};
 use pineappl::boc::{ScaleFuncForm, Scales};
 use pineappl::convolutions::{Conv, ConvType, ConvolutionCache};
@@ -13,7 +13,62 @@ use std::iter;
 use std::ops::RangeInclusive;
 use std::path::Path;
 use std::process::ExitCode;
+use std::result::Result as StdResult;
 use std::str::FromStr;
+
+pub const SCALES_VECTOR_REN_FAC: [(f64, f64, f64); 9] = [
+    (1.0, 1.0, 1.0),
+    (2.0, 2.0, 1.0),
+    (0.5, 0.5, 1.0),
+    (2.0, 1.0, 1.0),
+    (1.0, 2.0, 1.0),
+    (0.5, 1.0, 1.0),
+    (1.0, 0.5, 1.0),
+    (2.0, 0.5, 1.0),
+    (0.5, 2.0, 1.0),
+];
+
+const SCALES_VECTOR_REN_FRG: [(f64, f64, f64); 9] = [
+    (1.0, 1.0, 1.0),
+    (2.0, 1.0, 2.0),
+    (0.5, 1.0, 0.5),
+    (2.0, 1.0, 1.0),
+    (1.0, 1.0, 2.0),
+    (0.5, 1.0, 1.0),
+    (1.0, 1.0, 0.5),
+    (2.0, 1.0, 0.5),
+    (0.5, 1.0, 2.0),
+];
+
+const SCALES_VECTOR_27: [(f64, f64, f64); 27] = [
+    (1.0, 1.0, 1.0),
+    (2.0, 2.0, 2.0),
+    (0.5, 0.5, 0.5),
+    (0.5, 0.5, 1.0),
+    (0.5, 1.0, 0.5),
+    (0.5, 1.0, 1.0),
+    (0.5, 1.0, 2.0),
+    (1.0, 0.5, 0.5),
+    (1.0, 0.5, 1.0),
+    (1.0, 1.0, 0.5),
+    (1.0, 1.0, 2.0),
+    (1.0, 2.0, 1.0),
+    (1.0, 2.0, 2.0),
+    (2.0, 1.0, 0.5),
+    (2.0, 1.0, 1.0),
+    (2.0, 1.0, 2.0),
+    (2.0, 2.0, 1.0),
+    (2.0, 0.5, 0.5),
+    (0.5, 2.0, 0.5),
+    (1.0, 2.0, 0.5),
+    (2.0, 2.0, 0.5),
+    (2.0, 0.5, 1.0),
+    (0.5, 2.0, 1.0),
+    (0.5, 0.5, 2.0),
+    (1.0, 0.5, 2.0),
+    (2.0, 0.5, 2.0),
+    (0.5, 2.0, 2.0),
+];
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ConvFuns {
@@ -26,7 +81,7 @@ pub struct ConvFuns {
 impl FromStr for ConvFuns {
     type Err = Error;
 
-    fn from_str(arg: &str) -> std::result::Result<Self, Self::Err> {
+    fn from_str(arg: &str) -> StdResult<Self, Self::Err> {
         // split from the left, as '=' characters are allowed in labels but not in names
         let (names, label) = arg.split_once('=').unwrap_or((arg, arg));
         let (lhapdf_names, members, conv_types) = names
@@ -72,6 +127,13 @@ impl FromStr for ConvFuns {
             label: label.to_owned(),
         })
     }
+}
+
+#[derive(Copy, Clone)]
+pub enum ConvoluteMode {
+    Asymmetry,
+    Integrated,
+    Normal,
 }
 
 /// Creates convolution functions using LHAPDF backend (legacy).
@@ -198,60 +260,6 @@ pub fn create_table() -> Table {
     table
 }
 
-pub const SCALES_VECTOR_REN_FAC: [(f64, f64, f64); 9] = [
-    (1.0, 1.0, 1.0),
-    (2.0, 2.0, 1.0),
-    (0.5, 0.5, 1.0),
-    (2.0, 1.0, 1.0),
-    (1.0, 2.0, 1.0),
-    (0.5, 1.0, 1.0),
-    (1.0, 0.5, 1.0),
-    (2.0, 0.5, 1.0),
-    (0.5, 2.0, 1.0),
-];
-
-const SCALES_VECTOR_REN_FRG: [(f64, f64, f64); 9] = [
-    (1.0, 1.0, 1.0),
-    (2.0, 1.0, 2.0),
-    (0.5, 1.0, 0.5),
-    (2.0, 1.0, 1.0),
-    (1.0, 1.0, 2.0),
-    (0.5, 1.0, 1.0),
-    (1.0, 1.0, 0.5),
-    (2.0, 1.0, 0.5),
-    (0.5, 1.0, 2.0),
-];
-
-const SCALES_VECTOR_27: [(f64, f64, f64); 27] = [
-    (1.0, 1.0, 1.0),
-    (2.0, 2.0, 2.0),
-    (0.5, 0.5, 0.5),
-    (0.5, 0.5, 1.0),
-    (0.5, 1.0, 0.5),
-    (0.5, 1.0, 1.0),
-    (0.5, 1.0, 2.0),
-    (1.0, 0.5, 0.5),
-    (1.0, 0.5, 1.0),
-    (1.0, 1.0, 0.5),
-    (1.0, 1.0, 2.0),
-    (1.0, 2.0, 1.0),
-    (1.0, 2.0, 2.0),
-    (2.0, 1.0, 0.5),
-    (2.0, 1.0, 1.0),
-    (2.0, 1.0, 2.0),
-    (2.0, 2.0, 1.0),
-    (2.0, 0.5, 0.5),
-    (0.5, 2.0, 0.5),
-    (1.0, 2.0, 0.5),
-    (2.0, 2.0, 0.5),
-    (2.0, 0.5, 1.0),
-    (0.5, 2.0, 1.0),
-    (0.5, 0.5, 2.0),
-    (1.0, 0.5, 2.0),
-    (2.0, 0.5, 2.0),
-    (0.5, 2.0, 2.0),
-];
-
 pub fn labels_and_units(grid: &Grid, integrated: bool) -> (Vec<(String, &str)>, &str, &str) {
     let metadata = grid.metadata();
 
@@ -280,13 +288,6 @@ pub fn labels_and_units(grid: &Grid, integrated: bool) -> (Vec<(String, &str)>, 
             metadata.get("y_unit").map_or("", String::as_str)
         },
     )
-}
-
-#[derive(Clone, Copy)]
-pub enum ConvoluteMode {
-    Asymmetry,
-    Integrated,
-    Normal,
 }
 
 /// Performs convolution with scale variations using LHAPDF backend (legacy).
@@ -612,19 +613,18 @@ pub fn convolve_limits(grid: &Grid, bins: &[usize], mode: ConvoluteMode) -> Vec<
 }
 
 pub fn parse_integer_range(range: &str) -> Result<RangeInclusive<usize>> {
-    if let Some(at) = range.find('-') {
-        let (left, right) = range.split_at(at);
-        let left = str::parse::<usize>(left).context(format!(
+    if let Some((left, right)) = range.split_once('-') {
+        let left: usize = str::parse(left).context(format!(
             "unable to parse integer range '{range}'; couldn't convert '{left}'"
         ))?;
-        let right = str::parse::<usize>(&right[1..]).context(format!(
+        let right: usize = str::parse(right).context(format!(
             "unable to parse integer range '{range}'; couldn't convert '{right}'"
         ))?;
 
         Ok(left..=right)
     } else {
-        let value =
-            str::parse::<usize>(range).context(format!("unable to parse integer '{range}'"))?;
+        let value: usize =
+            str::parse(range).context(format!("unable to parse integer '{range}'"))?;
 
         Ok(value..=value)
     }

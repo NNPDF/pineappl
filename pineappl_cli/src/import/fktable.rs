@@ -1,4 +1,4 @@
-use anyhow::{Context, Result, anyhow};
+use anyhow::{Context as _, Result, anyhow};
 use flate2::read::GzDecoder;
 use ndarray::s;
 use pineappl::boc::{BinsWithFillLimits, Kinematics, Order, ScaleFuncForm, Scales};
@@ -300,7 +300,7 @@ fn read_fktable(reader: impl BufRead) -> Result<Grid> {
                         }
                     }
                 }
-                _ => {}
+                FkTableSection::Sof | FkTableSection::GridDesc | FkTableSection::VersionInfo => {}
             },
         }
     }

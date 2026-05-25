@@ -1,6 +1,6 @@
 use anyhow::Result;
 use float_cmp::approx_eq;
-use itertools::Itertools;
+use itertools::Itertools as _;
 use ndarray::s;
 use pineappl::boc::{BinsWithFillLimits, Channel, Kinematics, Order, ScaleFuncForm, Scales};
 use pineappl::convolutions::{Conv, ConvType};

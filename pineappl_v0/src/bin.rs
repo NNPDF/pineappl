@@ -1,4 +1,4 @@
-//! Module that contains helpers for binning observables
+//! Module that contains helpers for binning observables.
 
 use super::convert::f64_from_usize;
 use serde::Deserialize;
@@ -28,12 +28,6 @@ pub struct BinInfo<'a> {
 }
 
 impl<'a> BinInfo<'a> {
-    /// Constructor.
-    #[must_use]
-    pub const fn new(limits: &'a BinLimits, remapper: Option<&'a BinRemapper>) -> Self {
-        Self { limits, remapper }
-    }
-
     /// Returns the number of bins.
     #[must_use]
     pub const fn bins(&self) -> usize {
@@ -68,6 +62,12 @@ impl<'a> BinInfo<'a> {
         )
     }
 
+    /// Constructor.
+    #[must_use]
+    pub const fn new(limits: &'a BinLimits, remapper: Option<&'a BinRemapper>) -> Self {
+        Self { limits, remapper }
+    }
+
     /// Returns all normalization factors.
     #[must_use]
     pub fn normalizations(&self) -> Vec<f64> {
@@ -99,6 +99,17 @@ impl BinRemapper {
 }
 
 impl BinLimits {
+    /// Returns the size for each bin.
+    #[must_use]
+    pub fn bin_sizes(&self) -> Vec<f64> {
+        match &self.0 {
+            Limits::Equal { left, right, bins } => {
+                vec![(*right - *left) / f64_from_usize(*bins); *bins]
+            }
+            Limits::Unequal { limits } => limits.windows(2).map(|x| x[1] - x[0]).collect(),
+        }
+    }
+
     /// Returns the number of bins.
     #[must_use]
     pub const fn bins(&self) -> usize {
@@ -116,17 +127,6 @@ impl BinLimits {
                 .map(|b| (*right - *left).mul_add(f64_from_usize(b) / f64_from_usize(*bins), *left))
                 .collect(),
             Limits::Unequal { limits } => limits.clone(),
-        }
-    }
-
-    /// Returns the size for each bin.
-    #[must_use]
-    pub fn bin_sizes(&self) -> Vec<f64> {
-        match &self.0 {
-            Limits::Equal { left, right, bins } => {
-                vec![(*right - *left) / f64_from_usize(*bins); *bins]
-            }
-            Limits::Unequal { limits } => limits.windows(2).map(|x| x[1] - x[0]).collect(),
         }
     }
 }

@@ -20,7 +20,7 @@ use super::boc::Kinematics;
 use super::boc::Scales;
 use super::grid::Grid;
 use super::pids;
-use super::subgrid::{self, Subgrid, SubgridEnum};
+use super::subgrid::{self, Subgrid as _, SubgridEnum};
 use itertools::izip;
 use rustc_hash::FxHashMap;
 use serde::{Deserialize, Serialize};
@@ -49,6 +49,18 @@ pub struct ConvolutionCache<'a> {
 }
 
 impl<'a> ConvolutionCache<'a> {
+    /// Clears the cache.
+    pub fn clear(&mut self) {
+        self.alphas_cache.clear();
+        for xfx_cache in &mut self.caches {
+            xfx_cache.cache.clear();
+        }
+        for scales in &mut self.mu2 {
+            scales.clear();
+        }
+        self.x_grid.clear();
+    }
+
     /// Construct a new convolution cache.
     ///
     /// - `convolutions` describes each convolution function (PDF/FF type and hadron PID).
@@ -179,18 +191,6 @@ impl<'a> ConvolutionCache<'a> {
             ix: Vec::new(),
             scale_dims: Vec::new(),
         }
-    }
-
-    /// Clears the cache.
-    pub fn clear(&mut self) {
-        self.alphas_cache.clear();
-        for xfx_cache in &mut self.caches {
-            xfx_cache.cache.clear();
-        }
-        for scales in &mut self.mu2 {
-            scales.clear();
-        }
-        self.x_grid.clear();
     }
 }
 
@@ -351,6 +351,18 @@ pub enum ConvType {
 }
 
 impl ConvType {
+    /// Return `true` if this convolution type is a (polarized or unpolarized) FF.
+    #[must_use]
+    pub const fn is_ff(&self) -> bool {
+        matches!(self, Self::UnpolFF | Self::PolFF)
+    }
+
+    /// Return `true` if this convolution type is a (polarized or unpolarized) PDF.
+    #[must_use]
+    pub const fn is_pdf(&self) -> bool {
+        matches!(self, Self::UnpolPDF | Self::PolPDF)
+    }
+
     /// Construct a [`ConvType`] from the two boolean flags.
     #[must_use]
     pub const fn new(polarized: bool, time_like: bool) -> Self {
@@ -360,18 +372,6 @@ impl ConvType {
             (true, false) => Self::PolPDF,
             (true, true) => Self::PolFF,
         }
-    }
-
-    /// Return `true` if this convolution type is a (polarized or unpolarized) PDF.
-    #[must_use]
-    pub const fn is_pdf(&self) -> bool {
-        matches!(self, Self::UnpolPDF | Self::PolPDF)
-    }
-
-    /// Return `true` if this convolution type is a (polarized or unpolarized) FF.
-    #[must_use]
-    pub const fn is_ff(&self) -> bool {
-        matches!(self, Self::UnpolFF | Self::PolFF)
     }
 }
 
@@ -384,12 +384,6 @@ pub struct Conv {
 }
 
 impl Conv {
-    /// Constructor.
-    #[must_use]
-    pub const fn new(conv_type: ConvType, pid: i32) -> Self {
-        Self { conv_type, pid }
-    }
-
     /// Return the convolution if the PID is charged conjugated.
     #[must_use]
     pub const fn cc(&self) -> Self {
@@ -399,16 +393,22 @@ impl Conv {
         }
     }
 
-    /// Return the PID of the convolution.
-    #[must_use]
-    pub const fn pid(&self) -> i32 {
-        self.pid
-    }
-
     /// Return the convolution type of this convolution.
     #[must_use]
     pub const fn conv_type(&self) -> ConvType {
         self.conv_type
+    }
+
+    /// Constructor.
+    #[must_use]
+    pub const fn new(conv_type: ConvType, pid: i32) -> Self {
+        Self { conv_type, pid }
+    }
+
+    /// Return the PID of the convolution.
+    #[must_use]
+    pub const fn pid(&self) -> i32 {
+        self.pid
     }
 }
 

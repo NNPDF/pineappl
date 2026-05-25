@@ -1,13 +1,13 @@
 use super::helpers::{self, ConvFuns, ConvoluteMode};
 use super::{GlobalConfiguration, Subcommand};
 use anyhow::Result;
-use clap::builder::{PossibleValuesParser, TypedValueParser};
+use clap::builder::{PossibleValuesParser, TypedValueParser as _};
 use clap::{Parser, ValueHint};
-use itertools::Itertools;
+use itertools::Itertools as _;
 use pineappl::boc::Channel;
 use pineappl::grid::Grid;
 use rayon::{ThreadPoolBuilder, prelude::*};
-use std::fmt::Write;
+use std::fmt::Write as _;
 use std::num::NonZeroUsize;
 use std::ops::Range;
 use std::path::{Path, PathBuf};
@@ -47,106 +47,6 @@ pub struct Opts {
     /// Disable the (time-consuming) calculation of PDF uncertainties.
     #[arg(long)]
     no_conv_fun_unc: bool,
-}
-
-/// Convert `slice` to (unformatted) Python list.
-fn map_format_join(slice: &[f64]) -> String {
-    slice.iter().map(|x| format!("{x}")).join(", ")
-}
-
-fn map_format_e_join_repeat_last(slice: &[f64]) -> String {
-    slice
-        .iter()
-        .chain(slice.last())
-        .map(|x| format!("{x:.7e}"))
-        .join(", ")
-}
-
-/// Convert a channel to a good Python string representation.
-fn map_format_channel(channel: &Channel, grid: &Grid) -> String {
-    channel
-        .entry()
-        .iter()
-        .map(|(pids, _)| {
-            pids.iter()
-                .map(|&pid| grid.pid_basis().to_latex_str(pid))
-                .collect::<Vec<_>>()
-                .join("")
-        })
-        .join(" + ")
-}
-
-/// Convert channel contributions to Python tuples.
-fn map_format_channels(channels: &[(String, Vec<f64>)]) -> String {
-    channels
-        .iter()
-        .map(|(label, bins)| {
-            format!(
-                "            (r\"${}$\", np.array([{}]))",
-                label,
-                map_format_e_join_repeat_last(bins)
-            )
-        })
-        .join(",\n")
-}
-
-/// Convert PDF results to a Python tuple.
-fn format_pdf_results(pdf_uncertainties: &[Vec<Vec<f64>>], conv_funs: &[ConvFuns]) -> String {
-    pdf_uncertainties
-        .iter()
-        .zip(conv_funs.iter().map(|fun| &fun.label))
-        .map(|(values, label)| {
-            format!(
-                "            (
-                    r\"{}\",
-                    np.array([{}]),
-                    np.array([{}]),
-                    np.array([{}]),
-                ),",
-                label.replace('_', r"\_"),
-                map_format_e_join_repeat_last(&values[0]),
-                map_format_e_join_repeat_last(&values[1]),
-                map_format_e_join_repeat_last(&values[2]),
-            )
-        })
-        .join("\n")
-}
-
-/// Convert metadata into a Python dict.
-fn format_metadata(metadata: &[(&String, &String)]) -> String {
-    metadata
-        .iter()
-        .filter_map(|(key, value)| {
-            if value.contains('\n') {
-                // skip multi-line entries
-                None
-            } else {
-                Some(format!(
-                    "    \"{}\": r\"{}\",",
-                    key,
-                    if *key == "description" {
-                        value.replace('\u{2013}', "--").replace('\u{2014}', "---")
-                    } else if key.ends_with("_unit") {
-                        value
-                            .replace("GeV", r"\giga\electronvolt")
-                            .replace('/', r"\per")
-                            .replace("pb", r"\pico\barn")
-                    } else {
-                        (*value).clone()
-                    }
-                ))
-            }
-        })
-        .join("\n")
-}
-
-/// Convert `b` into a Python bool literal.
-fn map_bool(b: bool) -> String {
-    if b {
-        "True".to_owned()
-    } else {
-        "False".to_owned()
-    }
 }
 
 impl Subcommand for Opts {
@@ -565,4 +465,104 @@ metadata = {{
 
         Ok(ExitCode::SUCCESS)
     }
+}
+
+/// Convert `b` into a Python bool literal.
+fn map_bool(b: bool) -> String {
+    if b {
+        "True".to_owned()
+    } else {
+        "False".to_owned()
+    }
+}
+
+/// Convert `slice` to (unformatted) Python list.
+fn map_format_join(slice: &[f64]) -> String {
+    slice.iter().map(|x| format!("{x}")).join(", ")
+}
+
+fn map_format_e_join_repeat_last(slice: &[f64]) -> String {
+    slice
+        .iter()
+        .chain(slice.last())
+        .map(|x| format!("{x:.7e}"))
+        .join(", ")
+}
+
+/// Convert a channel to a good Python string representation.
+fn map_format_channel(channel: &Channel, grid: &Grid) -> String {
+    channel
+        .entry()
+        .iter()
+        .map(|(pids, _)| {
+            pids.iter()
+                .map(|&pid| grid.pid_basis().to_latex_str(pid))
+                .collect::<Vec<_>>()
+                .join("")
+        })
+        .join(" + ")
+}
+
+/// Convert channel contributions to Python tuples.
+fn map_format_channels(channels: &[(String, Vec<f64>)]) -> String {
+    channels
+        .iter()
+        .map(|(label, bins)| {
+            format!(
+                "            (r\"${}$\", np.array([{}]))",
+                label,
+                map_format_e_join_repeat_last(bins)
+            )
+        })
+        .join(",\n")
+}
+
+/// Convert PDF results to a Python tuple.
+fn format_pdf_results(pdf_uncertainties: &[Vec<Vec<f64>>], conv_funs: &[ConvFuns]) -> String {
+    pdf_uncertainties
+        .iter()
+        .zip(conv_funs.iter().map(|fun| &fun.label))
+        .map(|(values, label)| {
+            format!(
+                "            (
+                    r\"{}\",
+                    np.array([{}]),
+                    np.array([{}]),
+                    np.array([{}]),
+                ),",
+                label.replace('_', r"\_"),
+                map_format_e_join_repeat_last(&values[0]),
+                map_format_e_join_repeat_last(&values[1]),
+                map_format_e_join_repeat_last(&values[2]),
+            )
+        })
+        .join("\n")
+}
+
+/// Convert metadata into a Python dict.
+fn format_metadata(metadata: &[(&String, &String)]) -> String {
+    metadata
+        .iter()
+        .filter_map(|(key, value)| {
+            if value.contains('\n') {
+                // skip multi-line entries
+                None
+            } else {
+                Some(format!(
+                    "    \"{}\": r\"{}\",",
+                    key,
+                    if *key == "description" {
+                        value.replace('\u{2013}', "--").replace('\u{2014}', "---")
+                    } else if key.ends_with("_unit") {
+                        value
+                            .replace("GeV", r"\giga\electronvolt")
+                            .replace('/', r"\per")
+                            .replace("pb", r"\pico\barn")
+                    } else {
+                        (*value).clone()
+                    }
+                ))
+            }
+        })
+        .join("\n")
 }

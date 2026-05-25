@@ -8,7 +8,7 @@ use pineappl::boc::{Channel, Kinematics, Order};
 use pineappl::grid::Grid;
 use pineappl::interpolation::{Interp, InterpMeth, Map, ReweightMeth};
 use pineappl::pids::PidBasis;
-use pineappl::subgrid::{self, Subgrid};
+use pineappl::subgrid::{self, Subgrid as _};
 use pineappl_applgrid::ffi::{self, grid};
 use std::f64::consts::TAU;
 use std::iter;

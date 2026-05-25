@@ -4,7 +4,7 @@
 //!
 //! The main type of this crate is [`Grid`], which represents the interpolation grids that
 //! `PineAPPL` implements. Roughly speaking, a `Grid` is a three-dimensional array of [`Subgrid`]
-//! objects together with metadata. The three dimensions are
+//! objects together with metadata. The three dimensions are:
 //! 1. bins, whose limits can be accessed by [`Grid::bwfl()`], and
 //! 2. (perturbative) orders, represented by the type [`Order`] and accessible by
 //!    [`Grid::orders()`],

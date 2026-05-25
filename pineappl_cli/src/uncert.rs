@@ -1,7 +1,7 @@
 use super::helpers::{self, ConvFuns, ConvoluteMode};
 use super::{GlobalConfiguration, Subcommand};
 use anyhow::{Error, Result};
-use clap::builder::{PossibleValuesParser, TypedValueParser};
+use clap::builder::{PossibleValuesParser, TypedValueParser as _};
 use clap::{Args, Parser, ValueHint};
 use prettytable::{Row, cell};
 use rayon::{ThreadPoolBuilder, prelude::*};

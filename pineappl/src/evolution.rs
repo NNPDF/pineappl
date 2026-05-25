@@ -6,16 +6,18 @@ use super::error::{Error, Result};
 use super::grid::Grid;
 use super::packed_array::PackedArray;
 use super::pids::PidBasis;
-use super::subgrid::{self, ImportSubgridV1, Subgrid, SubgridEnum};
+use super::subgrid::{self, ImportSubgridV1, Subgrid as _, SubgridEnum};
 use float_cmp::approx_eq;
-use itertools::Itertools;
+use itertools::Itertools as _;
 use itertools::izip;
 use ndarray::linalg;
 use ndarray::{
     Array1, Array2, Array3, ArrayD, ArrayView1, ArrayView4, ArrayViewD, ArrayViewMutD, Axis, Ix1,
     Ix2, s,
 };
-use rayon::iter::{IndexedParallelIterator, IntoParallelRefMutIterator, ParallelIterator};
+use rayon::iter::{
+    IndexedParallelIterator as _, IntoParallelRefMutIterator as _, ParallelIterator as _,
+};
 use std::iter;
 
 /// This structure captures the information needed to create an evolution kernel operator (EKO) for
@@ -56,7 +58,7 @@ pub struct OperatorSliceInfo {
     pub fac0: f64,
     /// Particle identifiers of the `FkTable`.
     pub pids0: Vec<i32>,
-    /// `x`-grid coordinates of the `FkTable`
+    /// `x`-grid coordinates of the `FkTable`.
     pub x0: Vec<f64>,
     /// Squared factorization/fragmentation scale of the slice of `Grid` that should be evolved.
     pub fac1: f64,
@@ -110,6 +112,11 @@ impl AlphasTable {
     }
 }
 
+type Pid01IndexTuples = Vec<(usize, usize)>;
+type Pid01Tuples = Vec<(i32, i32)>;
+
+type X1aX1bOpDTuple = (Vec<Vec<f64>>, Option<ArrayD<f64>>);
+
 fn gluon_has_pid_zero(grid: &Grid) -> bool {
     // if there are any PID zero particles ...
     grid.channels()
@@ -118,9 +125,6 @@ fn gluon_has_pid_zero(grid: &Grid) -> bool {
         // and if the particle IDs are encoded using PDG MC IDs
         && *grid.pid_basis() == PidBasis::Pdg
 }
-
-type Pid01IndexTuples = Vec<(usize, usize)>;
-type Pid01Tuples = Vec<(i32, i32)>;
 
 fn pid_slices(
     operator: &ArrayView4<f64>,
@@ -203,8 +207,6 @@ fn operator_slices(
 
     Ok(operators)
 }
-
-type X1aX1bOpDTuple = (Vec<Vec<f64>>, Option<ArrayD<f64>>);
 
 fn ndarray_from_subgrid_orders_slice(
     grid: &Grid,

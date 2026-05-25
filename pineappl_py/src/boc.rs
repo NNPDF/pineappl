@@ -381,7 +381,7 @@ impl PyScales {
     /// Constructor for `Scales`
     #[new]
     #[must_use]
-    #[allow(clippy::needless_pass_by_value)]
+    #[expect(clippy::needless_pass_by_value, reason = "PyO3 requires pass by value")]
     pub fn news_scales(
         ren: PyRef<PyScaleFuncForm>,
         fac: PyRef<PyScaleFuncForm>,
@@ -469,7 +469,7 @@ impl PyOrder {
     ///     boolean array, to be used as orders' mask
     #[staticmethod]
     #[must_use]
-    #[allow(clippy::needless_pass_by_value)]
+    #[expect(clippy::needless_pass_by_value, reason = "PyO3 requires pass by value")]
     pub fn create_mask<'py>(
         orders: Vec<PyRef<Self>>,
         max_as: u8,

@@ -47,7 +47,7 @@ impl PyImportSubgridV1 {
     ///     Per-dimension node coordinates (scales, x values, etc.).
     #[new]
     #[must_use]
-    #[allow(clippy::needless_pass_by_value)]
+    #[expect(clippy::needless_pass_by_value, reason = "PyO3 requires pass by value")]
     pub fn new(array: PyReadonlyArrayDyn<f64>, node_values: Vec<Vec<f64>>) -> Self {
         let mut sparse_array: PackedArray<f64> =
             PackedArray::new(node_values.iter().map(Vec::len).collect());

@@ -1,16 +1,5 @@
 //! Interpolation module.
 
-use super::convert;
-use super::packed_array::PackedArray;
-use arrayvec::ArrayVec;
-use float_cmp::approx_eq;
-use serde::{Deserialize, Serialize};
-use std::mem;
-use std::ops::Range;
-
-const MAX_INTERP_ORDER_PLUS_ONE: usize = 8;
-const MAX_DIMENSIONS: usize = 8;
-
 mod applgrid {
     pub fn reweight_x(x: f64) -> f64 {
         (x.sqrt() / x.mul_add(-0.99, 1.0)).powi(3)
@@ -47,47 +36,16 @@ mod applgrid {
     }
 }
 
-fn lagrange_weights(i: usize, n: usize, u: f64) -> f64 {
-    let mut factorials = 1;
-    let mut product = 1.0;
-    for z in 0..i {
-        product *= u - convert::f64_from_usize(z);
-        factorials *= i - z;
-    }
-    for z in i + 1..=n {
-        product *= convert::f64_from_usize(z) - u;
-        factorials *= z - i;
-    }
-    product / convert::f64_from_usize(factorials)
-}
+use super::convert;
+use super::packed_array::PackedArray;
+use arrayvec::ArrayVec;
+use float_cmp::approx_eq;
+use serde::{Deserialize, Serialize};
+use std::mem;
+use std::ops::Range;
 
-/// How node weights are adjusted before accumulating into the sparse grid.
-#[repr(C)]
-#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
-pub enum ReweightMeth {
-    /// APPLgrid-style reweighting in `x` (see internal `applgrid::reweight_x`).
-    ApplGridX,
-    /// No multiplicative reweighting (factor 1).
-    NoReweight,
-}
-
-/// Map between physical variable `x` and internal interpolation coordinate `y`.
-#[repr(C)]
-#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
-pub enum Map {
-    /// Momentum fraction map used by APPLgrid (`fy2` / `fx2`).
-    ApplGridF2,
-    /// Scale map using `ln ln(Q2/0.0625)` and its inverse.
-    ApplGridH0,
-}
-
-/// Interpolation method along one dimension.
-#[repr(C)]
-#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
-pub enum InterpMeth {
-    /// Lagrange interpolation through `order + 1` consecutive nodes.
-    Lagrange,
-}
+const MAX_DIMENSIONS: usize = 8;
+const MAX_INTERP_ORDER_PLUS_ONE: usize = 8;
 
 /// One-dimensional interpolation specification: mapped range, node count, polynomial order,
 /// and method.
@@ -117,6 +75,79 @@ impl PartialEq for Interp {
 impl Eq for Interp {}
 
 impl Interp {
+    fn deltay(&self) -> f64 {
+        (self.max - self.min) / convert::f64_from_usize(self.nodes - 1)
+    }
+
+    fn gety(&self, index: usize) -> f64 {
+        convert::f64_from_usize(index).mul_add(self.deltay(), self.min)
+    }
+
+    /// Interpolation kernel (currently only Lagrange).
+    #[must_use]
+    pub const fn interp_meth(&self) -> InterpMeth {
+        self.interp_meth
+    }
+
+    /// Map `x` to the index of the first contributing node and a fractional offset in `y` space.
+    ///
+    /// Returns `None` if `x` maps outside the interpolated interval.
+    #[must_use]
+    pub fn interpolate(&self, x: f64) -> Option<(usize, f64)> {
+        let y = self.map_x_to_y(x);
+
+        // points falling outside the interpolation range shouldn't happen very often, because when
+        // it does it degrades the interpolation quality
+        if (self.min > y) || (y > self.max) {
+            return None;
+        }
+
+        if self.nodes == 1 {
+            // TODO: is the `y_fraction` correct?
+            Some((0, 0.0))
+        } else {
+            let index = convert::usize_from_f64(
+                (y - self.min) / self.deltay() - convert::f64_from_usize(self.order / 2),
+            )
+            .min(self.nodes - self.order - 1);
+            let y_fraction = (y - self.gety(index)) / self.deltay();
+
+            Some((index, y_fraction))
+        }
+    }
+
+    /// Coordinate map between `x` and internal `y`.
+    #[must_use]
+    pub const fn map(&self) -> Map {
+        self.map
+    }
+
+    fn map_x_to_y(&self, x: f64) -> f64 {
+        match self.map {
+            Map::ApplGridF2 => applgrid::fy2(x),
+            Map::ApplGridH0 => applgrid::ftau0(x),
+        }
+    }
+
+    fn map_y_to_x(&self, y: f64) -> f64 {
+        match self.map {
+            Map::ApplGridF2 => applgrid::fx2(y),
+            Map::ApplGridH0 => applgrid::fq20(y),
+        }
+    }
+
+    /// Largest physical `x` covered by the node set (after mapping and ordering).
+    #[must_use]
+    pub fn max(&self) -> f64 {
+        self.map_y_to_x(self.min).max(self.map_y_to_x(self.max))
+    }
+
+    /// Smallest physical `x` covered by the node set (after mapping and ordering).
+    #[must_use]
+    pub fn min(&self) -> f64 {
+        self.map_y_to_x(self.min).min(self.map_y_to_x(self.max))
+    }
+
     /// Build an interpolator from physical `min`..=`max`, node count, polynomial `order`, and options.
     ///
     /// # Panics
@@ -165,47 +196,15 @@ impl Interp {
         result
     }
 
-    fn deltay(&self) -> f64 {
-        (self.max - self.min) / convert::f64_from_usize(self.nodes - 1)
-    }
-
-    fn gety(&self, index: usize) -> f64 {
-        convert::f64_from_usize(index).mul_add(self.deltay(), self.min)
-    }
-
-    /// Multiplicative weight applied at abscissa `x` before adding to the grid.
+    /// Node positions in physical `x` for this dimension.
     #[must_use]
-    pub fn reweight(&self, x: f64) -> f64 {
-        match self.reweight {
-            ReweightMeth::ApplGridX => applgrid::reweight_x(x),
-            ReweightMeth::NoReweight => 1.0,
-        }
-    }
-
-    /// Map `x` to the index of the first contributing node and a fractional offset in `y` space.
-    ///
-    /// Returns `None` if `x` maps outside the interpolated interval.
-    #[must_use]
-    pub fn interpolate(&self, x: f64) -> Option<(usize, f64)> {
-        let y = self.map_x_to_y(x);
-
-        // points falling outside the interpolation range shouldn't happen very often, because when
-        // it does it degrades the interpolation quality
-        if (self.min > y) || (y > self.max) {
-            return None;
-        }
-
+    pub fn node_values(&self) -> Vec<f64> {
         if self.nodes == 1 {
-            // TODO: is the `y_fraction` correct?
-            Some((0, 0.0))
+            vec![self.map_y_to_x(self.min)]
         } else {
-            let index = convert::usize_from_f64(
-                (y - self.min) / self.deltay() - convert::f64_from_usize(self.order / 2),
-            )
-            .min(self.nodes - self.order - 1);
-            let y_fraction = (y - self.gety(index)) / self.deltay();
-
-            Some((index, y_fraction))
+            (0..self.nodes)
+                .map(|node| self.map_y_to_x(self.gety(node)))
+                .collect()
         }
     }
 
@@ -219,66 +218,25 @@ impl Interp {
             .collect()
     }
 
-    /// Polynomial interpolation order (number of intervals spanned is `order + 1` nodes).
-    #[must_use]
-    pub const fn order(&self) -> usize {
-        self.order
-    }
-
-    /// Node positions in physical `x` for this dimension.
-    #[must_use]
-    pub fn node_values(&self) -> Vec<f64> {
-        if self.nodes == 1 {
-            vec![self.map_y_to_x(self.min)]
-        } else {
-            (0..self.nodes)
-                .map(|node| self.map_y_to_x(self.gety(node)))
-                .collect()
-        }
-    }
-
-    fn map_y_to_x(&self, y: f64) -> f64 {
-        match self.map {
-            Map::ApplGridF2 => applgrid::fx2(y),
-            Map::ApplGridH0 => applgrid::fq20(y),
-        }
-    }
-
-    fn map_x_to_y(&self, x: f64) -> f64 {
-        match self.map {
-            Map::ApplGridF2 => applgrid::fy2(x),
-            Map::ApplGridH0 => applgrid::ftau0(x),
-        }
-    }
-
     /// Number of support nodes along this dimension.
     #[must_use]
     pub const fn nodes(&self) -> usize {
         self.nodes
     }
 
-    /// Smallest physical `x` covered by the node set (after mapping and ordering).
+    /// Polynomial interpolation order (number of intervals spanned is `order + 1` nodes).
     #[must_use]
-    pub fn min(&self) -> f64 {
-        self.map_y_to_x(self.min).min(self.map_y_to_x(self.max))
+    pub const fn order(&self) -> usize {
+        self.order
     }
 
-    /// Largest physical `x` covered by the node set (after mapping and ordering).
+    /// Multiplicative weight applied at abscissa `x` before adding to the grid.
     #[must_use]
-    pub fn max(&self) -> f64 {
-        self.map_y_to_x(self.min).max(self.map_y_to_x(self.max))
-    }
-
-    /// Coordinate map between `x` and internal `y`.
-    #[must_use]
-    pub const fn map(&self) -> Map {
-        self.map
-    }
-
-    /// Interpolation kernel (currently only Lagrange).
-    #[must_use]
-    pub const fn interp_meth(&self) -> InterpMeth {
-        self.interp_meth
+    pub fn reweight(&self, x: f64) -> f64 {
+        match self.reweight {
+            ReweightMeth::ApplGridX => applgrid::reweight_x(x),
+            ReweightMeth::NoReweight => 1.0,
+        }
     }
 
     /// Reweighting mode in `x`.
@@ -302,6 +260,34 @@ impl Interp {
     }
 }
 
+/// Interpolation method along one dimension.
+#[repr(C)]
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
+pub enum InterpMeth {
+    /// Lagrange interpolation through `order + 1` consecutive nodes.
+    Lagrange,
+}
+
+/// Map between physical variable `x` and internal interpolation coordinate `y`.
+#[repr(C)]
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
+pub enum Map {
+    /// Momentum fraction map used by APPLgrid (`fy2` / `fx2`).
+    ApplGridF2,
+    /// Scale map using `ln ln(Q2/0.0625)` and its inverse.
+    ApplGridH0,
+}
+
+/// How node weights are adjusted before accumulating into the sparse grid.
+#[repr(C)]
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
+pub enum ReweightMeth {
+    /// APPLgrid-style reweighting in `x` (see internal `applgrid::reweight_x`).
+    ApplGridX,
+    /// No multiplicative reweighting (factor 1).
+    NoReweight,
+}
+
 /// Add `weight` into `array` at the stencil given by `interps` and `ntuple`.
 ///
 /// Returns `false` if `weight` is zero or if any dimension maps outside its range.
@@ -311,7 +297,7 @@ pub fn interpolate(
     weight: f64,
     array: &mut PackedArray<f64>,
 ) -> bool {
-    use itertools::Itertools;
+    use itertools::Itertools as _;
 
     if weight == 0.0 {
         return false;
@@ -363,10 +349,25 @@ pub fn interpolate(
     true
 }
 
+fn lagrange_weights(i: usize, n: usize, u: f64) -> f64 {
+    let mut factorials = 1;
+    let mut product = 1.0;
+    for z in 0..i {
+        product *= u - convert::f64_from_usize(z);
+        factorials *= i - z;
+    }
+    for z in i + 1..=n {
+        product *= convert::f64_from_usize(z) - u;
+        factorials *= z - i;
+    }
+    product / convert::f64_from_usize(factorials)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
-    use float_cmp::Ulps;
+    use crate::packed_array::PackedArray;
+    use float_cmp::Ulps as _;
     use float_cmp::assert_approx_eq;
 
     #[test]
@@ -516,7 +517,7 @@ mod tests {
             assert_approx_eq!(f64, node, ref_node, ulps = 4);
         }
 
-        let mut array = crate::packed_array::PackedArray::<f64>::new(vec![40, 50, 50]);
+        let mut array = PackedArray::<f64>::new(vec![40, 50, 50]);
         let ntuples = [[100000.0, 0.25, 0.5], [1000.0, 0.5, 0.5]];
         let weight = 1.0;
 
@@ -711,7 +712,7 @@ mod tests {
                 InterpMeth::Lagrange,
             ),
         ];
-        let mut array = crate::packed_array::PackedArray::<f64>::new(vec![40, 50, 50]);
+        let mut array = PackedArray::<f64>::new(vec![40, 50, 50]);
 
         let ntuple = [1000.0, 0.5, 0.5];
         let weight = 0.0;
@@ -741,7 +742,7 @@ mod tests {
             Map::ApplGridH0,
             InterpMeth::Lagrange,
         )];
-        let mut array = crate::packed_array::PackedArray::<f64>::new(vec![1]);
+        let mut array = PackedArray::<f64>::new(vec![1]);
 
         let ntuple = [90.0_f64.powi(2)];
         let weight = 1.0;

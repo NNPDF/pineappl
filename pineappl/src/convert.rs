@@ -1,5 +1,8 @@
-#[allow(clippy::cast_possible_truncation)]
-#[allow(clippy::cast_sign_loss)]
+#[expect(
+    clippy::cast_possible_truncation,
+    reason = "we want that truncation to happen"
+)]
+#[expect(clippy::cast_sign_loss, reason = "we want to get rid of the sign")]
 pub const fn usize_from_f64(x: f64) -> usize {
     x.max(0.0) as usize
 }

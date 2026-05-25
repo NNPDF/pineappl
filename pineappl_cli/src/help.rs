@@ -1,7 +1,7 @@
 use super::{GlobalConfiguration, Subcommand};
 use anyhow::Result;
 use clap::Parser;
-use itertools::Itertools;
+use itertools::Itertools as _;
 use std::iter;
 use std::process::{Command, ExitCode};
 

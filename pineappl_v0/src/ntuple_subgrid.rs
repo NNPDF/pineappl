@@ -12,6 +12,14 @@ pub struct NtupleSubgridV1 {
 }
 
 impl Subgrid for NtupleSubgridV1 {
+    fn indexed_iter(&self) -> SubgridIndexedIter<'_> {
+        panic!("NtupleSubgridV1 doesn't support the indexed_iter operation");
+    }
+
+    fn is_empty(&self) -> bool {
+        self.ntuples.is_empty()
+    }
+
     fn mu2_grid(&self) -> Cow<'_, [Mu2]> {
         Cow::Borrowed(&[])
     }
@@ -22,14 +30,6 @@ impl Subgrid for NtupleSubgridV1 {
 
     fn x2_grid(&self) -> Cow<'_, [f64]> {
         Cow::Borrowed(&[])
-    }
-
-    fn is_empty(&self) -> bool {
-        self.ntuples.is_empty()
-    }
-
-    fn indexed_iter(&self) -> SubgridIndexedIter<'_> {
-        panic!("NtupleSubgridV1 doesn't support the indexed_iter operation");
     }
 }
 

@@ -2,7 +2,7 @@
 //!
 //! The `PineAPPL` Application Programming Interface for the C language (CAPI) defines types and
 //! functions that allow `PineAPPL` to be used without having to write Rust code, and instead
-//! offering
+//! offering:
 //!
 //! * C or C++, or
 //! * Fortran as programming languages. Fortran is supported using the `iso_c_binding` module to
@@ -26,7 +26,7 @@
 //! ```
 //!
 //! This will read `PineAPPL`'s `.pc` file and print the neccessary `CFLAGS` (`--cflags`) and
-//! linker flags (`--libs`). This procedure is supported by many build systems, such as
+//! linker flags (`--libs`). This procedure is supported by many build systems, such as:
 //!
 //! * [Autoconf]/[Automake], using the `PKG_CHECK_MODULES` macro, see the [Autotools mythbuster]
 //!   page for correct usage,
@@ -55,7 +55,7 @@
 //!
 //! [translation tables]: https://github.com/eqrion/cbindgen/blob/master/docs.md#std-types
 
-use itertools::{Itertools, izip};
+use itertools::{Itertools as _, izip};
 use ndarray::{Array4, CowArray};
 use pineappl::boc::{Bin, BinsWithFillLimits, Channel, Kinematics, Order, ScaleFuncForm, Scales};
 use pineappl::convolutions::{Conv, ConvType, ConvolutionCache};
@@ -66,13 +66,15 @@ use pineappl::interpolation::{Interp as InterpMain, InterpMeth, Map, ReweightMet
 use pineappl::packed_array::PackedArray;
 use pineappl::packed_array::{ravel_multi_index, unravel_index};
 use pineappl::pids::PidBasis;
-use pineappl::subgrid::{ImportSubgridV1, Subgrid};
+use pineappl::subgrid::{ImportSubgridV1, Subgrid as _};
 use std::collections::HashMap;
 use std::ffi::{CStr, CString};
 use std::fs::File;
+use std::io::Error as IoError;
 use std::mem;
 use std::os::raw::{c_char, c_void};
 use std::path::Path;
+use std::ptr;
 use std::slice;
 
 /// Select subgrid type optimization when passed to grid optimization (see `GridOptFlags::OPTIMIZE_SUBGRID_TYPE`).
@@ -94,6 +96,69 @@ pub const PINEAPPL_GOF_MERGE_SAME_CHANNELS: GridOptFlags = GridOptFlags::MERGE_S
 pub const PINEAPPL_GOF_STRIP_EMPTY_CHANNELS: GridOptFlags = GridOptFlags::STRIP_EMPTY_CHANNELS;
 
 // TODO: make sure no `panic` calls leave functions marked as `extern "C"`
+
+/// Type for defining a Channel function.
+#[derive(Clone)]
+pub struct Channels {
+    channels: Vec<Channel>,
+    convolutions: usize,
+}
+
+/// Type for defining the interpolation object.
+#[repr(C)]
+pub struct Interp {
+    /// Physical lower edge of the interpolation range (before internal mapping).
+    pub min: f64,
+    /// Physical upper edge of the interpolation range (before internal mapping).
+    pub max: f64,
+    /// Number of support nodes.
+    pub nodes: usize,
+    /// Polynomial interpolation order.
+    pub order: usize,
+    /// Reweighting mode in the physical variable.
+    pub reweight: ReweightMeth,
+    /// Map between physical variable and internal coordinate.
+    pub map: Map,
+    /// Interpolation kernel (Lagrange, ...).
+    pub interp_meth: InterpMeth,
+}
+
+/// Key-value storage for passing optional information during grid creation with
+/// `pineappl_grid_new`.
+#[derive(Default)]
+pub struct KeyVal {
+    bools: HashMap<String, bool>,
+    doubles: HashMap<String, f64>,
+    ints: HashMap<String, i32>,
+    strings: HashMap<String, CString>,
+}
+
+/// Type for defining a luminosity function.
+#[derive(Default)]
+pub struct Lumi(Vec<Channel>);
+
+/// Type alias for the operator callback.
+pub type OperatorCallback = unsafe extern "C" fn(
+    usize,        // index which selects Evolution parameters
+    f64,          // squared process scale (fac or frg)
+    *const i32,   // `pids_in`
+    *const f64,   // `x_in`
+    *const i32,   // `pids_out`
+    *const f64,   // `x_out`
+    *const usize, // shape of the EKO
+    *mut f64,     // Evolution Operator data buffer
+    *mut c_void,  // Callable state of parameters
+);
+
+/// Type for defining the Operator info.
+#[repr(C)]
+#[derive(Debug)]
+pub struct OperatorInfo {
+    fac0: f64,
+    fac1: f64,
+    pid_basis: PidBasis,
+    conv_type: ConvType,
+}
 
 fn grid_interpolation_params(key_vals: Option<&KeyVal>) -> Vec<InterpMain> {
     let mut q2_min = 1e2;
@@ -246,10 +311,6 @@ fn grid_interpolation_params(key_vals: Option<&KeyVal>) -> Vec<InterpMain> {
         ),
     ]
 }
-
-/// Type for defining a luminosity function.
-#[derive(Default)]
-pub struct Lumi(Vec<Channel>);
 
 /// Returns the number of bins in `grid`.
 ///
@@ -599,7 +660,10 @@ pub unsafe extern "C" fn pineappl_grid_dedup_channels(grid: *mut Grid, ulps: i64
 
 /// Delete a grid previously created with `pineappl_grid_new`.
 #[unsafe(no_mangle)]
-#[allow(unused_variables)]
+#[expect(
+    unused_variables,
+    reason = "by capturing the variable it is being destroyed"
+)]
 pub extern "C" fn pineappl_grid_delete(grid: Option<Box<Grid>>) {}
 
 /// Fill `grid` for the given momentum fractions `x1` and `x2`, at the scale `q2` for the given
@@ -886,7 +950,7 @@ pub unsafe extern "C" fn pineappl_grid_delete_bins(
     bin_indices_len: usize,
 ) {
     let grid = unsafe { &mut *grid };
-    let bin_indices = unsafe { std::slice::from_raw_parts(bin_indices_ptr, bin_indices_len) };
+    let bin_indices = unsafe { slice::from_raw_parts(bin_indices_ptr, bin_indices_len) };
     grid.delete_bins(bin_indices);
 }
 
@@ -1255,7 +1319,10 @@ pub const unsafe extern "C" fn pineappl_lumi_count(lumi: *const Lumi) -> usize {
 /// Delete luminosity function previously created with `pineappl_lumi_new`.
 #[deprecated(since = "1.0.0", note = "use `pineappl_channels_delete` instead")]
 #[unsafe(no_mangle)]
-#[allow(unused_variables)]
+#[expect(
+    unused_variables,
+    reason = "by capturing the variable it is being destroyed"
+)]
 pub extern "C" fn pineappl_lumi_delete(lumi: Option<Box<Lumi>>) {}
 
 /// Read out the channel with index `entry` of the luminosity function `lumi`. The PDG ids and
@@ -1301,20 +1368,13 @@ pub extern "C" fn pineappl_lumi_new() -> Box<Lumi> {
     Box::default()
 }
 
-/// Key-value storage for passing optional information during grid creation with
-/// `pineappl_grid_new`.
-#[derive(Default)]
-pub struct KeyVal {
-    bools: HashMap<String, bool>,
-    doubles: HashMap<String, f64>,
-    ints: HashMap<String, i32>,
-    strings: HashMap<String, CString>,
-}
-
 /// Delete the previously created object pointed to by `key_vals`.
 #[deprecated(since = "1.0.0", note = "")]
 #[unsafe(no_mangle)]
-#[allow(unused_variables)]
+#[expect(
+    unused_variables,
+    reason = "by capturing the variable it is being destroyed"
+)]
 pub extern "C" fn pineappl_keyval_delete(key_vals: Option<Box<KeyVal>>) {}
 
 /// Get the boolean-valued parameter with name `key` stored in `key_vals`.
@@ -1496,42 +1556,6 @@ pub unsafe extern "C" fn pineappl_string_delete(string: *mut c_char) {
 
 // Here starts the generalized C-API interface.
 
-/// Type for defining a Channel function.
-#[derive(Clone)]
-pub struct Channels {
-    channels: Vec<Channel>,
-    convolutions: usize,
-}
-
-/// Type for defining the interpolation object
-#[repr(C)]
-pub struct Interp {
-    /// Physical lower edge of the interpolation range (before internal mapping).
-    pub min: f64,
-    /// Physical upper edge of the interpolation range (before internal mapping).
-    pub max: f64,
-    /// Number of support nodes.
-    pub nodes: usize,
-    /// Polynomial interpolation order.
-    pub order: usize,
-    /// Reweighting mode in the physical variable.
-    pub reweight: ReweightMeth,
-    /// Map between physical variable and internal coordinate.
-    pub map: Map,
-    /// Interpolation kernel (Lagrange, ...).
-    pub interp_meth: InterpMeth,
-}
-
-/// Type for defining the Operator info.
-#[repr(C)]
-#[derive(Debug)]
-pub struct OperatorInfo {
-    fac0: f64,
-    fac1: f64,
-    pid_basis: PidBasis,
-    conv_type: ConvType,
-}
-
 /// An exact duplicate of `pineappl_lumi_new` to make naming (lumi -> channel) consistent.
 /// should be deleted using `pineappl_channels_delete`.
 #[unsafe(no_mangle)]
@@ -1627,7 +1651,10 @@ pub unsafe extern "C" fn pineappl_channels_combinations(
 
 /// An exact duplicate of `pineappl_lumi_delete` to make naming (lumi -> channel) consistent.
 #[unsafe(no_mangle)]
-#[allow(unused_variables)]
+#[expect(
+    unused_variables,
+    reason = "by capturing the variable it is being destroyed"
+)]
 pub extern "C" fn pineappl_channels_delete(channels: Option<Box<Channels>>) {}
 
 /// Creates a new and empty grid that can accept any number of convolutions. The creation requires
@@ -1705,7 +1732,7 @@ pub unsafe extern "C" fn pineappl_grid_new2(
     let convolutions = unsafe { slice::from_raw_parts(convolutions, nb_convolutions) }.to_vec();
 
     // Grid interpolations
-    let interp_slices = unsafe { std::slice::from_raw_parts(interps, interpolations) };
+    let interp_slices = unsafe { slice::from_raw_parts(interps, interpolations) };
     let interp_vecs: Vec<_> = interp_slices
         .iter()
         .map(|interp| {
@@ -1725,7 +1752,7 @@ pub unsafe extern "C" fn pineappl_grid_new2(
     let kinematics = unsafe { slice::from_raw_parts(kinematics, interp_vecs.len()) }.to_vec();
 
     // Scales. An array containing the values of `ScaleFuncForm` objects
-    let mu_scales = unsafe { std::slice::from_raw_parts(scales, 3) };
+    let mu_scales = unsafe { slice::from_raw_parts(scales, 3) };
 
     Box::new(Grid::new(
         bins,
@@ -1893,7 +1920,7 @@ pub unsafe extern "C" fn pineappl_grid_metadata(
 
     grid.metadata()
         .get(key.as_ref())
-        .map_or(std::ptr::null_mut(), |value| {
+        .map_or(ptr::null_mut(), |value| {
             CString::new(value.as_str()).unwrap().into_raw()
         })
 }
@@ -2353,19 +2380,6 @@ pub unsafe extern "C" fn pineappl_grid_evolve_info(
     ren1.copy_from_slice(&grid.evolve_info(order_mask).ren1);
 }
 
-/// Type alias for the operator callback
-pub type OperatorCallback = unsafe extern "C" fn(
-    usize,        // index which selects Evolution parameters
-    f64,          // squared process scale (fac or frg)
-    *const i32,   // `pids_in`
-    *const f64,   // `x_in`
-    *const i32,   // `pids_out`
-    *const f64,   // `x_out`
-    *const usize, // shape of the EKO
-    *mut f64,     // Evolution Operator data buffer
-    *mut c_void,  // Callable state of parameters
-);
-
 /// Evolve a grid with an evolution operator and dump the resulting FK table.
 ///
 /// # Arguments
@@ -2480,7 +2494,7 @@ pub unsafe extern "C" fn pineappl_grid_evolve(
                 }
 
                 // we specify an arbitrary error type since we don't return an error anywhere
-                Ok::<_, std::io::Error>((operator_slice_info, array))
+                Ok::<_, IoError>((operator_slice_info, array))
             })
         })
         .collect();
@@ -2515,10 +2529,12 @@ pub unsafe extern "C" fn pineappl_grid_evolve(
 pub unsafe extern "C" fn pineappl_fktable_optimize(grid: *mut Grid, assumptions: FkAssumptions) {
     let grid = unsafe { &mut *grid };
     // SAFETY: this code has been copied from the `take_mut` crate
-    let read_grid = unsafe { std::ptr::read(grid) };
+    let read_grid = unsafe { ptr::read(grid) };
     let mut fktable = FkTable::try_from(read_grid)
         // UNWRAP: error handling in the CAPI is to abort
         .unwrap();
     fktable.optimize(assumptions);
-    unsafe { std::ptr::write(grid, fktable.into_grid()) };
+    unsafe {
+        ptr::write(grid, fktable.into_grid());
+    }
 }

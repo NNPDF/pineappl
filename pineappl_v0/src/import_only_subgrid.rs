@@ -1,11 +1,11 @@
-//! TODO
+//! TODO.
 
 use super::sparse_array3::SparseArray3;
 use super::subgrid::{Mu2, Subgrid, SubgridIndexedIter};
 use serde::Deserialize;
 use std::borrow::Cow;
 
-/// TODO
+/// TODO.
 #[derive(Deserialize)]
 pub struct ImportOnlySubgridV1 {
     array: SparseArray3<f64>,
@@ -15,6 +15,14 @@ pub struct ImportOnlySubgridV1 {
 }
 
 impl Subgrid for ImportOnlySubgridV1 {
+    fn indexed_iter(&self) -> SubgridIndexedIter<'_> {
+        Box::new(self.array.indexed_iter())
+    }
+
+    fn is_empty(&self) -> bool {
+        self.array.is_empty()
+    }
+
     fn mu2_grid(&self) -> Cow<'_, [Mu2]> {
         self.q2_grid
             .iter()
@@ -30,17 +38,9 @@ impl Subgrid for ImportOnlySubgridV1 {
     fn x2_grid(&self) -> Cow<'_, [f64]> {
         Cow::Borrowed(&self.x2_grid)
     }
-
-    fn is_empty(&self) -> bool {
-        self.array.is_empty()
-    }
-
-    fn indexed_iter(&self) -> SubgridIndexedIter<'_> {
-        Box::new(self.array.indexed_iter())
-    }
 }
 
-/// TODO
+/// TODO.
 #[derive(Deserialize)]
 pub struct ImportOnlySubgridV2 {
     array: SparseArray3<f64>,
@@ -50,6 +50,14 @@ pub struct ImportOnlySubgridV2 {
 }
 
 impl Subgrid for ImportOnlySubgridV2 {
+    fn indexed_iter(&self) -> SubgridIndexedIter<'_> {
+        Box::new(self.array.indexed_iter())
+    }
+
+    fn is_empty(&self) -> bool {
+        self.array.is_empty()
+    }
+
     fn mu2_grid(&self) -> Cow<'_, [Mu2]> {
         Cow::Borrowed(&self.mu2_grid)
     }
@@ -60,13 +68,5 @@ impl Subgrid for ImportOnlySubgridV2 {
 
     fn x2_grid(&self) -> Cow<'_, [f64]> {
         Cow::Borrowed(&self.x2_grid)
-    }
-
-    fn is_empty(&self) -> bool {
-        self.array.is_empty()
-    }
-
-    fn indexed_iter(&self) -> SubgridIndexedIter<'_> {
-        Box::new(self.array.indexed_iter())
     }
 }

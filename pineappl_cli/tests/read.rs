@@ -1,4 +1,4 @@
-#![allow(missing_docs)]
+#![expect(missing_docs, reason = "non-public items will not be documented")]
 
 use assert_cmd::Command;
 
@@ -40,11 +40,11 @@ const BINS_STR: &str = "b   etal    norm
 
 const CHANNELS_STR: &str = "c    entry        entry
 -+------------+------------
-0 1 × ( 2, -1) 1 × ( 4, -3)
-1 1 × (21, -3) 1 × (21, -1)
-2 1 × (22, -3) 1 × (22, -1)
-3 1 × ( 2, 21) 1 × ( 4, 21)
-4 1 × ( 2, 22) 1 × ( 4, 22)
+0 1 \u{d7} ( 2, -1) 1 \u{d7} ( 4, -3)
+1 1 \u{d7} (21, -3) 1 \u{d7} (21, -1)
+2 1 \u{d7} (22, -3) 1 \u{d7} (22, -1)
+3 1 \u{d7} ( 2, 21) 1 \u{d7} ( 4, 21)
+4 1 \u{d7} ( 2, 22) 1 \u{d7} ( 4, 22)
 ";
 
 const ORDERS_STR: &str = "o      order

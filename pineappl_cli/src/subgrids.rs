@@ -3,7 +3,7 @@ use super::{GlobalConfiguration, Subcommand};
 use anyhow::Result;
 use clap::{Args, Parser, ValueHint};
 use pineappl::boc::Kinematics;
-use pineappl::subgrid::{Subgrid, SubgridEnum};
+use pineappl::subgrid::{Subgrid as _, SubgridEnum};
 use prettytable::{cell, row};
 use std::path::PathBuf;
 use std::process::ExitCode;
