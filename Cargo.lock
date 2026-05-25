@@ -858,7 +858,7 @@ dependencies = [
 [[package]]
 name = "neopdf"
 version = "0.3.3"
-source = "git+https://github.com/QCDLab/neopdf.git?branch=review-schwan#1e558cff2d355198c47d2c22901b0528d1fa3ccd"
+source = "git+https://github.com/QCDLab/neopdf.git#0adbddd49ae3312e42f9200a5850b538b1bfb354"
 dependencies = [
  "bincode",
  "flate2",
@@ -882,7 +882,7 @@ dependencies = [
 [[package]]
 name = "neopdf_legacy"
 version = "0.3.3"
-source = "git+https://github.com/QCDLab/neopdf.git?branch=review-schwan#1e558cff2d355198c47d2c22901b0528d1fa3ccd"
+source = "git+https://github.com/QCDLab/neopdf.git#0adbddd49ae3312e42f9200a5850b538b1bfb354"
 dependencies = [
  "bincode",
  "flate2",
