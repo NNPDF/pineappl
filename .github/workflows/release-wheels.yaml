@@ -29,9 +29,9 @@ jobs:
           # - runner: ubuntu-22.04
           #   target: x86
           #   manylinux: 2_17
-          # - runner: ubuntu-22.04
-          #   target: aarch64
-          #   manylinux: 2_17
+          - runner: ubuntu-22.04
+            target: aarch64
+            manylinux: 2_17
           # - runner: ubuntu-22.04
           #   target: armv7
           #   manylinux: 2_17
