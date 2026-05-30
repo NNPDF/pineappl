@@ -52,7 +52,7 @@ rayon = "1.5.1"
 rustc-hash = "2"
 serde = { features = ["derive"], version = "1.0.130" }
 serde_yaml = "0.9.13"
-tar = { default-features = false, version = "0.4.45" }
+tar = { default-features = false, version = "0.4.46" }
 thiserror = "1.0.30"
 
 # workspace crates
