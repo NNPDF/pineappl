@@ -51,9 +51,8 @@ jobs:
           sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
           manylinux: ${{ matrix.platform.manylinux }}
           before-script-linux: |
-            uname -a
-            cat /etc/os-release
-            yum -y install gcc-gfortran
+            # dependending on the target the container seems to either CentOS or Ubuntu
+            yum -y install gcc-gfortran || apt-get install -y gfortran
             # install statically-linked dependencies required to build the CLI
             static=yes . maintainer/install-cli-dependencies.sh
             echo "${APPL_IGRID_DIR}"
