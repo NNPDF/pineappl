@@ -55,7 +55,7 @@ jobs:
             if command -v apt-get; then
               gcc --version
               apt-get update
-              apt-get install -y gfortran-12
+              apt-get install -y gfortran-11
             fi
             # install statically-linked dependencies required to build the CLI
             static=yes . maintainer/install-cli-dependencies.sh
