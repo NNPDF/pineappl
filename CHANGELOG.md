@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.1] - 31/05/2026
+
 ### Added
 
 - added support for aarch64 on Linux for Python 3.8 to 3.14 and PyPy 3.11
@@ -888,7 +890,8 @@ the old file format can still be read with this new version.
 
 - first release
 
-[Unreleased]: https://github.com/NNPDF/pineappl/compare/v1.4.0...HEAD
+[Unreleased]: https://github.com/NNPDF/pineappl/compare/v1.4.1...HEAD
+[1.4.1]: https://github.com/NNPDF/pineappl/compare/v1.4.0...v1.4.1
 [1.4.0]: https://github.com/NNPDF/pineappl/compare/v1.3.3...v1.4.0
 [1.3.3]: https://github.com/NNPDF/pineappl/compare/v1.3.2...v1.3.3
 [1.3.2]: https://github.com/NNPDF/pineappl/compare/v1.3.1...v1.3.2
