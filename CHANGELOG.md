@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- added support for aarch64 on Linux for Python 3.8 to 3.14 and PyPy 3.11
+
 ## [1.4.0] - 12/05/2026
 
 Starting with this version, PineAPPL has an official logo!
