@@ -54,8 +54,6 @@ jobs:
             # dependending on the target the container seems to either CentOS or Ubuntu
             if command -v yum; then
               yum -y install gcc-gfortran
-            else
-              sudo apt-get install -y gfortran
             fi
             # install statically-linked dependencies required to build the CLI
             static=yes . maintainer/install-cli-dependencies.sh
