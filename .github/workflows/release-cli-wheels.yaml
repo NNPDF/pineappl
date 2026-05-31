@@ -54,7 +54,7 @@ jobs:
             # dependending on the target the container seems to either CentOS or Ubuntu
             if command -v apt-get; then
               apt-get update
-              apt-get install gfortran-11
+              apt-get install -y gfortran-11
             fi
             # install statically-linked dependencies required to build the CLI
             static=yes . maintainer/install-cli-dependencies.sh
