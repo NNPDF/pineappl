@@ -29,9 +29,9 @@ jobs:
           # - runner: ubuntu-22.04
           #   target: x86
           #   manylinux: 2_17
-          - runner: ubuntu-22.04
-            target: aarch64
-            manylinux: 2_17
+          # - runner: ubuntu-22.04
+          #   target: aarch64
+          #   manylinux: 2_17
           # - runner: ubuntu-22.04
           #   target: armv7
           #   manylinux: 2_17
@@ -51,12 +51,16 @@ jobs:
           sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
           manylinux: ${{ matrix.platform.manylinux }}
           before-script-linux: |
-            # dependending on the target the container seems to either CentOS or Ubuntu
+            # the container is CentOS (x86_64) or Ubuntu (aarch64)
             if command -v apt-get; then
-              gcc --version
               apt-get update
               apt-get install -y gfortran
-              command -v gfortran || echo gfortran not found
+              # TODO: CLI wheels fail to build with the following error:
+              # warning: ring@0.17.14: In file included from /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ring-0.17.14/pregenerated/chacha-armv8-linux64.S:4:0:
+              # warning: ring@0.17.14: /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ring-0.17.14/include/ring-core/asm_base.h:73:2: error: #error "ARM assembler must define __ARM_ARCH"
+              # warning: ring@0.17.14:  #error "ARM assembler must define __ARM_ARCH"
+              # warning: ring@0.17.14:   ^
+              # error: failed to run custom build command for `ring v0.17.14`
             fi
             # install statically-linked dependencies required to build the CLI
             static=yes . maintainer/install-cli-dependencies.sh

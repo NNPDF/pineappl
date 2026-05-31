@@ -9,8 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- fixed CLI wheels workflow that caused no wheels to be present for version
-  1.4.1
+- disabled CLI wheels for aarch64 on Linux due to unresolved issue with the
+  `ring` crate
 
 ## [1.4.1] - 31/05/2026
 
