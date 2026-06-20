@@ -527,7 +527,6 @@ pub fn unravel_index(mut index: usize, shape: &[usize]) -> Vec<usize> {
 mod tests {
     use super::*;
     use ndarray::Array3;
-    use std::mem;
 
     #[test]
     fn ravel_multi_index() {

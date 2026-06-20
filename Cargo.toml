@@ -104,6 +104,7 @@ wildcard_enum_match_arm = "warn"
 [workspace.lints.rust]
 elided_lifetimes_in_paths = "warn"
 missing_docs = "warn"
+redundant_imports = "warn"
 unreachable_pub = "warn"
 unsafe_op_in_unsafe_fn = "deny"
 

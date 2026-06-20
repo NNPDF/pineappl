@@ -366,7 +366,6 @@ fn lagrange_weights(i: usize, n: usize, u: f64) -> f64 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::packed_array::PackedArray;
     use float_cmp::Ulps as _;
     use float_cmp::assert_approx_eq;
 

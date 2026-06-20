@@ -1668,7 +1668,6 @@ impl Grid {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::boc::ScaleFuncForm;
     use crate::channel;
     use crate::convolutions::ConvType;
     use crate::interpolation::Map;
