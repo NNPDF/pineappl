@@ -39,8 +39,9 @@ one:
 
 If you use PineAPPL, please cite
 
-1. the software itself using its [zenodo DOI] and
-2. the [paper] introducing it.
+1. the software itself using its [zenodo DOI],
+2. the paper introducing the current [version 1] and
+3. the original paper introducing [version 0].
 
 By using PineAPPL, you're probably also using
 
@@ -54,7 +55,8 @@ If that is the case, please cite these accordingly.
 [fastNLO]: https://fastnlo.hepforge.org
 [LHAPDF]: https://lhapdf.hepforge.org
 [zenodo DOI]: https://zenodo.org/badge/latestdoi/248306479
-[paper]: https://inspirehep.net/literature/1814432
+[version 0]: https://inspirehep.net/literature/1814432
+[version 1]: https://inspirehep.net/literature/3169212
 
 # Tools using PineAPPL
 
