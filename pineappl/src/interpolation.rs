@@ -1,11 +1,11 @@
 //! Interpolation module.
 
 mod applgrid {
-    pub fn reweight_x(x: f64) -> f64 {
+    pub(super) fn reweight_x(x: f64) -> f64 {
         (x.sqrt() / x.mul_add(-0.99, 1.0)).powi(3)
     }
 
-    pub fn fx2(y: f64) -> f64 {
+    pub(super) fn fx2(y: f64) -> f64 {
         let mut yp = y;
         let mut deltap = f64::INFINITY;
 
@@ -23,15 +23,15 @@ mod applgrid {
         unreachable!();
     }
 
-    pub fn fy2(x: f64) -> f64 {
+    pub(super) fn fy2(x: f64) -> f64 {
         (1.0 - x).mul_add(5.0, -x.ln())
     }
 
-    pub fn ftau0(q2: f64) -> f64 {
+    pub(super) fn ftau0(q2: f64) -> f64 {
         (q2 / 0.0625).ln().ln()
     }
 
-    pub fn fq20(tau: f64) -> f64 {
+    pub(super) fn fq20(tau: f64) -> f64 {
         0.0625 * tau.exp().exp()
     }
 }

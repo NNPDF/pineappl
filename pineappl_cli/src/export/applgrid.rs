@@ -93,7 +93,7 @@ fn reconstruct_subgrid_params(grid: &Grid, order: usize, bin: usize) -> Result<V
     Ok(result)
 }
 
-pub fn convert_into_applgrid(
+pub(super) fn convert_into_applgrid(
     grid: &mut Grid,
     output: &Path,
     discard_non_matching_values: bool,
@@ -394,7 +394,7 @@ pub fn convert_into_applgrid(
 }
 
 // TODO: deduplicate this function from import
-pub fn convolve_applgrid(grid: Pin<&mut grid>, conv_funs: &mut [Pdf]) -> Vec<f64> {
+pub(super) fn convolve_applgrid(grid: Pin<&mut grid>, conv_funs: &mut [Pdf]) -> Vec<f64> {
     let nloops = grid.nloops();
 
     // TODO: add support for convolving an APPLgrid with two functions

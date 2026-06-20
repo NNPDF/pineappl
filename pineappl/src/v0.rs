@@ -10,7 +10,7 @@ use super::subgrid::{self, ImportSubgridV1};
 use pineappl_v0::grid::Grid as GridV0;
 use std::io::BufRead;
 
-pub fn default_interps(flexible_scale: bool, convolutions: usize) -> Vec<Interp> {
+pub(crate) fn default_interps(flexible_scale: bool, convolutions: usize) -> Vec<Interp> {
     let scales = if flexible_scale { 2 } else { 1 };
     let mut interps = Vec::with_capacity(convolutions + scales);
     for _ in 0..scales {
@@ -40,7 +40,7 @@ pub fn default_interps(flexible_scale: bool, convolutions: usize) -> Vec<Interp>
     interps
 }
 
-pub fn read_uncompressed_v0(mut reader: impl BufRead) -> Result<Grid> {
+pub(crate) fn read_uncompressed_v0(mut reader: impl BufRead) -> Result<Grid> {
     use pineappl_v0::convolutions::Convolution;
     use pineappl_v0::pids::PidBasis as PidBasisV0;
     use pineappl_v0::subgrid::Subgrid as _;

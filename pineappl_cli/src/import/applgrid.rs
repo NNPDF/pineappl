@@ -71,7 +71,7 @@ fn reconstruct_channels(grid: &grid, order: i32) -> Vec<Channel> {
     channels.into_iter().map(Channel::new).collect()
 }
 
-pub fn convert_applgrid(grid: Pin<&mut grid>, alpha: u8) -> Result<Grid> {
+pub(super) fn convert_applgrid(grid: Pin<&mut grid>, alpha: u8) -> Result<Grid> {
     let bin_limits: Vec<_> = (0..=grid.Nobs_internal())
         .map(|i| grid.obslow_internal(i))
         .collect();
@@ -300,7 +300,7 @@ pub fn convert_applgrid(grid: Pin<&mut grid>, alpha: u8) -> Result<Grid> {
     Ok(grid0)
 }
 
-pub fn convolve_applgrid(grid: Pin<&mut grid>, conv_funs: &mut [Pdf]) -> Vec<f64> {
+pub(super) fn convolve_applgrid(grid: Pin<&mut grid>, conv_funs: &mut [Pdf]) -> Vec<f64> {
     let nloops = grid.nloops();
 
     // TODO: add support for convolving an APPLgrid with two functions

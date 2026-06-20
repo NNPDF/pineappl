@@ -329,7 +329,7 @@ fn read_fktable(reader: impl BufRead) -> Result<Grid> {
     Ok(grid)
 }
 
-pub fn convert_fktable(input: &Path) -> Result<Grid> {
+pub(super) fn convert_fktable(input: &Path) -> Result<Grid> {
     let reader = GzDecoder::new(File::open(input)?);
 
     let mut archive = Archive::new(reader);
