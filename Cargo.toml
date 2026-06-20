@@ -102,8 +102,8 @@ unused_trait_names = "warn"
 wildcard_enum_match_arm = "warn"
 
 [workspace.lints.rust]
-missing-docs = "warn"
-unsafe-op-in-unsafe-fn = "deny"
+missing_docs = "warn"
+unsafe_op_in_unsafe_fn = "deny"
 
 [profile.release]
 codegen-units = 1
