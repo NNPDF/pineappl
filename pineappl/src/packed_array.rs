@@ -142,7 +142,7 @@ impl<T: Copy + Default + MulAssign<T> + PartialEq> MulAssign<T> for PackedArray<
 impl<T: Copy + Default + PartialEq> PackedArray<T> {
     /// Converts `array` into a `PackedArray<T>`.
     #[must_use]
-    pub fn from_ndarray(array: ArrayView3<T>, xstart: usize, xsize: usize) -> Self {
+    pub fn from_ndarray(array: ArrayView3<'_, T>, xstart: usize, xsize: usize) -> Self {
         let shape = array.shape();
 
         let mut result = Self::new(vec![xsize, shape[1], shape[2]]);
@@ -159,7 +159,7 @@ impl<T: Copy + Default + PartialEq> PackedArray<T> {
 }
 
 impl<T: Copy + Default + PartialEq> From<ArrayViewD<'_, T>> for PackedArray<T> {
-    fn from(array: ArrayViewD<T>) -> Self {
+    fn from(array: ArrayViewD<'_, T>) -> Self {
         let mut result = Self::new(array.shape().to_vec());
 
         for (i, &entry) in array

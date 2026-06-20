@@ -170,7 +170,7 @@ impl Grid {
     /// orders or channels respectively, or if PDF lookup inside the cache panics.
     pub fn convolve(
         &self,
-        cache: &mut ConvolutionCache,
+        cache: &mut ConvolutionCache<'_>,
         order_mask: &[bool],
         bin_indices: &[usize],
         channel_mask: &[bool],

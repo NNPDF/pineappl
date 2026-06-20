@@ -102,6 +102,7 @@ unused_trait_names = "warn"
 wildcard_enum_match_arm = "warn"
 
 [workspace.lints.rust]
+elided_lifetimes_in_paths = "warn"
 missing_docs = "warn"
 unreachable_pub = "warn"
 unsafe_op_in_unsafe_fn = "deny"
