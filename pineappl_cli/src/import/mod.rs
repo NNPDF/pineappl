@@ -181,7 +181,20 @@ fn convert_applgrid(
 
     let mut grid = ffi::make_grid(input.to_str().unwrap())?;
     let pgrid = applgrid::convert_applgrid(grid.pin_mut(), alpha)?;
-    let results = applgrid::convolve_applgrid(grid.pin_mut(), conv_funs);
+    let nloops = grid.nloops();
+
+    // TODO: add support for convolving an APPLgrid with two functions
+    assert_eq!(conv_funs.len(), 1);
+
+    let results = pineappl_applgrid::grid_convolve_with_one(
+        grid.pin_mut(),
+        &mut |pid, x, q2| conv_funs[0].xfx_q2(pid, x, q2),
+        &mut |q2| conv_funs[0].alphas_q2(q2),
+        nloops,
+        1.0,
+        1.0,
+        1.0,
+    );
 
     Ok(("APPLgrid", pgrid, results, 1))
 }

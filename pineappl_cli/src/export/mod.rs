@@ -198,7 +198,20 @@ fn convert_into_applgrid(
 
     let (mut applgrid, order_mask) =
         applgrid::convert_into_applgrid(grid, output, discard_non_matching_values)?;
-    let results = applgrid::convolve_applgrid(applgrid.pin_mut(), conv_funs);
+    let nloops = applgrid.nloops();
+
+    // TODO: add support for convolving an APPLgrid with two functions
+    assert_eq!(conv_funs.len(), 1);
+
+    let results = pineappl_applgrid::grid_convolve_with_one(
+        applgrid.pin_mut(),
+        &mut |pid, x, q2| conv_funs[0].xfx_q2(pid, x, q2),
+        &mut |q2| conv_funs[0].alphas_q2(q2),
+        nloops,
+        1.0,
+        1.0,
+        1.0,
+    );
 
     Ok(("APPLgrid", results, 1, order_mask))
 }
