@@ -2,7 +2,6 @@ use super::GlobalConfiguration;
 use super::pdf_backend::{self, Backend, ForcePositive, PdfBackend, PdfSetBackend};
 use anyhow::{Context as _, Error, Result, anyhow, bail};
 use itertools::Itertools as _;
-use lhapdf::Pdf;
 use pineappl::boc::{ScaleFuncForm, Scales};
 use pineappl::convolutions::{Conv, ConvType, ConvolutionCache};
 use pineappl::grid::Grid;
@@ -136,25 +135,6 @@ pub enum ConvoluteMode {
     Normal,
 }
 
-/// Creates convolution functions using LHAPDF backend (legacy).
-pub fn create_conv_funs(funs: &ConvFuns) -> Result<Vec<Pdf>> {
-    Ok(funs
-        .lhapdf_names
-        .iter()
-        .zip(&funs.members)
-        .map(|(lhapdf_name, member)| {
-            lhapdf_name.parse().map_or_else(
-                |_| {
-                    let member = member.unwrap_or(0);
-                    // UNWRAP: we don't support sets with more members than `i32`
-                    Pdf::with_setname_and_member(lhapdf_name, member.try_into().unwrap())
-                },
-                Pdf::with_lhaid,
-            )
-        })
-        .collect::<Result<_, _>>()?)
-}
-
 /// Creates convolution functions using the specified backend.
 pub fn create_conv_funs_with_backend(
     funs: &ConvFuns,
@@ -254,124 +234,6 @@ pub fn labels_and_units(grid: &Grid, integrated: bool) -> (Vec<(String, &str)>, 
             metadata.get("y_unit").map_or("", String::as_str)
         },
     )
-}
-
-/// Performs convolution with scale variations using LHAPDF backend (legacy).
-pub fn convolve_scales(
-    grid: &Grid,
-    conv_funs: &mut [Pdf],
-    conv_types: &[ConvType],
-    orders: &[(u8, u8)],
-    bins: &[usize],
-    channels: &[bool],
-    scales: &[(f64, f64, f64)],
-    mode: ConvoluteMode,
-    cfg: &GlobalConfiguration,
-) -> Vec<f64> {
-    let orders: Vec<_> = grid
-        .orders()
-        .iter()
-        .map(|order| {
-            orders.is_empty()
-                || orders
-                    .iter()
-                    .any(|other| (order.alphas == other.0) && (order.alpha == other.1))
-        })
-        .collect();
-
-    if cfg.force_positive {
-        for fun in conv_funs.iter_mut() {
-            fun.set_force_positive(1);
-        }
-    }
-
-    // TODO: promote this to an error
-    assert!(
-        cfg.use_alphas_from < conv_funs.len(),
-        "expected `use_alphas_from` to be an integer within `[0, {})`, but got `{}`",
-        conv_funs.len(),
-        cfg.use_alphas_from
-    );
-
-    let x_min_max: Vec<_> = conv_funs
-        .iter_mut()
-        .map(|fun| (fun.x_min(), fun.x_max()))
-        .collect();
-    let mut funs: Vec<_> = conv_funs
-        .iter()
-        .zip(x_min_max)
-        .map(|(fun, (x_min, x_max))| {
-            move |id, x, q2| {
-                if !cfg.allow_extrapolation && (x < x_min || x > x_max) {
-                    0.0
-                } else {
-                    fun.xfx_q2(id, x, q2)
-                }
-            }
-        })
-        .collect();
-    let xfx: Vec<_> = funs
-        .iter_mut()
-        .map(|fun| fun as &mut dyn FnMut(i32, f64, f64) -> f64)
-        .collect();
-    let mut alphas_funs: Vec<_> = conv_funs
-        .iter()
-        .map(|fun| move |q2| fun.alphas_q2(q2))
-        .collect();
-    let convolutions: Vec<_> = conv_funs
-        .iter()
-        .zip(conv_types)
-        .map(|(fun, &conv_type)| {
-            let pid = fun
-                .set()
-                .entry("Particle")
-                // if the field 'Particle' is missing we assume it's a proton PDF
-                .map_or(Ok(2212), |string| string.parse::<i32>())
-                // UNWRAP: if this fails, there's a non-integer string in the LHAPDF info file
-                .unwrap();
-
-            Conv::new(conv_type, pid)
-        })
-        .collect();
-
-    let mut cache = ConvolutionCache::new(convolutions, xfx, &mut alphas_funs[cfg.use_alphas_from]);
-    let mut results = grid.convolve(&mut cache, &orders, bins, channels, scales);
-
-    match mode {
-        ConvoluteMode::Asymmetry => {
-            let bin_count = grid.bwfl().len();
-            assert!((bins.is_empty() || (bins.len() == bin_count)) && (bin_count % 2 == 0));
-
-            results
-                .iter()
-                .skip((bin_count / 2) * scales.len())
-                .zip(
-                    results
-                        .chunks_exact(scales.len())
-                        .take(bin_count / 2)
-                        .rev()
-                        .flatten(),
-                )
-                .map(|(pos, neg)| (pos - neg) / (pos + neg))
-                .collect()
-        }
-        ConvoluteMode::Integrated => {
-            results
-                .iter_mut()
-                .zip(
-                    grid.bwfl()
-                        .normalizations()
-                        .into_iter()
-                        .enumerate()
-                        .filter(|(index, _)| bins.is_empty() || bins.contains(index))
-                        .flat_map(|(_, norm)| iter::repeat(norm).take(scales.len())),
-                )
-                .for_each(|(value, norm)| *value *= norm);
-
-            results
-        }
-        ConvoluteMode::Normal => results,
-    }
 }
 
 /// Performs convolution with scale variations using the backend abstraction.
@@ -509,31 +371,6 @@ pub fn scales_vector(grid: &Grid, scales: usize) -> &[(f64, f64, f64)] {
         (_, _, 27) => &SCALES_VECTOR_27[..],
         _ => unreachable!(),
     }
-}
-
-/// Performs convolution using LHAPDF backend (legacy).
-pub fn convolve(
-    grid: &Grid,
-    conv_funs: &mut [Pdf],
-    conv_types: &[ConvType],
-    orders: &[(u8, u8)],
-    bins: &[usize],
-    lumis: &[bool],
-    scales: usize,
-    mode: ConvoluteMode,
-    cfg: &GlobalConfiguration,
-) -> Vec<f64> {
-    convolve_scales(
-        grid,
-        conv_funs,
-        conv_types,
-        orders,
-        bins,
-        lumis,
-        scales_vector(grid, scales),
-        mode,
-        cfg,
-    )
 }
 
 /// Performs convolution using the backend abstraction.
