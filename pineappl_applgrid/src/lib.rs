@@ -212,15 +212,15 @@ pub fn grid_convolve_with_one(
     fscale: f64,
     escale: f64,
 ) -> Vec<f64> {
-    struct FnMuts<'a, 'b> {
+    struct FnMuts<'a> {
         xfx_q2: &'a mut dyn FnMut(i32, f64, f64) -> f64,
-        alphas_q2: &'b mut dyn FnMut(f64) -> f64,
+        alphas_q2: &'a mut dyn FnMut(f64) -> f64,
     }
 
     let mut fn_muts = FnMuts { xfx_q2, alphas_q2 };
 
     let xfx = |x: &f64, q: &f64, results: *mut f64, ptr: *mut ffi::c_void| {
-        let fn_muts = unsafe { &mut *ptr.cast::<FnMuts>() };
+        let fn_muts = unsafe { &mut *ptr.cast::<FnMuts<'_>>() };
         let results = unsafe { slice::from_raw_parts_mut(results, 14) };
         for (pid, result) in [-6, -5, -4, -3, -2, -1, 21, 1, 2, 3, 4, 5, 6, 22]
             .into_iter()
@@ -233,7 +233,7 @@ pub fn grid_convolve_with_one(
     };
 
     let alphas = |q: &f64, ptr: *mut ffi::c_void| -> f64 {
-        let fn_muts = unsafe { &mut *ptr.cast::<FnMuts>() };
+        let fn_muts = unsafe { &mut *ptr.cast::<FnMuts<'_>>() };
         (fn_muts.alphas_q2)(*q * *q)
     };
 
