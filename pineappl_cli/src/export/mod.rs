@@ -2,11 +2,11 @@
 mod applgrid;
 
 use super::helpers::{self, ConvFuns, ConvoluteMode};
+use super::pdf_backend::PdfBackend;
 use super::{GlobalConfiguration, Subcommand};
 use anyhow::{Result, anyhow};
 use clap::builder::{PossibleValuesParser, TypedValueParser as _};
 use clap::{Parser, ValueHint};
-use lhapdf::Pdf;
 use pineappl::boc::Order;
 use pineappl::grid::Grid;
 use std::path::{Path, PathBuf};
@@ -50,7 +50,7 @@ impl Subcommand for Opts {
         use prettytable::{cell, row};
 
         let mut grid = helpers::read_grid(&self.input)?;
-        let mut conv_funs = helpers::create_conv_funs(&self.conv_funs)?;
+        let mut conv_funs = helpers::create_conv_funs_with_backend(&self.conv_funs, cfg.pdf_backend)?;
 
         // TODO: figure out `member` from `self.pdfset`
         let (grid_type, results, scale_variations, order_mask) = convert_into_grid(
@@ -104,7 +104,7 @@ impl Subcommand for Opts {
         if results.is_empty() {
             println!("file was converted, but we cannot check the conversion for this type");
         } else {
-            let reference_results = helpers::convolve(
+            let reference_results = helpers::convolve_with_backend(
                 &grid,
                 &mut conv_funs,
                 &self.conv_funs.conv_types,
@@ -190,7 +190,7 @@ impl Subcommand for Opts {
 fn convert_into_applgrid(
     output: &Path,
     grid: &mut Grid,
-    conv_funs: &mut [Pdf],
+    conv_funs: &mut [Box<dyn PdfBackend>],
     _: usize,
     discard_non_matching_values: bool,
 ) -> Result<(&'static str, Vec<f64>, usize, Vec<bool>)> {
@@ -220,7 +220,7 @@ fn convert_into_applgrid(
 fn convert_into_applgrid(
     _: &Path,
     _: &mut Grid,
-    _: &mut [Pdf],
+    _: &mut [Box<dyn PdfBackend>],
     _: usize,
     _: bool,
 ) -> Result<(&'static str, Vec<f64>, usize, Vec<bool>)> {
@@ -232,7 +232,7 @@ fn convert_into_applgrid(
 fn convert_into_grid(
     output: &Path,
     grid: &mut Grid,
-    conv_funs: &mut [Pdf],
+    conv_funs: &mut [Box<dyn PdfBackend>],
     scales: usize,
     discard_non_matching_values: bool,
 ) -> Result<(&'static str, Vec<f64>, usize, Vec<bool>)> {

@@ -6,11 +6,11 @@ mod fastnlo;
 mod fktable;
 
 use super::helpers::{self, ConvFuns, ConvoluteMode};
+use super::pdf_backend::PdfBackend;
 use super::{GlobalConfiguration, Subcommand};
 use anyhow::{Result, anyhow};
 use clap::builder::{PossibleValuesParser, TypedValueParser as _};
 use clap::{Parser, ValueHint};
-use lhapdf::Pdf;
 use pineappl::grid::Grid;
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
@@ -63,7 +63,8 @@ impl Subcommand for Opts {
     fn run(&self, cfg: &GlobalConfiguration) -> Result<ExitCode> {
         use prettytable::{cell, row};
 
-        let mut conv_funs = helpers::create_conv_funs(&self.conv_funs)?;
+        let mut conv_funs =
+            helpers::create_conv_funs_with_backend(&self.conv_funs, cfg.pdf_backend)?;
 
         // TODO: figure out `member` from `self.pdfset`
         let (grid_type, mut grid, reference_results, scale_variations) = convert_grid(
@@ -86,7 +87,7 @@ impl Subcommand for Opts {
         if reference_results.is_empty() {
             println!("file was converted, but we cannot check the conversion for this type");
         } else {
-            let results = helpers::convolve(
+            let results = helpers::convolve_with_backend(
                 &grid,
                 &mut conv_funs,
                 &self.conv_funs.conv_types,
@@ -172,7 +173,7 @@ impl Subcommand for Opts {
 fn convert_applgrid(
     input: &Path,
     alpha: u8,
-    conv_funs: &mut [Pdf],
+    conv_funs: &mut [Box<dyn PdfBackend>],
     _: usize,
 ) -> Result<(&'static str, Grid, Vec<f64>, usize)> {
     use pineappl_applgrid::ffi;
@@ -203,7 +204,7 @@ fn convert_applgrid(
 fn convert_applgrid(
     _: &Path,
     _: u8,
-    _: &mut [Pdf],
+    _: &mut [Box<dyn PdfBackend>],
     _: usize,
 ) -> Result<(&'static str, Grid, Vec<f64>, usize)> {
     Err(anyhow!(
@@ -312,7 +313,7 @@ fn convert_fktable(_: &Path) -> Result<(&'static str, Grid, Vec<f64>, usize)> {
 fn convert_grid(
     input: &Path,
     alpha: u8,
-    conv_funs: &mut [Pdf],
+    conv_funs: &mut [Box<dyn PdfBackend>],
     fun_names: &ConvFuns,
     member: usize,
     scales: usize,
