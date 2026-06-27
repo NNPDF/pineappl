@@ -69,7 +69,7 @@ impl Subcommand for Opts {
         let (grid_type, mut grid, reference_results, scale_variations) = convert_grid(
             &self.input,
             self.alpha,
-            &mut conv_funs,
+            &conv_funs,
             &self.conv_funs,
             0,
             self.scales,
@@ -172,7 +172,7 @@ impl Subcommand for Opts {
 fn convert_applgrid(
     input: &Path,
     alpha: u8,
-    conv_funs: &mut [Box<dyn PdfBackend>],
+    conv_funs: &[Box<dyn PdfBackend>],
     _: usize,
 ) -> Result<(&'static str, Grid, Vec<f64>, usize)> {
     use pineappl_applgrid::ffi;
@@ -312,7 +312,7 @@ fn convert_fktable(_: &Path) -> Result<(&'static str, Grid, Vec<f64>, usize)> {
 fn convert_grid(
     input: &Path,
     alpha: u8,
-    conv_funs: &mut [Box<dyn PdfBackend>],
+    conv_funs: &[Box<dyn PdfBackend>],
     fun_names: &ConvFuns,
     member: usize,
     scales: usize,

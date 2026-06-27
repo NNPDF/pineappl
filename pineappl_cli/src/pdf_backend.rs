@@ -4,8 +4,11 @@
 //! currently supporting `LHAPDF` and `NeoPDF`. It allows runtime selection of the backend
 //! and provides type-safe access to PDF metadata.
 
-use anyhow::{Context, Result, anyhow};
+use anyhow::{Context as _, Result, anyhow};
 // use std::fmt;
+use lhapdf::PdfSet;
+use neopdf::gridpdf::ForcePositive as NeoPDFForcePositive;
+use neopdf::pdf::PDF;
 use std::str::FromStr;
 
 pub use neopdf::uncertainty::CL_1_SIGMA;
@@ -57,8 +60,7 @@ impl FromStr for Backend {
             "lhapdf" => Ok(Self::Lhapdf),
             "neopdf" => Ok(Self::Neopdf),
             _ => Err(anyhow!(
-                "unknown PDF backend '{}'; must be 'lhapdf' or 'neopdf'",
-                s
+                "unknown PDF backend '{s}'; must be 'lhapdf' or 'neopdf'"
             )),
         }
     }
@@ -78,6 +80,30 @@ impl FromStr for Backend {
 /// This trait provides a common interface for PDF interpolation backends,
 /// allowing the CLI to work with different implementations transparently.
 pub trait PdfBackend: Send {
+    /// Evaluates the strong coupling constant `alpha_s(Q^2)`.
+    fn alphas_q2(&self, q2: f64) -> f64;
+
+    // /// Returns the error type of the PDF set (e.g., "replicas", "hessian").
+    // fn error_type(&self) -> String;
+
+    // /// Returns whether this is a polarized PDF.
+    // fn is_polarized(&self) -> bool;
+
+    /// Returns the hadron particle ID (PDG code).
+    fn particle_id(&self) -> i32;
+
+    /// Sets the method for handling negative PDF values.
+    fn set_force_positive(&mut self, method: ForcePositive);
+
+    // /// Returns the PDF set type (space-like or time-like).
+    // fn set_type(&self) -> SetType;
+
+    /// Returns the maximum valid x value.
+    fn x_max(&mut self) -> f64;
+
+    /// Returns the minimum valid x value.
+    fn x_min(&mut self) -> f64;
+
     /// Evaluates xf(x, Q^2) for a given flavor.
     ///
     /// # Arguments
@@ -91,30 +117,6 @@ pub trait PdfBackend: Send {
     /// # TODO
     /// Extend to support `NeoPDF` multi-parameters interpolation.
     fn xfx_q2(&self, id: i32, x: f64, q2: f64) -> f64;
-
-    /// Evaluates the strong coupling constant `alpha_s(Q^2)`.
-    fn alphas_q2(&self, q2: f64) -> f64;
-
-    /// Returns the minimum valid x value.
-    fn x_min(&mut self) -> f64;
-
-    /// Returns the maximum valid x value.
-    fn x_max(&mut self) -> f64;
-
-    /// Returns the hadron particle ID (PDG code).
-    fn particle_id(&self) -> i32;
-
-    // /// Returns whether this is a polarized PDF.
-    // fn is_polarized(&self) -> bool;
-
-    // /// Returns the PDF set type (space-like or time-like).
-    // fn set_type(&self) -> SetType;
-
-    /// Sets the method for handling negative PDF values.
-    fn set_force_positive(&mut self, method: ForcePositive);
-
-    // /// Returns the error type of the PDF set (e.g., "replicas", "hessian").
-    // fn error_type(&self) -> String;
 }
 
 /// Unified PDF set interface for uncertainty calculations.
@@ -123,9 +125,17 @@ pub trait PdfSetBackend {
     // fn num_members(&self) -> usize;
 
     /// Creates all PDF members in the set.
+    ///
+    /// # Errors
+    ///
+    /// TODO.
     fn mk_pdfs(&self) -> Result<Vec<Box<dyn PdfBackend>>>;
 
     /// Calculates the uncertainty for a set of values.
+    ///
+    /// # Errors
+    ///
+    /// TODO.
     fn uncertainty(&self, values: &[f64], cl: f64, alternative: bool) -> Result<Uncertainty>;
 }
 
@@ -150,7 +160,23 @@ pub struct LhapdfPdf {
 }
 
 impl LhapdfPdf {
+    /// Creates a new LHAPDF PDF by LHAID.
+    ///
+    /// # Errors
+    ///
+    /// TODO.
+    pub fn with_lhaid(lhaid: i32) -> Result<Self> {
+        Ok(Self {
+            pdf: lhapdf::Pdf::with_lhaid(lhaid)
+                .with_context(|| format!("failed to load LHAPDF with LHAID {lhaid}"))?,
+        })
+    }
+
     /// Creates a new LHAPDF PDF by set name and member index.
+    ///
+    /// # Errors
+    ///
+    /// TODO.
     pub fn with_setname_and_member(setname: &str, member: i32) -> Result<Self> {
         Ok(Self {
             pdf: lhapdf::Pdf::with_setname_and_member(setname, member).with_context(|| {
@@ -158,32 +184,27 @@ impl LhapdfPdf {
             })?,
         })
     }
-
-    /// Creates a new LHAPDF PDF by LHAID.
-    pub fn with_lhaid(lhaid: i32) -> Result<Self> {
-        Ok(Self {
-            pdf: lhapdf::Pdf::with_lhaid(lhaid)
-                .with_context(|| format!("failed to load LHAPDF with LHAID {lhaid}"))?,
-        })
-    }
 }
 
 impl PdfBackend for LhapdfPdf {
-    fn xfx_q2(&self, id: i32, x: f64, q2: f64) -> f64 {
-        self.pdf.xfx_q2(id, x, q2)
-    }
-
     fn alphas_q2(&self, q2: f64) -> f64 {
         self.pdf.alphas_q2(q2)
     }
 
-    fn x_min(&mut self) -> f64 {
-        self.pdf.x_min()
-    }
+    // fn error_type(&self) -> String {
+    //     self.pdf
+    //         .set()
+    //         .entry("ErrorType")
+    //         .map(|s| s.to_owned())
+    //         .unwrap_or_default()
+    // }
 
-    fn x_max(&mut self) -> f64 {
-        self.pdf.x_max()
-    }
+    // fn is_polarized(&self) -> bool {
+    //     self.pdf
+    //         .set()
+    //         .entry("Polarized")
+    //         .is_some_and(|s| s.eq_ignore_ascii_case("true"))
+    // }
 
     fn particle_id(&self) -> i32 {
         self.pdf
@@ -193,12 +214,12 @@ impl PdfBackend for LhapdfPdf {
             .unwrap_or(2212)
     }
 
-    // fn is_polarized(&self) -> bool {
-    //     self.pdf
-    //         .set()
-    //         .entry("Polarized")
-    //         .is_some_and(|s| s.eq_ignore_ascii_case("true"))
-    // }
+    fn set_force_positive(&mut self, method: ForcePositive) {
+        match method {
+            ForcePositive::None => self.pdf.set_force_positive(0),
+            ForcePositive::ClipNegative => self.pdf.set_force_positive(1),
+        }
+    }
 
     // fn set_type(&self) -> SetType {
     //     self.pdf
@@ -213,20 +234,17 @@ impl PdfBackend for LhapdfPdf {
     //         })
     // }
 
-    fn set_force_positive(&mut self, method: ForcePositive) {
-        match method {
-            ForcePositive::None => self.pdf.set_force_positive(0),
-            ForcePositive::ClipNegative => self.pdf.set_force_positive(1),
-        }
+    fn x_max(&mut self) -> f64 {
+        self.pdf.x_max()
     }
 
-    // fn error_type(&self) -> String {
-    //     self.pdf
-    //         .set()
-    //         .entry("ErrorType")
-    //         .map(|s| s.to_owned())
-    //         .unwrap_or_default()
-    // }
+    fn x_min(&mut self) -> f64 {
+        self.pdf.x_min()
+    }
+
+    fn xfx_q2(&self, id: i32, x: f64, q2: f64) -> f64 {
+        self.pdf.xfx_q2(id, x, q2)
+    }
 }
 
 /// LHAPDF set wrapper.
@@ -236,9 +254,13 @@ pub struct LhapdfSet {
 
 impl LhapdfSet {
     /// Creates a new LHAPDF set by name.
+    ///
+    /// # Errors
+    ///
+    /// TODO.
     pub fn new(setname: &str) -> Result<Self> {
         Ok(Self {
-            set: lhapdf::PdfSet::new(setname)
+            set: PdfSet::new(setname)
                 .with_context(|| format!("failed to load LHAPDF set '{setname}'"))?,
         })
     }
@@ -276,42 +298,47 @@ impl PdfSetBackend for LhapdfSet {
 
 /// `NeoPDF` backend wrapper.
 pub struct NeopdfPdf {
-    pdf: neopdf::pdf::PDF,
+    pdf: PDF,
 }
 
 impl NeopdfPdf {
     /// Loads a NeoPDF member by set name and member index.
+    #[must_use]
     pub fn load(pdf_name: &str, member: usize) -> Self {
         Self {
-            pdf: neopdf::pdf::PDF::load(pdf_name, member),
+            pdf: PDF::load(pdf_name, member),
         }
     }
 }
 
 impl PdfBackend for NeopdfPdf {
-    fn xfx_q2(&self, id: i32, x: f64, q2: f64) -> f64 {
-        self.pdf.xfxq2(id, &[x, q2])
-    }
-
     fn alphas_q2(&self, q2: f64) -> f64 {
         self.pdf.alphas_q2(q2)
     }
 
-    fn x_min(&mut self) -> f64 {
-        self.pdf.metadata().x_min
-    }
+    // fn error_type(&self) -> String {
+    //     self.pdf.metadata().error_type.clone()
+    // }
 
-    fn x_max(&mut self) -> f64 {
-        self.pdf.metadata().x_max
-    }
+    // fn is_polarized(&self) -> bool {
+    //     self.pdf.metadata().polarised
+    // }
 
     fn particle_id(&self) -> i32 {
         self.pdf.metadata().hadron_pid
     }
 
-    // fn is_polarized(&self) -> bool {
-    //     self.pdf.metadata().polarised
-    // }
+    fn set_force_positive(&mut self, method: ForcePositive) {
+        match method {
+            ForcePositive::None => {
+                self.pdf.set_force_positive(NeoPDFForcePositive::NoClipping);
+            }
+            ForcePositive::ClipNegative => {
+                self.pdf
+                    .set_force_positive(NeoPDFForcePositive::ClipNegative);
+            }
+        }
+    }
 
     // fn set_type(&self) -> SetType {
     //     match self.pdf.metadata().set_type {
@@ -320,22 +347,17 @@ impl PdfBackend for NeopdfPdf {
     //     }
     // }
 
-    fn set_force_positive(&mut self, method: ForcePositive) {
-        match method {
-            ForcePositive::None => {
-                self.pdf
-                    .set_force_positive(neopdf::gridpdf::ForcePositive::NoClipping);
-            }
-            ForcePositive::ClipNegative => {
-                self.pdf
-                    .set_force_positive(neopdf::gridpdf::ForcePositive::ClipNegative);
-            }
-        }
+    fn x_max(&mut self) -> f64 {
+        self.pdf.metadata().x_max
     }
 
-    // fn error_type(&self) -> String {
-    //     self.pdf.metadata().error_type.clone()
-    // }
+    fn x_min(&mut self) -> f64 {
+        self.pdf.metadata().x_min
+    }
+
+    fn xfx_q2(&self, id: i32, x: f64, q2: f64) -> f64 {
+        self.pdf.xfxq2(id, &[x, q2])
+    }
 }
 
 /// `NeoPDF` set wrapper.
@@ -347,9 +369,10 @@ pub struct NeopdfSet {
 
 impl NeopdfSet {
     /// Creates a new NeoPDF set by name.
+    #[must_use]
     pub fn new(pdf_name: &str) -> Self {
         // Load member 0 to get metadata
-        let pdf0 = neopdf::pdf::PDF::load(pdf_name, 0);
+        let pdf0 = PDF::load(pdf_name, 0);
         let metadata = pdf0.metadata();
 
         Self {
@@ -366,7 +389,7 @@ impl PdfSetBackend for NeopdfSet {
     // }
 
     fn mk_pdfs(&self) -> Result<Vec<Box<dyn PdfBackend>>> {
-        let pdfs = neopdf::pdf::PDF::load_pdfs(&self.pdf_name);
+        let pdfs = PDF::load_pdfs(&self.pdf_name);
         Ok(pdfs
             .into_iter()
             .map(|pdf| Box::new(NeopdfPdf { pdf }) as Box<dyn PdfBackend>)
@@ -374,14 +397,9 @@ impl PdfSetBackend for NeopdfSet {
     }
 
     fn uncertainty(&self, values: &[f64], cl: f64, alternative: bool) -> Result<Uncertainty> {
-        let unc = neopdf::uncertainty::uncertainty(
-            values,
-            &self.error_type,
-            neopdf::uncertainty::CL_1_SIGMA,
-            cl,
-            alternative,
-        )
-        .map_err(|e| anyhow::anyhow!(e))?;
+        let unc =
+            neopdf::uncertainty::uncertainty(values, &self.error_type, CL_1_SIGMA, cl, alternative)
+                .map_err(|e| anyhow::anyhow!(e))?;
 
         Ok(Uncertainty {
             central: unc.central,
@@ -396,6 +414,10 @@ impl PdfSetBackend for NeopdfSet {
 // ============================================================================
 
 /// Creates a single PDF from a set name and member index.
+///
+/// # Errors
+///
+/// TODO.
 pub fn create_pdf(name: &str, member: usize, backend: Backend) -> Result<Box<dyn PdfBackend>> {
     match backend {
         Backend::Lhapdf => {
@@ -414,6 +436,10 @@ pub fn create_pdf(name: &str, member: usize, backend: Backend) -> Result<Box<dyn
 }
 
 /// Creates a PDF set for uncertainty calculations.
+///
+/// # Errors
+///
+/// TODO.
 pub fn create_pdf_set(name: &str, backend: Backend) -> Result<Box<dyn PdfSetBackend>> {
     match backend {
         Backend::Lhapdf => {

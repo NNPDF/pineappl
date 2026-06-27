@@ -238,7 +238,6 @@ pub(crate) fn labels_and_units(grid: &Grid, integrated: bool) -> (Vec<(String, &
 }
 
 /// Performs convolution with scale variations using the backend abstraction.
-#[expect(clippy::too_many_arguments)]
 pub(crate) fn convolve_scales(
     grid: &Grid,
     conv_funs: &mut [Box<dyn PdfBackend>],
@@ -375,7 +374,6 @@ pub(crate) fn scales_vector(grid: &Grid, scales: usize) -> &[(f64, f64, f64)] {
 }
 
 /// Performs convolution using the backend abstraction.
-#[expect(clippy::too_many_arguments)]
 pub(crate) fn convolve(
     grid: &Grid,
     conv_funs: &mut [Box<dyn PdfBackend>],

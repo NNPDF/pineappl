@@ -56,7 +56,7 @@ impl Subcommand for Opts {
         let (grid_type, results, scale_variations, order_mask) = convert_into_grid(
             &self.output,
             &mut grid,
-            &mut conv_funs,
+            &conv_funs,
             self.scales,
             self.discard_non_matching_values,
         )?;
@@ -190,7 +190,7 @@ impl Subcommand for Opts {
 fn convert_into_applgrid(
     output: &Path,
     grid: &mut Grid,
-    conv_funs: &mut [Box<dyn PdfBackend>],
+    conv_funs: &[Box<dyn PdfBackend>],
     _: usize,
     discard_non_matching_values: bool,
 ) -> Result<(&'static str, Vec<f64>, usize, Vec<bool>)> {
@@ -220,7 +220,7 @@ fn convert_into_applgrid(
 fn convert_into_applgrid(
     _: &Path,
     _: &mut Grid,
-    _: &mut [Box<dyn PdfBackend>],
+    _: &[Box<dyn PdfBackend>],
     _: usize,
     _: bool,
 ) -> Result<(&'static str, Vec<f64>, usize, Vec<bool>)> {
@@ -232,7 +232,7 @@ fn convert_into_applgrid(
 fn convert_into_grid(
     output: &Path,
     grid: &mut Grid,
-    conv_funs: &mut [Box<dyn PdfBackend>],
+    conv_funs: &[Box<dyn PdfBackend>],
     scales: usize,
     discard_non_matching_values: bool,
 ) -> Result<(&'static str, Vec<f64>, usize, Vec<bool>)> {
