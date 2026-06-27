@@ -17,7 +17,6 @@ workspace = true
 
 [dependencies]
 cxx.workspace = true
-lhapdf.workspace = true
 
 [build-dependencies]
 cc.workspace = true
@@ -25,4 +24,4 @@ cxx-build.workspace = true
 pkg-config.workspace = true
 
 [features]
-static = ["lhapdf/static"]
+static = []

@@ -1053,7 +1053,6 @@ dependencies = [
  "cc",
  "cxx",
  "cxx-build",
- "managed-lhapdf",
  "pkg-config",
 ]
 

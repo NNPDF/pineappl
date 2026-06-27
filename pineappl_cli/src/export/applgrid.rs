@@ -400,5 +400,13 @@ pub fn convolve_applgrid(grid: Pin<&mut grid>, conv_funs: &mut [Pdf]) -> Vec<f64
     // TODO: add support for convolving an APPLgrid with two functions
     assert_eq!(conv_funs.len(), 1);
 
-    pineappl_applgrid::grid_convolve_with_one(grid, &mut conv_funs[0], nloops, 1.0, 1.0, 1.0)
+    pineappl_applgrid::grid_convolve_with_one(
+        grid,
+        &mut |pid, x, q2| conv_funs[0].xfx_q2(pid, x, q2),
+        &mut |q2| conv_funs[0].alphas_q2(q2),
+        nloops,
+        1.0,
+        1.0,
+        1.0,
+    )
 }
