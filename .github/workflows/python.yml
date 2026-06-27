@@ -4,6 +4,7 @@ on:
   push:
     branches-ignore:
       - pycli
+      - fix-cli-wheels
       - update-wheels-actions
       - update-wheels-actions-2
 

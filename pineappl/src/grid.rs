@@ -170,7 +170,7 @@ impl Grid {
     /// orders or channels respectively, or if PDF lookup inside the cache panics.
     pub fn convolve(
         &self,
-        cache: &mut ConvolutionCache,
+        cache: &mut ConvolutionCache<'_>,
         order_mask: &[bool],
         bin_indices: &[usize],
         channel_mask: &[bool],
@@ -1668,7 +1668,6 @@ impl Grid {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::boc::ScaleFuncForm;
     use crate::channel;
     use crate::convolutions::ConvType;
     use crate::interpolation::Map;

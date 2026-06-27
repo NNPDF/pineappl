@@ -222,6 +222,15 @@ int main() {
     // now we no longer need `keyval` and `channels`
     pineappl_channels_delete(channels);
 
+    // check that the grid's convolution PIDs match the ones used at creation
+    std::size_t nb_convs = pineappl_grid_convolutions_len(grid);
+    assert(nb_convs == nb_convolutions);
+    std::vector<int32_t> conv_pids(nb_convs);
+    pineappl_grid_convolution_pids(grid, conv_pids.data());
+    for (std::size_t i = 0; i != nb_convs; ++i) {
+        assert(conv_pids[i] == convs[i].pid);
+    }
+
     // ---
     // Fill the grid with phase-space points
     fill_grid(grid, 10000000);

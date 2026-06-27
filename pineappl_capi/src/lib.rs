@@ -2098,6 +2098,21 @@ pub unsafe extern "C" fn pineappl_grid_conv_types(grid: *const Grid, conv_types:
     conv_types.copy_from_slice(&convs_array);
 }
 
+/// Get the hadron PIDs of the convolutions for a given Grid.
+///
+/// # Safety
+///
+/// `grid` must be valid. `pids` must point to writable memory for `grid.convolutions().len()`
+/// elements.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn pineappl_grid_convolution_pids(grid: *const Grid, pids: *mut i32) {
+    let grid = unsafe { &*grid };
+    let pids = unsafe { slice::from_raw_parts_mut(pids, grid.convolutions().len()) };
+    let pid_array: Vec<i32> = grid.convolutions().iter().map(Conv::pid).collect_vec();
+
+    pids.copy_from_slice(&pid_array);
+}
+
 /// Get the number of convolutions for a given Grid.
 ///
 /// # Safety

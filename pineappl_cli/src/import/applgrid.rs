@@ -70,7 +70,7 @@ fn reconstruct_channels(grid: &grid, order: i32) -> Vec<Channel> {
     channels.into_iter().map(Channel::new).collect()
 }
 
-pub fn convert_applgrid(grid: Pin<&mut grid>, alpha: u8) -> Result<Grid> {
+pub(super) fn convert_applgrid(grid: Pin<&mut grid>, alpha: u8) -> Result<Grid> {
     let bin_limits: Vec<_> = (0..=grid.Nobs_internal())
         .map(|i| grid.obslow_internal(i))
         .collect();

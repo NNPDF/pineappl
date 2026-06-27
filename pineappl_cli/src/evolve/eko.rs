@@ -145,8 +145,7 @@ impl EkoSlices {
                     .extension()
                     .is_some_and(|ext| ext == "npz"))
             {
-                let Some(file_stem) =
-                    path.with_extension("").file_stem().map(ToOwned::to_owned)
+                let Some(file_stem) = path.with_extension("").file_stem().map(ToOwned::to_owned)
                 else {
                     continue;
                 };
@@ -270,10 +269,7 @@ impl EkoSlices {
                     .bases
                     .targetgrid
                     .unwrap_or_else(|| metadata.bases.xgrid.clone()),
-                conv_type: ConvType::new(
-                    operator.configs.polarized,
-                    operator.configs.time_like,
-                ),
+                conv_type: ConvType::new(operator.configs.polarized, operator.configs.time_like),
             },
             archive: Archive::new(File::open(eko_path)?),
         })
@@ -315,10 +311,7 @@ impl EkoSlices {
                 fac1: 0.0,
                 pids1: BASES_V1_DEFAULT_PIDS.to_vec(),
                 x1: metadata.xgrid,
-                conv_type: ConvType::new(
-                    operator.configs.polarized,
-                    operator.configs.time_like,
-                ),
+                conv_type: ConvType::new(operator.configs.polarized, operator.configs.time_like),
             },
             archive: Archive::new(File::open(eko_path)?),
         })
@@ -479,4 +472,3 @@ struct Rotations {
     pids: Vec<i32>,
     xgrid: Vec<f64>,
 }
-

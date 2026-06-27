@@ -480,7 +480,7 @@ fn convert_coeff_add_flex(
     grid
 }
 
-pub fn convert_fastnlo_table(file: &fastNLOLHAPDF, alpha: u8) -> Result<Grid> {
+pub(super) fn convert_fastnlo_table(file: &fastNLOLHAPDF, alpha: u8) -> Result<Grid> {
     let file_as_reader = ffi::downcast_lhapdf_to_reader(file);
     let file_as_table = ffi::downcast_lhapdf_to_table(file);
 

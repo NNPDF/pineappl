@@ -670,7 +670,7 @@ contains
         type (pineappl_conv), dimension(*), intent(in), target                    :: convolutions
         type (pineappl_kinematics), dimension(interpolations), intent(in), target :: kinematics
         type (pineappl_interp), dimension(interpolations), intent(in)             :: interp_info
-        type (pineappl_scale_func_form), dimension(interpolations)                :: mu_scales
+        type (pineappl_scale_func_form), dimension(3), intent(in)                  :: mu_scales
 
         pineappl_grid_new2 = pineappl_grid(grid_new2(&
             int(bins, c_size_t), &

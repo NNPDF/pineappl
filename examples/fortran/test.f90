@@ -86,6 +86,7 @@ program test_pineappl
     type(pineappl_scale_func_form) :: mu_scales_form(3)
     type(pineappl_interp)          :: interp_info(3)
     type(pineappl_conv)            :: convolutions(2)
+    type(pineappl_conv)            :: ff_conv(1)
 
     real(dp), allocatable :: result(:), bin_limits_left(:), bin_limits_right(:), bin_normalizations(:)
 
@@ -278,5 +279,140 @@ program test_pineappl
 
     call pineappl_channels_delete(channels)
 
+    call pineappl_grid_delete(grid)
+
+    ! -----------------------------------------------------------------------
+    ! Test: grid with two independent scale kinematics (separate μR and μA)
+    !
+    ! This tests the case where the fragmentation scale μA is dynamically
+    ! different from the hard scale driving μR. Two Scale kinematics are used:
+    !   Scale(0) -> hard scale (μR = sqrt(Scale(0)))
+    !   Scale(1) -> frag scale (μA = sqrt(Scale(1)))
+    !
+    ! In ScaleFuncForm the `index_0` field identifies which Scale(n) kinematic
+    ! to use. NOTE: This is NOT the position in the kinematics array.
+    !
+    ! The ntuple passed to pineappl_grid_fill2 must match the kinematics order:
+    !   [Scale(0), Scale(1), X(0)] = [mu2_hard, mu2_frag, z]
+    ! -----------------------------------------------------------------------
+
+    channels = pineappl_channels_new(1)
+    call pineappl_channels_add(channels, 1, [21], [1.0_dp])
+
+    kinematics = [ &
+        pineappl_kinematics(pineappl_kinematics_tag_scale, 0), &
+        pineappl_kinematics(pineappl_kinematics_tag_scale, 1), &
+        pineappl_kinematics(pineappl_kinematics_tag_x,     0)  &
+    ]
+
+    interp_info = [ &
+        pineappl_interp(1e2_dp, 1e8_dp, 40, 3, q2_reweight, q2_mapping, interpolation_meth), &
+        pineappl_interp(1e2_dp, 1e8_dp, 40, 3, q2_reweight, q2_mapping, interpolation_meth), &
+        pineappl_interp(2e-7_dp, 1.0_dp, 50, 3, x_reweight, x_mapping, interpolation_meth)   &
+    ]
+
+    ! ren -> Scale(0), fac -> NoScale (pure-FF: no PDF), frg -> Scale(1)
+    mu_scales_form = [ &
+        pineappl_scale_func_form(pineappl_scale_func_form_tag_scale,    pineappl_scale_func_form_body(0, 0)), &
+        pineappl_scale_func_form(pineappl_scale_func_form_tag_no_scale, pineappl_scale_func_form_body(0, 0)), &
+        pineappl_scale_func_form(pineappl_scale_func_form_tag_scale,    pineappl_scale_func_form_body(1, 0))  &
+    ]
+
+    ff_conv(1) = pineappl_conv(pineappl_conv_type_unpol_ff, 211)
+
+    grid = pineappl_grid_new2(2, [0.0_dp, 0.5_dp, 1.0_dp], 1, [1_1, 0_1, 0_1, 0_1, 0_1], channels, &
+        pineappl_pid_basis_pdg, ff_conv, 3, interp_info, kinematics, mu_scales_form)
+
+    if (pineappl_grid_bin_count(grid) /= 2) then
+        write(*, *) "separate scales - pineappl_grid_bin_count(): ", pineappl_grid_bin_count(grid)
+        error stop "error: separate scales pineappl_grid_bin_count"
+    end if
+
+    if (pineappl_grid_order_count(grid) /= 1) then
+        write(*, *) "separate scales - pineappl_grid_order_count(): ", pineappl_grid_order_count(grid)
+        error stop "error: separate scales pineappl_grid_order_count"
+    end if
+
+    ! Fill: ntuple = (Scale(0), Scale(1), X(0)) = (mu2_hard, mu2_frag, z)
+    ! The two scale values are independent: here mu2_hard=100, mu2_frag=400
+    call pineappl_grid_fill2(grid, 0, 0.25_dp, 0, [100.0_dp, 400.0_dp, 0.3_dp], 1.5_dp)
+    call pineappl_grid_fill2(grid, 0, 0.75_dp, 0, [100.0_dp, 400.0_dp, 0.7_dp], 2.5_dp)
+
+    call pineappl_grid_optimize(grid)
+
+    call pineappl_channels_delete(channels)
+    call pineappl_grid_delete(grid)
+
+    ! -----------------------------------------------------------------------
+    ! Test: grid using a two-argument ScaleFuncForm (QuadraticSum)
+    !
+    ! This tests the case where an unphysical scale is derived from two
+    ! independent Scale kinematics via a functional combination.
+    ! QuadraticSum(idx1, idx2) computes: mu^2 = Scale(idx1) + Scale(idx2)
+    !
+    ! For two-argument forms BOTH index_0 and index_1 in
+    ! pineappl_scale_func_form_body are meaningful:
+    !   index_0 = idx1  (n in Kinematics::Scale(n) for the first argument)
+    !   index_1 = idx2  (n in Kinematics::Scale(n) for the second argument)
+    !
+    ! Here we construct a single-PDF DIS-like process:
+    !   ren -> Scale(0)               (mu_R = sqrt(Scale(0)))
+    !   fac -> QuadraticSum(0, 1)     (mu_F = sqrt(Scale(0) + Scale(1)))
+    !   frg -> NoScale
+    !
+    ! Kinematics order: [Scale(0), Scale(1), X(0)]
+    ! Ntuple order when filling: [mu2_hard, mu2_soft, x]
+    ! -----------------------------------------------------------------------
+
+    channels = pineappl_channels_new(1)
+    call pineappl_channels_add(channels, 1, [2212], [1.0_dp])
+
+    kinematics = [ &
+        pineappl_kinematics(pineappl_kinematics_tag_scale, 0), &
+        pineappl_kinematics(pineappl_kinematics_tag_scale, 1), &
+        pineappl_kinematics(pineappl_kinematics_tag_x,     0)  &
+    ]
+
+    interp_info = [ &
+        pineappl_interp(1e2_dp, 1e8_dp, 40, 3, q2_reweight, q2_mapping, interpolation_meth), &
+        pineappl_interp(1e2_dp, 1e8_dp, 40, 3, q2_reweight, q2_mapping, interpolation_meth), &
+        pineappl_interp(2e-7_dp, 1.0_dp, 50, 3, x_reweight, x_mapping, interpolation_meth)   &
+    ]
+
+    ! ren -> Scale(0)           : index_0=0, index_1 unused
+    ! fac -> QuadraticSum(0, 1) : index_0=0 (first Scale), index_1=1 (second Scale)
+    ! frg -> NoScale
+    mu_scales_form = [ &
+        pineappl_scale_func_form(pineappl_scale_func_form_tag_scale, &
+            pineappl_scale_func_form_body(int(0, c_size_t), int(0, c_size_t))), &
+        pineappl_scale_func_form(pineappl_scale_func_form_tag_quadratic_sum, &
+            pineappl_scale_func_form_body(int(0, c_size_t), int(1, c_size_t))), &
+        pineappl_scale_func_form(pineappl_scale_func_form_tag_no_scale, &
+            pineappl_scale_func_form_body(int(0, c_size_t), int(0, c_size_t)))  &
+    ]
+
+    ff_conv(1) = pineappl_conv(pineappl_conv_type_unpol_pdf, 2212)
+
+    grid = pineappl_grid_new2(2, [0.0_dp, 0.5_dp, 1.0_dp], 1, [1_1, 0_1, 0_1, 0_1, 0_1], channels, &
+        pineappl_pid_basis_pdg, ff_conv, 3, interp_info, kinematics, mu_scales_form)
+
+    if (pineappl_grid_bin_count(grid) /= 2) then
+        write(*, *) "quadratic sum - pineappl_grid_bin_count(): ", pineappl_grid_bin_count(grid)
+        error stop "error: quadratic sum pineappl_grid_bin_count"
+    end if
+
+    if (pineappl_grid_order_count(grid) /= 1) then
+        write(*, *) "quadratic sum - pineappl_grid_order_count(): ", pineappl_grid_order_count(grid)
+        error stop "error: quadratic sum pineappl_grid_order_count"
+    end if
+
+    ! Fill: ntuple = (Scale(0), Scale(1), X(0)) = (mu2_hard, mu2_soft, x)
+    ! Effective fac scale = sqrt(mu2_hard + mu2_soft) = sqrt(100 + 900) = sqrt(1000)
+    call pineappl_grid_fill2(grid, 0, 0.25_dp, 0, [100.0_dp, 900.0_dp, 0.3_dp], 1.5_dp)
+    call pineappl_grid_fill2(grid, 0, 0.75_dp, 0, [100.0_dp, 900.0_dp, 0.7_dp], 2.5_dp)
+
+    call pineappl_grid_optimize(grid)
+
+    call pineappl_channels_delete(channels)
     call pineappl_grid_delete(grid)
 end program test_pineappl

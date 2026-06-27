@@ -53,15 +53,15 @@ rayon = "1.5.1"
 rustc-hash = "2"
 serde = { features = ["derive"], version = "1.0.130" }
 serde_yaml = "0.9.13"
-tar = { default-features = false, version = "0.4.45" }
+tar = { default-features = false, version = "0.4.46" }
 thiserror = "1.0.30"
 
 # workspace crates
-pineappl = { path = "pineappl", version = "=1.4.0" }
-pineappl_applgrid = { path = "pineappl_applgrid", version = "=1.4.0" }
-pineappl_cli = { path = "pineappl_cli", version = "=1.4.0" }
-pineappl_fastnlo = { path = "pineappl_fastnlo", version = "=1.4.0" }
-pineappl_v0 = { path = "pineappl_v0", version = "=1.4.0" }
+pineappl = { path = "pineappl", version = "=1.4.2" }
+pineappl_applgrid = { path = "pineappl_applgrid", version = "=1.4.2" }
+pineappl_cli = { path = "pineappl_cli", version = "=1.4.2" }
+pineappl_fastnlo = { path = "pineappl_fastnlo", version = "=1.4.2" }
+pineappl_v0 = { path = "pineappl_v0", version = "=1.4.2" }
 
 [workspace.package]
 categories = ["science"]
@@ -70,7 +70,7 @@ keywords = ["high-energy-physics", "physics"]
 license = "GPL-3.0-or-later"
 repository = "https://github.com/NNPDF/pineappl"
 rust-version = "1.91.0"
-version = "1.4.0"
+version = "1.4.2"
 
 [workspace.lints.clippy]
 all = { level = "warn", priority = -1 }
@@ -103,8 +103,11 @@ unused_trait_names = "warn"
 wildcard_enum_match_arm = "warn"
 
 [workspace.lints.rust]
-missing-docs = "warn"
-unsafe-op-in-unsafe-fn = "deny"
+elided_lifetimes_in_paths = "warn"
+missing_docs = "warn"
+redundant_imports = "warn"
+unreachable_pub = "warn"
+unsafe_op_in_unsafe_fn = "deny"
 
 [profile.release]
 codegen-units = 1

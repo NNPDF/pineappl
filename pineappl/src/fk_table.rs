@@ -62,7 +62,7 @@ pub enum FkAssumptions {
 }
 
 impl Display for FkAssumptions {
-    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         write!(
             f,
             "{}",
@@ -117,7 +117,7 @@ impl FkTable {
     /// FK-tables have all orders merged together and do not support scale variations.
     pub fn convolve(
         &self,
-        convolution_cache: &mut ConvolutionCache,
+        convolution_cache: &mut ConvolutionCache<'_>,
         bin_indices: &[usize],
         channel_mask: &[bool],
     ) -> Vec<f64> {

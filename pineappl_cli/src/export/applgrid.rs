@@ -91,7 +91,7 @@ fn reconstruct_subgrid_params(grid: &Grid, order: usize, bin: usize) -> Result<V
     Ok(result)
 }
 
-pub fn convert_into_applgrid(
+pub(super) fn convert_into_applgrid(
     grid: &mut Grid,
     output: &Path,
     discard_non_matching_values: bool,

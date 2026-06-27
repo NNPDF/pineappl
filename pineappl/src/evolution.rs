@@ -127,7 +127,7 @@ fn gluon_has_pid_zero(grid: &Grid) -> bool {
 }
 
 fn pid_slices(
-    operator: &ArrayView4<f64>,
+    operator: &ArrayView4<'_, f64>,
     info: &OperatorSliceInfo,
     gluon_has_pid_zero: bool,
     pid1_nonzero: &dyn Fn(i32) -> bool,
@@ -175,7 +175,7 @@ fn pid_slices(
 }
 
 fn operator_slices(
-    operator: &ArrayView4<f64>,
+    operator: &ArrayView4<'_, f64>,
     info: &OperatorSliceInfo,
     pid_indices: &[(usize, usize)],
     x1: &[f64],
@@ -212,7 +212,7 @@ fn ndarray_from_subgrid_orders_slice(
     grid: &Grid,
     fac1: f64,
     kinematics: &[Kinematics],
-    subgrids: &ArrayView1<SubgridEnum>,
+    subgrids: &ArrayView1<'_, SubgridEnum>,
     orders: &[Order],
     order_mask: &[bool],
     (xir, xif, xia): (f64, f64, f64),
@@ -377,7 +377,7 @@ fn ndarray_from_subgrid_orders_slice(
 
 pub(crate) fn evolve_slice(
     grid: &Grid,
-    operators: &[ArrayView4<f64>],
+    operators: &[ArrayView4<'_, f64>],
     infos: &[OperatorSliceInfo],
     scale_values: &[f64],
     order_mask: &[bool],
@@ -522,9 +522,9 @@ pub(crate) fn evolve_slice(
 
 fn general_tensor_mul(
     factor: f64,
-    array: ArrayViewD<f64>,
+    array: ArrayViewD<'_, f64>,
     ops: &[&Array2<f64>],
-    mut fk_table: ArrayViewMutD<f64>,
+    mut fk_table: ArrayViewMutD<'_, f64>,
 ) {
     let convolutions = array.shape().len();
 
