@@ -64,7 +64,7 @@ pub(crate) struct CkfOpts {
 impl Subcommand for CkfOpts {
     fn run(&self, cfg: &GlobalConfiguration) -> Result<ExitCode> {
         let grid = helpers::read_grid(&self.input)?;
-        let mut conv_funs = helpers::create_conv_funs(&self.conv_funs)?;
+        let mut conv_funs = helpers::create_conv_funs(&self.conv_funs, cfg.pdf_backend)?;
 
         let orders_den = if self.orders_den.is_empty() {
             grid.orders()

@@ -2,10 +2,10 @@
 mod eko;
 
 use super::helpers::{self, ConvFuns, ConvoluteMode};
+use super::pdf_backend::PdfBackend;
 use super::{GlobalConfiguration, Subcommand};
 use anyhow::{Result, anyhow};
 use clap::{Parser, ValueHint};
-use lhapdf::Pdf;
 use pineappl::fk_table::FkTable;
 use pineappl::grid::Grid;
 use std::path::{Path, PathBuf};
@@ -59,7 +59,7 @@ impl Subcommand for Opts {
         use prettytable::row;
 
         let grid = helpers::read_grid(&self.input)?;
-        let mut conv_funs = helpers::create_conv_funs(&self.conv_funs)?;
+        let mut conv_funs = helpers::create_conv_funs(&self.conv_funs, cfg.pdf_backend)?;
         let results = helpers::convolve_scales(
             &grid,
             &mut conv_funs,
@@ -76,7 +76,7 @@ impl Subcommand for Opts {
         let fk_table = evolve_grid(
             &grid,
             &eko_paths,
-            &conv_funs[cfg.use_alphas_from],
+            &*conv_funs[cfg.use_alphas_from],
             &self.orders,
             self.xir,
             self.xif,
@@ -137,7 +137,7 @@ impl Subcommand for Opts {
 fn evolve_grid(
     grid: &Grid,
     ekos: &[&Path],
-    use_alphas_from: &Pdf,
+    use_alphas_from: &dyn PdfBackend,
     orders: &[(u8, u8)],
     xir: f64,
     xif: f64,
@@ -171,7 +171,7 @@ fn evolve_grid(
 fn evolve_grid(
     _: &Grid,
     _: &[&Path],
-    _: &Pdf,
+    _: &dyn PdfBackend,
     _: &[(u8, u8)],
     _: f64,
     _: f64,

@@ -2,11 +2,11 @@
 mod applgrid;
 
 use super::helpers::{self, ConvFuns, ConvoluteMode};
+use super::pdf_backend::PdfBackend;
 use super::{GlobalConfiguration, Subcommand};
 use anyhow::{Result, anyhow};
 use clap::builder::{PossibleValuesParser, TypedValueParser as _};
 use clap::{Parser, ValueHint};
-use lhapdf::Pdf;
 use pineappl::boc::Order;
 use pineappl::grid::Grid;
 use std::path::{Path, PathBuf};
@@ -50,13 +50,13 @@ impl Subcommand for Opts {
         use prettytable::{cell, row};
 
         let mut grid = helpers::read_grid(&self.input)?;
-        let mut conv_funs = helpers::create_conv_funs(&self.conv_funs)?;
+        let mut conv_funs = helpers::create_conv_funs(&self.conv_funs, cfg.pdf_backend)?;
 
         // TODO: figure out `member` from `self.pdfset`
         let (grid_type, results, scale_variations, order_mask) = convert_into_grid(
             &self.output,
             &mut grid,
-            &mut conv_funs,
+            &conv_funs,
             self.scales,
             self.discard_non_matching_values,
         )?;
@@ -190,7 +190,7 @@ impl Subcommand for Opts {
 fn convert_into_applgrid(
     output: &Path,
     grid: &mut Grid,
-    conv_funs: &mut [Pdf],
+    conv_funs: &[Box<dyn PdfBackend>],
     _: usize,
     discard_non_matching_values: bool,
 ) -> Result<(&'static str, Vec<f64>, usize, Vec<bool>)> {
@@ -198,7 +198,20 @@ fn convert_into_applgrid(
 
     let (mut applgrid, order_mask) =
         applgrid::convert_into_applgrid(grid, output, discard_non_matching_values)?;
-    let results = applgrid::convolve_applgrid(applgrid.pin_mut(), conv_funs);
+    let nloops = applgrid.nloops();
+
+    // TODO: add support for convolving an APPLgrid with two functions
+    assert_eq!(conv_funs.len(), 1);
+
+    let results = pineappl_applgrid::grid_convolve_with_one(
+        applgrid.pin_mut(),
+        &mut |pid, x, q2| conv_funs[0].xfx_q2(pid, x, q2),
+        &mut |q2| conv_funs[0].alphas_q2(q2),
+        nloops,
+        1.0,
+        1.0,
+        1.0,
+    );
 
     Ok(("APPLgrid", results, 1, order_mask))
 }
@@ -207,7 +220,7 @@ fn convert_into_applgrid(
 fn convert_into_applgrid(
     _: &Path,
     _: &mut Grid,
-    _: &mut [Pdf],
+    _: &[Box<dyn PdfBackend>],
     _: usize,
     _: bool,
 ) -> Result<(&'static str, Vec<f64>, usize, Vec<bool>)> {
@@ -219,7 +232,7 @@ fn convert_into_applgrid(
 fn convert_into_grid(
     output: &Path,
     grid: &mut Grid,
-    conv_funs: &mut [Pdf],
+    conv_funs: &[Box<dyn PdfBackend>],
     scales: usize,
     discard_non_matching_values: bool,
 ) -> Result<(&'static str, Vec<f64>, usize, Vec<bool>)> {

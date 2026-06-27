@@ -1,8 +1,8 @@
 use super::helpers::{self, ConvFuns, ConvoluteMode};
+use super::pdf_backend::{PdfBackend, PdfSetBackend};
 use super::{GlobalConfiguration, Subcommand};
 use anyhow::{Error, Result};
 use clap::{Parser, ValueHint};
-use lhapdf::{Pdf, PdfSet};
 use prettytable::{Row, cell};
 use rayon::{ThreadPoolBuilder, prelude::*};
 use std::num::NonZeroUsize;
@@ -53,9 +53,9 @@ impl Subcommand for Opts {
         let grid = helpers::read_grid(&self.input)?;
 
         let (set1, mut conv_funs1) =
-            helpers::create_conv_funs_for_set(&self.conv_funs1, self.pull_from)?;
+            helpers::create_conv_funs_for_set(&self.conv_funs1, self.pull_from, cfg.pdf_backend)?;
         let (set2, mut conv_funs2) =
-            helpers::create_conv_funs_for_set(&self.conv_funs2, self.pull_from)?;
+            helpers::create_conv_funs_for_set(&self.conv_funs2, self.pull_from, cfg.pdf_backend)?;
 
         ThreadPoolBuilder::new()
             .num_threads(self.threads)
@@ -141,79 +141,81 @@ impl Subcommand for Opts {
                 (diff / unc1.hypot(unc2), unc1, unc2)
             };
 
-            let channel_results =
-                |conv_funs: &ConvFuns, pdfset: &mut [Vec<Pdf>], set: &PdfSet| -> Vec<f64> {
-                    if let Some(member) = conv_funs.members[self.pull_from] {
-                        (0..grid.channels().len())
-                            .map(|channel| {
-                                let mut channel_mask = vec![false; grid.channels().len()];
-                                channel_mask[channel] = true;
-                                match helpers::convolve(
-                                    &grid,
-                                    &mut pdfset[member],
-                                    &conv_funs.conv_types,
-                                    &self.orders,
-                                    &[bin],
-                                    &channel_mask,
-                                    1,
-                                    ConvoluteMode::Normal,
-                                    cfg,
-                                )
-                                .as_slice()
-                                {
-                                    [value] => *value,
-                                    _ => unreachable!(),
-                                }
-                            })
-                            .collect()
-                    } else {
-                        let results: Vec<_> = pdfset
-                            .iter_mut()
-                            .flat_map(|fun| {
-                                (0..grid.channels().len())
-                                    .map(|channel| {
-                                        let mut channel_mask = vec![false; grid.channels().len()];
-                                        channel_mask[channel] = true;
-                                        match helpers::convolve(
-                                            &grid,
-                                            fun,
-                                            &conv_funs.conv_types,
-                                            &self.orders,
-                                            &[bin],
-                                            &channel_mask,
-                                            1,
-                                            ConvoluteMode::Normal,
-                                            cfg,
-                                        )
-                                        .as_slice()
-                                        {
-                                            [value] => *value,
-                                            _ => unreachable!(),
-                                        }
-                                    })
-                                    .collect::<Vec<_>>()
-                            })
-                            .collect();
+            let channel_results = |conv_funs: &ConvFuns,
+                                   pdfset: &mut [Vec<Box<dyn PdfBackend>>],
+                                   set: &dyn PdfSetBackend|
+             -> Vec<f64> {
+                if let Some(member) = conv_funs.members[self.pull_from] {
+                    (0..grid.channels().len())
+                        .map(|channel| {
+                            let mut channel_mask = vec![false; grid.channels().len()];
+                            channel_mask[channel] = true;
+                            match helpers::convolve(
+                                &grid,
+                                &mut pdfset[member],
+                                &conv_funs.conv_types,
+                                &self.orders,
+                                &[bin],
+                                &channel_mask,
+                                1,
+                                ConvoluteMode::Normal,
+                                cfg,
+                            )
+                            .as_slice()
+                            {
+                                [value] => *value,
+                                _ => unreachable!(),
+                            }
+                        })
+                        .collect()
+                } else {
+                    let results: Vec<_> = pdfset
+                        .iter_mut()
+                        .flat_map(|fun| {
+                            (0..grid.channels().len())
+                                .map(|channel| {
+                                    let mut channel_mask = vec![false; grid.channels().len()];
+                                    channel_mask[channel] = true;
+                                    match helpers::convolve(
+                                        &grid,
+                                        fun,
+                                        &conv_funs.conv_types,
+                                        &self.orders,
+                                        &[bin],
+                                        &channel_mask,
+                                        1,
+                                        ConvoluteMode::Normal,
+                                        cfg,
+                                    )
+                                    .as_slice()
+                                    {
+                                        [value] => *value,
+                                        _ => unreachable!(),
+                                    }
+                                })
+                                .collect::<Vec<_>>()
+                        })
+                        .collect();
 
-                        (0..grid.channels().len())
-                            .map(|channel| {
-                                let central: Vec<_> = results
-                                    .iter()
-                                    .skip(channel)
-                                    .step_by(grid.channels().len())
-                                    .copied()
-                                    .collect();
-                                set.uncertainty(&central, self.cl, false).unwrap().central
-                            })
-                            .collect()
-                    }
-                };
+                    (0..grid.channels().len())
+                        .map(|channel| {
+                            let central: Vec<_> = results
+                                .iter()
+                                .skip(channel)
+                                .step_by(grid.channels().len())
+                                .copied()
+                                .collect();
+                            set.uncertainty(&central, self.cl, false).unwrap().central
+                        })
+                        .collect()
+                }
+            };
 
             let mut pull_tuples = if self.limit == 0 {
                 Vec::new()
             } else {
-                let channel_results1 = channel_results(&self.conv_funs1, &mut conv_funs1, &set1);
-                let channel_results2 = channel_results(&self.conv_funs2, &mut conv_funs2, &set2);
+                let channel_results1 = channel_results(&self.conv_funs1, &mut conv_funs1, &*set1);
+                let channel_results2 = channel_results(&self.conv_funs2, &mut conv_funs2, &*set2);
 
                 let pull_tuples: Vec<_> = channel_results2
                     .iter()

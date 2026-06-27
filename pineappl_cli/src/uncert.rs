@@ -66,7 +66,7 @@ pub struct Opts {
     #[command(flatten)]
     group: Group,
     /// Confidence level in per cent, for convolution function uncertainties.
-    #[arg(default_value_t = lhapdf::CL_1_SIGMA, long)]
+    #[arg(default_value_t = super::pdf_backend::CL_1_SIGMA, long)]
     cl: f64,
     /// Show integrated numbers (without bin widths) instead of differential ones.
     #[arg(long, short)]
@@ -94,7 +94,7 @@ pub struct Opts {
 impl Subcommand for Opts {
     fn run(&self, cfg: &GlobalConfiguration) -> Result<ExitCode> {
         let grid = helpers::read_grid(&self.input)?;
-        let mut conv_funs = helpers::create_conv_funs(&self.conv_funs)?;
+        let mut conv_funs = helpers::create_conv_funs(&self.conv_funs, cfg.pdf_backend)?;
 
         let limits = helpers::convolve_limits(
             &grid,
@@ -116,7 +116,8 @@ impl Subcommand for Opts {
             .conv_fun
             .iter()
             .map(|&index| {
-                let (set, funs) = helpers::create_conv_funs_for_set(&self.conv_funs, index)?;
+                let (set, funs) =
+                    helpers::create_conv_funs_for_set(&self.conv_funs, index, cfg.pdf_backend)?;
                 let results: Vec<_> = funs
                     .into_par_iter()
                     .map(|mut funs| {

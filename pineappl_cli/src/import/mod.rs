@@ -6,11 +6,11 @@ mod fastnlo;
 mod fktable;
 
 use super::helpers::{self, ConvFuns, ConvoluteMode};
+use super::pdf_backend::PdfBackend;
 use super::{GlobalConfiguration, Subcommand};
 use anyhow::{Result, anyhow};
 use clap::builder::{PossibleValuesParser, TypedValueParser as _};
 use clap::{Parser, ValueHint};
-use lhapdf::Pdf;
 use pineappl::grid::Grid;
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
@@ -63,13 +63,13 @@ impl Subcommand for Opts {
     fn run(&self, cfg: &GlobalConfiguration) -> Result<ExitCode> {
         use prettytable::{cell, row};
 
-        let mut conv_funs = helpers::create_conv_funs(&self.conv_funs)?;
+        let mut conv_funs = helpers::create_conv_funs(&self.conv_funs, cfg.pdf_backend)?;
 
         // TODO: figure out `member` from `self.pdfset`
         let (grid_type, mut grid, reference_results, scale_variations) = convert_grid(
             &self.input,
             self.alpha,
-            &mut conv_funs,
+            &conv_funs,
             &self.conv_funs,
             0,
             self.scales,
@@ -172,7 +172,7 @@ impl Subcommand for Opts {
 fn convert_applgrid(
     input: &Path,
     alpha: u8,
-    conv_funs: &mut [Pdf],
+    conv_funs: &[Box<dyn PdfBackend>],
     _: usize,
 ) -> Result<(&'static str, Grid, Vec<f64>, usize)> {
     use pineappl_applgrid::ffi;
@@ -181,7 +181,20 @@ fn convert_applgrid(
 
     let mut grid = ffi::make_grid(input.to_str().unwrap())?;
     let pgrid = applgrid::convert_applgrid(grid.pin_mut(), alpha)?;
-    let results = applgrid::convolve_applgrid(grid.pin_mut(), conv_funs);
+    let nloops = grid.nloops();
+
+    // TODO: add support for convolving an APPLgrid with two functions
+    assert_eq!(conv_funs.len(), 1);
+
+    let results = pineappl_applgrid::grid_convolve_with_one(
+        grid.pin_mut(),
+        &mut |pid, x, q2| conv_funs[0].xfx_q2(pid, x, q2),
+        &mut |q2| conv_funs[0].alphas_q2(q2),
+        nloops,
+        1.0,
+        1.0,
+        1.0,
+    );
 
     Ok(("APPLgrid", pgrid, results, 1))
 }
@@ -190,7 +203,7 @@ fn convert_applgrid(
 fn convert_applgrid(
     _: &Path,
     _: u8,
-    _: &mut [Pdf],
+    _: &mut [Box<dyn PdfBackend>],
     _: usize,
 ) -> Result<(&'static str, Grid, Vec<f64>, usize)> {
     Err(anyhow!(
@@ -299,7 +312,7 @@ fn convert_fktable(_: &Path) -> Result<(&'static str, Grid, Vec<f64>, usize)> {
 fn convert_grid(
     input: &Path,
     alpha: u8,
-    conv_funs: &mut [Pdf],
+    conv_funs: &[Box<dyn PdfBackend>],
     fun_names: &ConvFuns,
     member: usize,
     scales: usize,

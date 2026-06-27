@@ -1,7 +1,7 @@
 use super::GlobalConfiguration;
+use super::pdf_backend::{self, Backend, ForcePositive, PdfBackend, PdfSetBackend};
 use anyhow::{Context as _, Error, Result, anyhow, bail};
 use itertools::Itertools as _;
-use lhapdf::{Pdf, PdfSet};
 use pineappl::boc::{ScaleFuncForm, Scales};
 use pineappl::convolutions::{Conv, ConvType, ConvolutionCache};
 use pineappl::grid::Grid;
@@ -136,50 +136,38 @@ pub(crate) enum ConvoluteMode {
     Normal,
 }
 
-pub(crate) fn create_conv_funs(funs: &ConvFuns) -> Result<Vec<Pdf>> {
-    Ok(funs
-        .lhapdf_names
+/// Creates convolution functions using the specified backend.
+pub(crate) fn create_conv_funs(
+    funs: &ConvFuns,
+    backend: Backend,
+) -> Result<Vec<Box<dyn PdfBackend>>> {
+    funs.lhapdf_names
         .iter()
         .zip(&funs.members)
-        .map(|(lhapdf_name, member)| {
-            lhapdf_name.parse().map_or_else(
-                |_| {
-                    let member = member.unwrap_or(0);
-                    // UNWRAP: we don't support sets with more members than `i32`
-                    Pdf::with_setname_and_member(lhapdf_name, member.try_into().unwrap())
-                },
-                Pdf::with_lhaid,
-            )
+        .map(|(name, member)| {
+            let member = member.unwrap_or(0);
+            pdf_backend::create_pdf(name, member, backend)
         })
-        .collect::<Result<_, _>>()?)
+        .collect()
 }
 
+/// Creates convolution functions for a PDF set using the specified backend.
+///
+/// Returns a tuple of (`PdfSetBackend`, Vec<Vec<Box<dyn PdfBackend>>>).
 pub(crate) fn create_conv_funs_for_set(
     funs: &ConvFuns,
     index_of_set: usize,
-) -> Result<(PdfSet, Vec<Vec<Pdf>>)> {
+    backend: Backend,
+) -> Result<(Box<dyn PdfSetBackend>, Vec<Vec<Box<dyn PdfBackend>>>)> {
     let setname = &funs.lhapdf_names[index_of_set];
-    let set = setname.parse().map_or_else(
-        |_| Ok::<_, Error>(PdfSet::new(setname)?),
-        |lhaid| {
-            Ok(PdfSet::new(
-                &lhapdf::lookup_pdf(lhaid)
-                    .map(|(set, _)| set)
-                    .ok_or_else(|| {
-                        anyhow!("no convolution function for LHAID = `{lhaid}` found")
-                    })?,
-            )?)
-        },
-    )?;
+    let set = pdf_backend::create_pdf_set(setname, backend)?;
 
-    let conv_funs = set
-        .mk_pdfs()?
+    let set_members = set.mk_pdfs()?;
+    let conv_funs = set_members
         .into_iter()
-        .map(|conv_fun| {
-            // TODO: do not create objects that are getting overwritten in any case
-            let mut conv_funs = create_conv_funs(funs)?;
-            conv_funs[index_of_set] = conv_fun;
-
+        .map(|member_pdf| {
+            let mut conv_funs = create_conv_funs(funs, backend)?;
+            conv_funs[index_of_set] = member_pdf;
             Ok::<_, Error>(conv_funs)
         })
         .collect::<Result<_, _>>()?;
@@ -249,9 +237,10 @@ pub(crate) fn labels_and_units(grid: &Grid, integrated: bool) -> (Vec<(String, &
     )
 }
 
+/// Performs convolution with scale variations using the backend abstraction.
 pub(crate) fn convolve_scales(
     grid: &Grid,
-    conv_funs: &mut [Pdf],
+    conv_funs: &mut [Box<dyn PdfBackend>],
     conv_types: &[ConvType],
     orders: &[(u8, u8)],
     bins: &[usize],
@@ -273,7 +262,7 @@ pub(crate) fn convolve_scales(
 
     if cfg.force_positive {
         for fun in conv_funs.iter_mut() {
-            fun.set_force_positive(1);
+            fun.set_force_positive(ForcePositive::ClipNegative);
         }
     }
 
@@ -289,11 +278,12 @@ pub(crate) fn convolve_scales(
         .iter_mut()
         .map(|fun| (fun.x_min(), fun.x_max()))
         .collect();
+
     let mut funs: Vec<_> = conv_funs
         .iter()
-        .zip(x_min_max)
-        .map(|(fun, (x_min, x_max))| {
-            move |id, x, q2| {
+        .zip(&x_min_max)
+        .map(|(fun, &(x_min, x_max))| {
+            move |id: i32, x: f64, q2: f64| {
                 if !cfg.allow_extrapolation && (x < x_min || x > x_max) {
                     0.0
                 } else {
@@ -302,26 +292,25 @@ pub(crate) fn convolve_scales(
             }
         })
         .collect();
+
     let xfx: Vec<_> = funs
         .iter_mut()
         .map(|fun| fun as &mut dyn FnMut(i32, f64, f64) -> f64)
         .collect();
+
     let mut alphas_funs: Vec<_> = conv_funs
         .iter()
-        .map(|fun| move |q2| fun.alphas_q2(q2))
+        .map(|fun| {
+            let fun_ref = fun.as_ref();
+            move |q2: f64| fun_ref.alphas_q2(q2)
+        })
         .collect();
+
     let convolutions: Vec<_> = conv_funs
         .iter()
         .zip(conv_types)
         .map(|(fun, &conv_type)| {
-            let pid = fun
-                .set()
-                .entry("Particle")
-                // if the field 'Particle' is missing we assume it's a proton PDF
-                .map_or(Ok(2212), |string| string.parse::<i32>())
-                // UNWRAP: if this fails, there's a non-integer string in the LHAPDF info file
-                .unwrap();
-
+            let pid = fun.particle_id();
             Conv::new(conv_type, pid)
         })
         .collect();
@@ -384,9 +373,10 @@ pub(crate) fn scales_vector(grid: &Grid, scales: usize) -> &[(f64, f64, f64)] {
     }
 }
 
+/// Performs convolution using the backend abstraction.
 pub(crate) fn convolve(
     grid: &Grid,
-    conv_funs: &mut [Pdf],
+    conv_funs: &mut [Box<dyn PdfBackend>],
     conv_types: &[ConvType],
     orders: &[(u8, u8)],
     bins: &[usize],

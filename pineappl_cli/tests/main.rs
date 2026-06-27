@@ -29,6 +29,7 @@ Options:
       --force-positive         Forces negative PDF values to zero
       --allow-extrapolation    Allow extrapolation of PDFs outside their region of validity
       --use-alphas-from <IDX>  Choose the PDF/FF set for the strong coupling [default: 0]
+      --pdf-backend <BACKEND>  Select the PDF interpolation backend: 'lhapdf' or 'neopdf' [default: lhapdf]
   -h, --help                   Print help
   -V, --version                Print version
 ";
