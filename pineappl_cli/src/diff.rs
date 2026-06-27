@@ -120,8 +120,7 @@ impl Subcommand for Opts {
             bail!("channels differ");
         }
 
-        let mut conv_funs =
-            helpers::create_conv_funs_with_backend(&self.conv_funs, cfg.pdf_backend)?;
+        let mut conv_funs = helpers::create_conv_funs(&self.conv_funs, cfg.pdf_backend)?;
 
         let mut table = helpers::create_table();
         let mut title = Row::empty();
@@ -141,7 +140,7 @@ impl Subcommand for Opts {
 
             table.set_titles(title);
 
-            let results1 = helpers::convolve_with_backend(
+            let results1 = helpers::convolve(
                 &grid1,
                 &mut conv_funs,
                 &self.conv_funs.conv_types,
@@ -152,7 +151,7 @@ impl Subcommand for Opts {
                 ConvoluteMode::Normal,
                 cfg,
             );
-            let results2 = helpers::convolve_with_backend(
+            let results2 = helpers::convolve(
                 &grid2,
                 &mut conv_funs,
                 &self.conv_funs.conv_types,
@@ -205,7 +204,7 @@ impl Subcommand for Opts {
             let order_results1: Vec<Vec<f64>> = orders
                 .iter()
                 .map(|&order| {
-                    helpers::convolve_with_backend(
+                    helpers::convolve(
                         &grid1,
                         &mut conv_funs,
                         &self.conv_funs.conv_types,
@@ -221,7 +220,7 @@ impl Subcommand for Opts {
             let order_results2: Vec<Vec<f64>> = orders
                 .iter()
                 .map(|&order| {
-                    helpers::convolve_with_backend(
+                    helpers::convolve(
                         &grid2,
                         &mut conv_funs,
                         &self.conv_funs.conv_types,

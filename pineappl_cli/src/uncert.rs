@@ -94,8 +94,7 @@ pub struct Opts {
 impl Subcommand for Opts {
     fn run(&self, cfg: &GlobalConfiguration) -> Result<ExitCode> {
         let grid = helpers::read_grid(&self.input)?;
-        let mut conv_funs =
-            helpers::create_conv_funs_with_backend(&self.conv_funs, cfg.pdf_backend)?;
+        let mut conv_funs = helpers::create_conv_funs(&self.conv_funs, cfg.pdf_backend)?;
 
         let limits = helpers::convolve_limits(
             &grid,
@@ -122,7 +121,7 @@ impl Subcommand for Opts {
                 let results: Vec<_> = funs
                     .into_par_iter()
                     .map(|mut funs| {
-                        Ok::<_, Error>(helpers::convolve_with_backend(
+                        Ok::<_, Error>(helpers::convolve(
                             &grid,
                             &mut funs,
                             &self.conv_funs.conv_types,
@@ -161,7 +160,7 @@ impl Subcommand for Opts {
             .max()
             .unwrap_or(1);
         let scale_tuples = helpers::scales_vector(&grid, scales_max);
-        let scale_results = helpers::convolve_scales_with_backend(
+        let scale_results = helpers::convolve_scales(
             &grid,
             &mut conv_funs,
             &self.conv_funs.conv_types,

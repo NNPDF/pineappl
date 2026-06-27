@@ -64,7 +64,7 @@ impl Subcommand for Opts {
 
         let grid = helpers::read_grid(&self.input)?;
         let mut conv_funs =
-            helpers::create_conv_funs_with_backend(&self.conv_funs[0], cfg.pdf_backend)?;
+            helpers::create_conv_funs(&self.conv_funs[0], cfg.pdf_backend)?;
         let slices = grid.bwfl().slices();
         let mut data_string = String::new();
 
@@ -99,7 +99,7 @@ impl Subcommand for Opts {
         {
             let bins: Vec<_> = slice.collect();
 
-            let results = helpers::convolve_with_backend(
+            let results = helpers::convolve(
                 &grid,
                 &mut conv_funs,
                 &self.conv_funs[0].conv_types,
@@ -126,7 +126,7 @@ impl Subcommand for Opts {
                     })
                     .collect();
 
-                helpers::convolve_with_backend(
+                helpers::convolve(
                     &grid,
                     &mut conv_funs,
                     &self.conv_funs[0].conv_types,
@@ -161,9 +161,9 @@ impl Subcommand for Opts {
                     if self.no_conv_fun_unc {
                         let conv_types = &conv_funs.conv_types;
                         let mut conv_funs =
-                            helpers::create_conv_funs_with_backend(conv_funs, cfg.pdf_backend)?;
+                            helpers::create_conv_funs(conv_funs, cfg.pdf_backend)?;
 
-                        let results = helpers::convolve_with_backend(
+                        let results = helpers::convolve(
                             &grid,
                             &mut conv_funs,
                             conv_types,
@@ -186,7 +186,7 @@ impl Subcommand for Opts {
                         let pdf_results: Vec<_> = funs
                             .into_par_iter()
                             .flat_map(|mut funs| {
-                                helpers::convolve_with_backend(
+                                helpers::convolve(
                                     &grid,
                                     &mut funs,
                                     &conv_funs.conv_types,
@@ -282,7 +282,7 @@ impl Subcommand for Opts {
                         channel_mask[channel] = true;
                         (
                             map_format_channel(&grid.channels()[channel], &grid),
-                            helpers::convolve_with_backend(
+                            helpers::convolve(
                                 &grid,
                                 &mut conv_funs,
                                 &self.conv_funs[0].conv_types,

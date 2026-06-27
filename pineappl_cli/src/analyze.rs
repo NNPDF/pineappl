@@ -64,8 +64,7 @@ pub struct CkfOpts {
 impl Subcommand for CkfOpts {
     fn run(&self, cfg: &GlobalConfiguration) -> Result<ExitCode> {
         let grid = helpers::read_grid(&self.input)?;
-        let mut conv_funs =
-            helpers::create_conv_funs_with_backend(&self.conv_funs, cfg.pdf_backend)?;
+        let mut conv_funs = helpers::create_conv_funs(&self.conv_funs, cfg.pdf_backend)?;
 
         let orders_den = if self.orders_den.is_empty() {
             grid.orders()
@@ -85,7 +84,7 @@ impl Subcommand for CkfOpts {
             .map(|lumi| {
                 let mut lumi_mask = vec![false; grid.channels().len()];
                 lumi_mask[lumi] = true;
-                helpers::convolve_with_backend(
+                helpers::convolve(
                     &grid,
                     &mut conv_funs,
                     &self.conv_funs.conv_types,
@@ -102,7 +101,7 @@ impl Subcommand for CkfOpts {
             .map(|lumi| {
                 let mut lumi_mask = vec![false; grid.channels().len()];
                 lumi_mask[lumi] = true;
-                helpers::convolve_with_backend(
+                helpers::convolve(
                     &grid,
                     &mut conv_funs,
                     &self.conv_funs.conv_types,

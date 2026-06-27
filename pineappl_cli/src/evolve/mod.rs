@@ -59,9 +59,8 @@ impl Subcommand for Opts {
         use prettytable::row;
 
         let grid = helpers::read_grid(&self.input)?;
-        let mut conv_funs =
-            helpers::create_conv_funs_with_backend(&self.conv_funs, cfg.pdf_backend)?;
-        let results = helpers::convolve_scales_with_backend(
+        let mut conv_funs = helpers::create_conv_funs(&self.conv_funs, cfg.pdf_backend)?;
+        let results = helpers::convolve_scales(
             &grid,
             &mut conv_funs,
             &self.conv_funs.conv_types,
@@ -84,7 +83,7 @@ impl Subcommand for Opts {
             self.xia,
         )?;
 
-        let evolved_results = helpers::convolve_scales_with_backend(
+        let evolved_results = helpers::convolve_scales(
             fk_table.grid(),
             &mut conv_funs,
             &self.conv_funs.conv_types,

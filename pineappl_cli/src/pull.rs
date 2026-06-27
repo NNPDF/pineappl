@@ -67,7 +67,7 @@ impl Subcommand for Opts {
         let results1: Vec<_> = conv_funs1
             .par_iter_mut()
             .map(|funs| {
-                Ok::<_, Error>(helpers::convolve_with_backend(
+                Ok::<_, Error>(helpers::convolve(
                     &grid,
                     funs,
                     &self.conv_funs1.conv_types,
@@ -86,7 +86,7 @@ impl Subcommand for Opts {
         let results2: Vec<_> = conv_funs2
             .par_iter_mut()
             .map(|funs| {
-                Ok::<_, Error>(helpers::convolve_with_backend(
+                Ok::<_, Error>(helpers::convolve(
                     &grid,
                     funs,
                     &self.conv_funs2.conv_types,
@@ -150,7 +150,7 @@ impl Subcommand for Opts {
                         .map(|channel| {
                             let mut channel_mask = vec![false; grid.channels().len()];
                             channel_mask[channel] = true;
-                            match helpers::convolve_with_backend(
+                            match helpers::convolve(
                                 &grid,
                                 &mut pdfset[member],
                                 &conv_funs.conv_types,
@@ -176,7 +176,7 @@ impl Subcommand for Opts {
                                 .map(|channel| {
                                     let mut channel_mask = vec![false; grid.channels().len()];
                                     channel_mask[channel] = true;
-                                    match helpers::convolve_with_backend(
+                                    match helpers::convolve(
                                         &grid,
                                         fun,
                                         &conv_funs.conv_types,

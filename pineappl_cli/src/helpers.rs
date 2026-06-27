@@ -136,10 +136,7 @@ pub enum ConvoluteMode {
 }
 
 /// Creates convolution functions using the specified backend.
-pub fn create_conv_funs_with_backend(
-    funs: &ConvFuns,
-    backend: Backend,
-) -> Result<Vec<Box<dyn PdfBackend>>> {
+pub fn create_conv_funs(funs: &ConvFuns, backend: Backend) -> Result<Vec<Box<dyn PdfBackend>>> {
     funs.lhapdf_names
         .iter()
         .zip(&funs.members)
@@ -165,7 +162,7 @@ pub fn create_conv_funs_for_set(
     let conv_funs = set_members
         .into_iter()
         .map(|member_pdf| {
-            let mut conv_funs = create_conv_funs_with_backend(funs, backend)?;
+            let mut conv_funs = create_conv_funs(funs, backend)?;
             conv_funs[index_of_set] = member_pdf;
             Ok::<_, Error>(conv_funs)
         })
@@ -238,7 +235,7 @@ pub fn labels_and_units(grid: &Grid, integrated: bool) -> (Vec<(String, &str)>, 
 
 /// Performs convolution with scale variations using the backend abstraction.
 #[allow(clippy::too_many_arguments)]
-pub fn convolve_scales_with_backend(
+pub fn convolve_scales(
     grid: &Grid,
     conv_funs: &mut [Box<dyn PdfBackend>],
     conv_types: &[ConvType],
@@ -375,7 +372,7 @@ pub fn scales_vector(grid: &Grid, scales: usize) -> &[(f64, f64, f64)] {
 
 /// Performs convolution using the backend abstraction.
 #[allow(clippy::too_many_arguments)]
-pub fn convolve_with_backend(
+pub fn convolve(
     grid: &Grid,
     conv_funs: &mut [Box<dyn PdfBackend>],
     conv_types: &[ConvType],
@@ -386,7 +383,7 @@ pub fn convolve_with_backend(
     mode: ConvoluteMode,
     cfg: &GlobalConfiguration,
 ) -> Vec<f64> {
-    convolve_scales_with_backend(
+    convolve_scales(
         grid,
         conv_funs,
         conv_types,

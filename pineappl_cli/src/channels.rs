@@ -64,8 +64,7 @@ pub struct Opts {
 impl Subcommand for Opts {
     fn run(&self, cfg: &GlobalConfiguration) -> Result<ExitCode> {
         let grid = helpers::read_grid(&self.input)?;
-        let mut conv_funs =
-            helpers::create_conv_funs_with_backend(&self.conv_funs, cfg.pdf_backend)?;
+        let mut conv_funs = helpers::create_conv_funs(&self.conv_funs, cfg.pdf_backend)?;
 
         let mut channels: Vec<_> = self.channels.iter().cloned().flatten().collect();
         channels.sort_unstable();
@@ -91,7 +90,7 @@ impl Subcommand for Opts {
             .map(|channel| {
                 let mut channel_mask = vec![false; grid.channels().len()];
                 channel_mask[channel] = true;
-                helpers::convolve_with_backend(
+                helpers::convolve(
                     &grid,
                     &mut conv_funs,
                     &self.conv_funs.conv_types,

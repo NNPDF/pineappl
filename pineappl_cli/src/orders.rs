@@ -41,8 +41,7 @@ pub struct Opts {
 impl Subcommand for Opts {
     fn run(&self, cfg: &GlobalConfiguration) -> Result<ExitCode> {
         let grid = helpers::read_grid(&self.input)?;
-        let mut conv_funs =
-            helpers::create_conv_funs_with_backend(&self.conv_funs, cfg.pdf_backend)?;
+        let mut conv_funs = helpers::create_conv_funs(&self.conv_funs, cfg.pdf_backend)?;
 
         let mut orders: Vec<_> = grid
             .orders()
@@ -64,7 +63,7 @@ impl Subcommand for Opts {
         let results: Vec<Vec<f64>> = orders
             .iter()
             .map(|order| {
-                helpers::convolve_with_backend(
+                helpers::convolve(
                     &grid,
                     &mut conv_funs,
                     &self.conv_funs.conv_types,
