@@ -33,10 +33,9 @@ pub use neopdf::uncertainty::CL_1_SIGMA;
 // }
 
 /// Method for handling negative PDF values.
-#[derive(Clone, Copy, Debug, Default)]
+#[derive(Clone, Copy, Debug)]
 pub enum ForcePositive {
     /// No clipping - return values as-is.
-    #[default]
     None,
     /// Clip negative values to zero.
     ClipNegative,
