@@ -103,11 +103,7 @@ impl Subcommand for Opts {
 
         let mut different = false;
 
-        for (bin, (one, two)) in results
-            .into_iter()
-            .zip(evolved_results.into_iter())
-            .enumerate()
-        {
+        for (bin, (one, two)) in results.into_iter().zip(evolved_results).enumerate() {
             #[expect(clippy::float_cmp, reason = "here we really need an exact comparison")]
             let rel_diff = if one == two { 0.0 } else { two / one - 1.0 };
 
