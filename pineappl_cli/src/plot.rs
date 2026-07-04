@@ -1,4 +1,5 @@
 use super::helpers::{self, ConvFuns, ConvoluteMode};
+use super::pdf_backend::PdfSetBackend as _;
 use super::{GlobalConfiguration, Subcommand};
 use anyhow::Result;
 use clap::builder::{PossibleValuesParser, TypedValueParser as _};
@@ -63,8 +64,7 @@ impl Subcommand for Opts {
         };
 
         let grid = helpers::read_grid(&self.input)?;
-        let mut conv_funs =
-            helpers::create_conv_funs(&self.conv_funs[0], cfg.pdf_backend)?;
+        let mut conv_funs = helpers::create_conv_funs(&self.conv_funs[0], cfg.pdf_backend)?;
         let slices = grid.bwfl().slices();
         let mut data_string = String::new();
 
@@ -160,8 +160,7 @@ impl Subcommand for Opts {
                 .map(|conv_funs| {
                     if self.no_conv_fun_unc {
                         let conv_types = &conv_funs.conv_types;
-                        let mut conv_funs =
-                            helpers::create_conv_funs(conv_funs, cfg.pdf_backend)?;
+                        let mut conv_funs = helpers::create_conv_funs(conv_funs, cfg.pdf_backend)?;
 
                         let results = helpers::convolve(
                             &grid,

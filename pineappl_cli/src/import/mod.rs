@@ -6,7 +6,7 @@ mod fastnlo;
 mod fktable;
 
 use super::helpers::{self, ConvFuns, ConvoluteMode};
-use super::pdf_backend::PdfBackend;
+use super::pdf_backend::{ConvFunBackend, PdfBackend as _};
 use super::{GlobalConfiguration, Subcommand};
 use anyhow::{Result, anyhow};
 use clap::builder::{PossibleValuesParser, TypedValueParser as _};
@@ -172,7 +172,7 @@ impl Subcommand for Opts {
 fn convert_applgrid(
     input: &Path,
     alpha: u8,
-    conv_funs: &[Box<dyn PdfBackend>],
+    conv_funs: &[ConvFunBackend],
     _: usize,
 ) -> Result<(&'static str, Grid, Vec<f64>, usize)> {
     use pineappl_applgrid::ffi;
@@ -203,7 +203,7 @@ fn convert_applgrid(
 fn convert_applgrid(
     _: &Path,
     _: u8,
-    _: &mut [Box<dyn PdfBackend>],
+    _: &mut [ConvFunBackend],
     _: usize,
 ) -> Result<(&'static str, Grid, Vec<f64>, usize)> {
     Err(anyhow!(
@@ -312,7 +312,7 @@ fn convert_fktable(_: &Path) -> Result<(&'static str, Grid, Vec<f64>, usize)> {
 fn convert_grid(
     input: &Path,
     alpha: u8,
-    conv_funs: &[Box<dyn PdfBackend>],
+    conv_funs: &[ConvFunBackend],
     fun_names: &ConvFuns,
     member: usize,
     scales: usize,

@@ -1,5 +1,5 @@
 use super::helpers::{self, ConvFuns, ConvoluteMode};
-use super::pdf_backend::{PdfBackend, PdfSetBackend};
+use super::pdf_backend::{ConvFunBackend, PdfSetBackend};
 use super::{GlobalConfiguration, Subcommand};
 use anyhow::{Error, Result};
 use clap::{Parser, ValueHint};
@@ -142,7 +142,7 @@ impl Subcommand for Opts {
             };
 
             let channel_results = |conv_funs: &ConvFuns,
-                                   pdfset: &mut [Vec<Box<dyn PdfBackend>>],
+                                   pdfset: &mut [Vec<ConvFunBackend>],
                                    set: &dyn PdfSetBackend|
              -> Vec<f64> {
                 if let Some(member) = conv_funs.members[self.pull_from] {
@@ -214,8 +214,8 @@ impl Subcommand for Opts {
             let mut pull_tuples = if self.limit == 0 {
                 Vec::new()
             } else {
-                let channel_results1 = channel_results(&self.conv_funs1, &mut conv_funs1, &*set1);
-                let channel_results2 = channel_results(&self.conv_funs2, &mut conv_funs2, &*set2);
+                let channel_results1 = channel_results(&self.conv_funs1, &mut conv_funs1, &set1);
+                let channel_results2 = channel_results(&self.conv_funs2, &mut conv_funs2, &set2);
 
                 let pull_tuples: Vec<_> = channel_results2
                     .iter()

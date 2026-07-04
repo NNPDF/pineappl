@@ -1,4 +1,5 @@
 use super::helpers::{self, ConvFuns, ConvoluteMode};
+use super::pdf_backend::PdfSetBackend as _;
 use super::{GlobalConfiguration, Subcommand};
 use anyhow::{Error, Result};
 use clap::builder::{PossibleValuesParser, TypedValueParser as _};

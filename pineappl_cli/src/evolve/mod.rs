@@ -76,7 +76,7 @@ impl Subcommand for Opts {
         let fk_table = evolve_grid(
             &grid,
             &eko_paths,
-            &*conv_funs[cfg.use_alphas_from],
+            &conv_funs[cfg.use_alphas_from],
             &self.orders,
             self.xir,
             self.xif,

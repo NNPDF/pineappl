@@ -2,7 +2,7 @@
 mod applgrid;
 
 use super::helpers::{self, ConvFuns, ConvoluteMode};
-use super::pdf_backend::PdfBackend;
+use super::pdf_backend::{ConvFunBackend, PdfBackend as _};
 use super::{GlobalConfiguration, Subcommand};
 use anyhow::{Result, anyhow};
 use clap::builder::{PossibleValuesParser, TypedValueParser as _};
@@ -190,7 +190,7 @@ impl Subcommand for Opts {
 fn convert_into_applgrid(
     output: &Path,
     grid: &mut Grid,
-    conv_funs: &[Box<dyn PdfBackend>],
+    conv_funs: &[ConvFunBackend],
     _: usize,
     discard_non_matching_values: bool,
 ) -> Result<(&'static str, Vec<f64>, usize, Vec<bool>)> {
@@ -220,7 +220,7 @@ fn convert_into_applgrid(
 fn convert_into_applgrid(
     _: &Path,
     _: &mut Grid,
-    _: &[Box<dyn PdfBackend>],
+    _: &[ConvFunBackend],
     _: usize,
     _: bool,
 ) -> Result<(&'static str, Vec<f64>, usize, Vec<bool>)> {
@@ -232,7 +232,7 @@ fn convert_into_applgrid(
 fn convert_into_grid(
     output: &Path,
     grid: &mut Grid,
-    conv_funs: &[Box<dyn PdfBackend>],
+    conv_funs: &[ConvFunBackend],
     scales: usize,
     discard_non_matching_values: bool,
 ) -> Result<(&'static str, Vec<f64>, usize, Vec<bool>)> {

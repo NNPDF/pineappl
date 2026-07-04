@@ -1,5 +1,7 @@
 use super::GlobalConfiguration;
-use super::pdf_backend::{self, Backend, ForcePositive, PdfBackend, PdfSetBackend};
+use super::pdf_backend::{
+    self, Backend, ConvFunBackend, ConvFunSetBackend, ForcePositive, PdfBackend as _, PdfSetBackend,
+};
 use anyhow::{Context as _, Error, Result, anyhow, bail};
 use itertools::Itertools as _;
 use pineappl::boc::{ScaleFuncForm, Scales};
@@ -137,10 +139,7 @@ pub(crate) enum ConvoluteMode {
 }
 
 /// Creates convolution functions using the specified backend.
-pub(crate) fn create_conv_funs(
-    funs: &ConvFuns,
-    backend: Backend,
-) -> Result<Vec<Box<dyn PdfBackend>>> {
+pub(crate) fn create_conv_funs(funs: &ConvFuns, backend: Backend) -> Result<Vec<ConvFunBackend>> {
     funs.lhapdf_names
         .iter()
         .zip(&funs.members)
@@ -152,13 +151,11 @@ pub(crate) fn create_conv_funs(
 }
 
 /// Creates convolution functions for a PDF set using the specified backend.
-///
-/// Returns a tuple of (`PdfSetBackend`, Vec<Vec<Box<dyn PdfBackend>>>).
 pub(crate) fn create_conv_funs_for_set(
     funs: &ConvFuns,
     index_of_set: usize,
     backend: Backend,
-) -> Result<(Box<dyn PdfSetBackend>, Vec<Vec<Box<dyn PdfBackend>>>)> {
+) -> Result<(ConvFunSetBackend, Vec<Vec<ConvFunBackend>>)> {
     let setname = &funs.lhapdf_names[index_of_set];
     let set = pdf_backend::create_pdf_set(setname, backend)?;
 
@@ -240,7 +237,7 @@ pub(crate) fn labels_and_units(grid: &Grid, integrated: bool) -> (Vec<(String, &
 /// Performs convolution with scale variations using the backend abstraction.
 pub(crate) fn convolve_scales(
     grid: &Grid,
-    conv_funs: &mut [Box<dyn PdfBackend>],
+    conv_funs: &mut [ConvFunBackend],
     conv_types: &[ConvType],
     orders: &[(u8, u8)],
     bins: &[usize],
@@ -298,13 +295,7 @@ pub(crate) fn convolve_scales(
         .map(|fun| fun as &mut dyn FnMut(i32, f64, f64) -> f64)
         .collect();
 
-    let mut alphas_funs: Vec<_> = conv_funs
-        .iter()
-        .map(|fun| {
-            let fun_ref = fun.as_ref();
-            move |q2: f64| fun_ref.alphas_q2(q2)
-        })
-        .collect();
+    let mut alphas_funs: Vec<_> = conv_funs.iter().map(|fun| |q2| fun.alphas_q2(q2)).collect();
 
     let convolutions: Vec<_> = conv_funs
         .iter()
@@ -376,7 +367,7 @@ pub(crate) fn scales_vector(grid: &Grid, scales: usize) -> &[(f64, f64, f64)] {
 /// Performs convolution using the backend abstraction.
 pub(crate) fn convolve(
     grid: &Grid,
-    conv_funs: &mut [Box<dyn PdfBackend>],
+    conv_funs: &mut [ConvFunBackend],
     conv_types: &[ConvType],
     orders: &[(u8, u8)],
     bins: &[usize],

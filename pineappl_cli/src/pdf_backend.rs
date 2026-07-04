@@ -5,6 +5,7 @@
 //! and provides type-safe access to PDF metadata.
 
 use anyhow::{Context as _, Result, anyhow};
+use enum_dispatch::enum_dispatch;
 // use std::fmt;
 use lhapdf::PdfSet;
 use neopdf::gridpdf::ForcePositive as NeoPDFForcePositive;
@@ -78,6 +79,7 @@ impl FromStr for Backend {
 ///
 /// This trait provides a common interface for PDF interpolation backends,
 /// allowing the CLI to work with different implementations transparently.
+#[enum_dispatch]
 pub trait PdfBackend: Send {
     /// Evaluates the strong coupling constant `alpha_s(Q^2)`.
     fn alphas_q2(&self, q2: f64) -> f64;
@@ -118,7 +120,17 @@ pub trait PdfBackend: Send {
     fn xfx_q2(&self, id: i32, x: f64, q2: f64) -> f64;
 }
 
+/// TODO.
+#[enum_dispatch(PdfBackend)]
+pub enum ConvFunBackend {
+    /// TODO.
+    LhapdfPdf,
+    /// TODO.
+    NeopdfPdf,
+}
+
 /// Unified PDF set interface for uncertainty calculations.
+#[enum_dispatch]
 pub trait PdfSetBackend {
     // /// Returns the number of members in this set.
     // fn num_members(&self) -> usize;
@@ -128,7 +140,7 @@ pub trait PdfSetBackend {
     /// # Errors
     ///
     /// TODO.
-    fn mk_pdfs(&self) -> Result<Vec<Box<dyn PdfBackend>>>;
+    fn mk_pdfs(&self) -> Result<Vec<ConvFunBackend>>;
 
     /// Calculates the uncertainty for a set of values.
     ///
@@ -136,6 +148,15 @@ pub trait PdfSetBackend {
     ///
     /// TODO.
     fn uncertainty(&self, values: &[f64], cl: f64, alternative: bool) -> Result<Uncertainty>;
+}
+
+/// TODO.
+#[enum_dispatch(PdfSetBackend)]
+pub enum ConvFunSetBackend {
+    /// TODO.
+    LhapdfSet,
+    /// TODO.
+    NeopdfSet,
 }
 
 /// Uncertainty information from a PDF set.
@@ -273,11 +294,11 @@ impl PdfSetBackend for LhapdfSet {
     //         .unwrap_or(1)
     // }
 
-    fn mk_pdfs(&self) -> Result<Vec<Box<dyn PdfBackend>>> {
+    fn mk_pdfs(&self) -> Result<Vec<ConvFunBackend>> {
         let pdfs = self.set.mk_pdfs()?;
         Ok(pdfs
             .into_iter()
-            .map(|pdf| Box::new(LhapdfPdf { pdf }) as Box<dyn PdfBackend>)
+            .map(|pdf| LhapdfPdf { pdf }.into())
             .collect())
     }
 
@@ -387,11 +408,11 @@ impl PdfSetBackend for NeopdfSet {
     //     self.num_members
     // }
 
-    fn mk_pdfs(&self) -> Result<Vec<Box<dyn PdfBackend>>> {
+    fn mk_pdfs(&self) -> Result<Vec<ConvFunBackend>> {
         let pdfs = PDF::load_pdfs(&self.pdf_name);
         Ok(pdfs
             .into_iter()
-            .map(|pdf| Box::new(NeopdfPdf { pdf }) as Box<dyn PdfBackend>)
+            .map(|pdf| NeopdfPdf { pdf }.into())
             .collect())
     }
 
@@ -417,20 +438,17 @@ impl PdfSetBackend for NeopdfSet {
 /// # Errors
 ///
 /// TODO.
-pub fn create_pdf(name: &str, member: usize, backend: Backend) -> Result<Box<dyn PdfBackend>> {
+pub fn create_pdf(name: &str, member: usize, backend: Backend) -> Result<ConvFunBackend> {
     match backend {
         Backend::Lhapdf => {
             if let Ok(lhaid) = name.parse::<i32>() {
-                Ok(Box::new(LhapdfPdf::with_lhaid(lhaid)?))
+                Ok(LhapdfPdf::with_lhaid(lhaid)?.into())
             } else {
-                Ok(Box::new(LhapdfPdf::with_setname_and_member(
-                    name,
-                    member.try_into().unwrap(),
-                )?))
+                Ok(LhapdfPdf::with_setname_and_member(name, member.try_into().unwrap())?.into())
             }
         }
         // NOTE: `NeoPDF` doesn't support reading LHAID yet.
-        Backend::Neopdf => Ok(Box::new(NeopdfPdf::load(name, member))),
+        Backend::Neopdf => Ok(NeopdfPdf::load(name, member).into()),
     }
 }
 
@@ -439,7 +457,7 @@ pub fn create_pdf(name: &str, member: usize, backend: Backend) -> Result<Box<dyn
 /// # Errors
 ///
 /// TODO.
-pub fn create_pdf_set(name: &str, backend: Backend) -> Result<Box<dyn PdfSetBackend>> {
+pub fn create_pdf_set(name: &str, backend: Backend) -> Result<ConvFunSetBackend> {
     match backend {
         Backend::Lhapdf => {
             // Try parsing as LHAID first
@@ -450,8 +468,8 @@ pub fn create_pdf_set(name: &str, backend: Backend) -> Result<Box<dyn PdfSetBack
             } else {
                 name.to_owned()
             };
-            Ok(Box::new(LhapdfSet::new(&setname)?))
+            Ok(LhapdfSet::new(&setname)?.into())
         }
-        Backend::Neopdf => Ok(Box::new(NeopdfSet::new(name))),
+        Backend::Neopdf => Ok(NeopdfSet::new(name).into()),
     }
 }
