@@ -16,7 +16,7 @@ use std::result::Result as StdResult;
 use std::str::FromStr;
 
 // TODO: remove `pub`
-pub(crate) const SCALES_VECTOR_REN_FAC: [(f64, f64, f64); 9] = [
+pub const SCALES_VECTOR_REN_FAC: [(f64, f64, f64); 9] = [
     (1.0, 1.0, 1.0),
     (2.0, 2.0, 1.0),
     (0.5, 0.5, 1.0),
@@ -71,7 +71,7 @@ const SCALES_VECTOR_27: [(f64, f64, f64); 27] = [
 ];
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub(crate) struct ConvFuns {
+pub struct ConvFuns {
     pub lhapdf_names: Vec<String>,
     pub members: Vec<Option<usize>>,
     pub conv_types: Vec<ConvType>,
@@ -130,13 +130,13 @@ impl FromStr for ConvFuns {
 }
 
 #[derive(Clone, Copy)]
-pub(crate) enum ConvoluteMode {
+pub enum ConvoluteMode {
     Asymmetry,
     Integrated,
     Normal,
 }
 
-pub(crate) fn create_conv_funs(funs: &ConvFuns) -> Result<Vec<Pdf>> {
+pub fn create_conv_funs(funs: &ConvFuns) -> Result<Vec<Pdf>> {
     Ok(funs
         .lhapdf_names
         .iter()
@@ -154,7 +154,7 @@ pub(crate) fn create_conv_funs(funs: &ConvFuns) -> Result<Vec<Pdf>> {
         .collect::<Result<_, _>>()?)
 }
 
-pub(crate) fn create_conv_funs_for_set(
+pub fn create_conv_funs_for_set(
     funs: &ConvFuns,
     index_of_set: usize,
 ) -> Result<(PdfSet, Vec<Vec<Pdf>>)> {
@@ -187,12 +187,12 @@ pub(crate) fn create_conv_funs_for_set(
     Ok((set, conv_funs))
 }
 
-pub(crate) fn read_grid(input: &Path) -> Result<Grid> {
+pub fn read_grid(input: &Path) -> Result<Grid> {
     Grid::read(File::open(input).context(format!("unable to open '{}'", input.display()))?)
         .context(format!("unable to read '{}'", input.display()))
 }
 
-pub(crate) fn write_grid(output: &Path, grid: &Grid) -> Result<ExitCode> {
+pub fn write_grid(output: &Path, grid: &Grid) -> Result<ExitCode> {
     let file = OpenOptions::new()
         .write(true)
         .create_new(true)
@@ -208,7 +208,7 @@ pub(crate) fn write_grid(output: &Path, grid: &Grid) -> Result<ExitCode> {
     Ok(ExitCode::SUCCESS)
 }
 
-pub(crate) fn create_table() -> Table {
+pub fn create_table() -> Table {
     let mut table = Table::new();
     table.set_format(
         FormatBuilder::new()
@@ -219,7 +219,7 @@ pub(crate) fn create_table() -> Table {
     table
 }
 
-pub(crate) fn labels_and_units(grid: &Grid, integrated: bool) -> (Vec<(String, &str)>, &str, &str) {
+pub fn labels_and_units(grid: &Grid, integrated: bool) -> (Vec<(String, &str)>, &str, &str) {
     let metadata = grid.metadata();
 
     (
@@ -249,7 +249,7 @@ pub(crate) fn labels_and_units(grid: &Grid, integrated: bool) -> (Vec<(String, &
     )
 }
 
-pub(crate) fn convolve_scales(
+pub fn convolve_scales(
     grid: &Grid,
     conv_funs: &mut [Pdf],
     conv_types: &[ConvType],
@@ -368,7 +368,7 @@ pub(crate) fn convolve_scales(
     }
 }
 
-pub(crate) fn scales_vector(grid: &Grid, scales: usize) -> &[(f64, f64, f64)] {
+pub fn scales_vector(grid: &Grid, scales: usize) -> &[(f64, f64, f64)] {
     let Scales { fac, frg, .. } = grid.scales();
 
     match (fac, frg, scales) {
@@ -384,7 +384,7 @@ pub(crate) fn scales_vector(grid: &Grid, scales: usize) -> &[(f64, f64, f64)] {
     }
 }
 
-pub(crate) fn convolve(
+pub fn convolve(
     grid: &Grid,
     conv_funs: &mut [Pdf],
     conv_types: &[ConvType],
@@ -408,11 +408,7 @@ pub(crate) fn convolve(
     )
 }
 
-pub(crate) fn convolve_limits(
-    grid: &Grid,
-    bins: &[usize],
-    mode: ConvoluteMode,
-) -> Vec<Vec<(f64, f64)>> {
+pub fn convolve_limits(grid: &Grid, bins: &[usize], mode: ConvoluteMode) -> Vec<Vec<(f64, f64)>> {
     let limits: Vec<_> = grid
         .bwfl()
         .bins()
@@ -428,7 +424,7 @@ pub(crate) fn convolve_limits(
     }
 }
 
-pub(crate) fn parse_integer_range(range: &str) -> Result<RangeInclusive<usize>> {
+pub fn parse_integer_range(range: &str) -> Result<RangeInclusive<usize>> {
     if let Some((left, right)) = range.split_once('-') {
         let left: usize = str::parse(left).context(format!(
             "unable to parse integer range '{range}'; couldn't convert '{left}'"
@@ -446,7 +442,7 @@ pub(crate) fn parse_integer_range(range: &str) -> Result<RangeInclusive<usize>> 
     }
 }
 
-pub(crate) fn parse_order(order: &str) -> Result<(u8, u8)> {
+pub fn parse_order(order: &str) -> Result<(u8, u8)> {
     const FORMAT: &str = "must be one of `asX`, `aY`, `asXaY` or `aYasX` with `X` and `Y` integer";
 
     // since 'a' is a substring of 'as', the latter must be given first
