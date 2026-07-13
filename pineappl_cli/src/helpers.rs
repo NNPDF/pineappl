@@ -1,6 +1,7 @@
 use super::GlobalConfiguration;
 use super::pdf_backend::{
-    self, Backend, ConvFunBackend, ConvFunSetBackend, ForcePositive, PdfBackend as _, PdfSetBackend,
+    self, Backend, ConvFunBackend, ConvFunSetBackend, ForcePositive, PdfBackend as _,
+    PdfSetBackend as _,
 };
 use anyhow::{Context as _, Error, Result, anyhow, bail};
 use itertools::Itertools as _;
@@ -139,7 +140,7 @@ pub enum ConvoluteMode {
 }
 
 /// Creates convolution functions using the specified backend.
-pub(crate) fn create_conv_funs(funs: &ConvFuns, backend: Backend) -> Result<Vec<ConvFunBackend>> {
+pub fn create_conv_funs(funs: &ConvFuns, backend: Backend) -> Result<Vec<ConvFunBackend>> {
     funs.lhapdf_names
         .iter()
         .zip(&funs.members)
@@ -151,7 +152,7 @@ pub(crate) fn create_conv_funs(funs: &ConvFuns, backend: Backend) -> Result<Vec<
 }
 
 /// Creates convolution functions for a PDF set using the specified backend.
-pub(crate) fn create_conv_funs_for_set(
+pub fn create_conv_funs_for_set(
     funs: &ConvFuns,
     index_of_set: usize,
     backend: Backend,
@@ -235,7 +236,7 @@ pub fn labels_and_units(grid: &Grid, integrated: bool) -> (Vec<(String, &str)>, 
 }
 
 /// Performs convolution with scale variations using the backend abstraction.
-pub(crate) fn convolve_scales(
+pub fn convolve_scales(
     grid: &Grid,
     conv_funs: &mut [ConvFunBackend],
     conv_types: &[ConvType],
@@ -365,7 +366,7 @@ pub fn scales_vector(grid: &Grid, scales: usize) -> &[(f64, f64, f64)] {
 }
 
 /// Performs convolution using the backend abstraction.
-pub(crate) fn convolve(
+pub fn convolve(
     grid: &Grid,
     conv_funs: &mut [ConvFunBackend],
     conv_types: &[ConvType],

@@ -147,7 +147,7 @@ impl Subcommand for Opts {
                             .map(|pdf| results[pdf][bin])
                             .collect::<Vec<_>>()
                     })
-                    .map(|values| Ok(set.uncertainty(&values, self.cl, false)?))
+                    .map(|values| set.uncertainty(&values, self.cl, false))
                     .collect::<Result<_, _>>()
             })
             .collect::<Result<_, Error>>()?;

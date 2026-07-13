@@ -6,7 +6,7 @@ mod fastnlo;
 mod fktable;
 
 use super::helpers::{self, ConvFuns, ConvoluteMode};
-use super::pdf_backend::{ConvFunBackend, PdfBackend as _};
+use super::pdf_backend::ConvFunBackend;
 use super::{GlobalConfiguration, Subcommand};
 use anyhow::{Result, anyhow};
 use clap::builder::{PossibleValuesParser, TypedValueParser as _};
@@ -175,6 +175,7 @@ fn convert_applgrid(
     conv_funs: &[ConvFunBackend],
     _: usize,
 ) -> Result<(&'static str, Grid, Vec<f64>, usize)> {
+    use super::pdf_backend::PdfBackend as _;
     use pineappl_applgrid::ffi;
 
     // TODO: check AMCATNLO scale variations
@@ -203,7 +204,7 @@ fn convert_applgrid(
 fn convert_applgrid(
     _: &Path,
     _: u8,
-    _: &mut [ConvFunBackend],
+    _: &[ConvFunBackend],
     _: usize,
 ) -> Result<(&'static str, Grid, Vec<f64>, usize)> {
     Err(anyhow!(

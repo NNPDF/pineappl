@@ -121,6 +121,10 @@ pub trait PdfBackend: Send {
 }
 
 /// TODO.
+#[expect(
+    clippy::large_enum_variant,
+    reason = "LhapdfPdf is artificially small due to indirection"
+)]
 #[enum_dispatch(PdfBackend)]
 pub enum ConvFunBackend {
     /// TODO.

@@ -2,7 +2,7 @@
 mod applgrid;
 
 use super::helpers::{self, ConvFuns, ConvoluteMode};
-use super::pdf_backend::{ConvFunBackend, PdfBackend as _};
+use super::pdf_backend::ConvFunBackend;
 use super::{GlobalConfiguration, Subcommand};
 use anyhow::{Result, anyhow};
 use clap::builder::{PossibleValuesParser, TypedValueParser as _};
@@ -194,6 +194,8 @@ fn convert_into_applgrid(
     _: usize,
     discard_non_matching_values: bool,
 ) -> Result<(&'static str, Vec<f64>, usize, Vec<bool>)> {
+    use super::pdf_backend::PdfBackend as _;
+
     // TODO: check also scale-varied results
 
     let (mut applgrid, order_mask) =
