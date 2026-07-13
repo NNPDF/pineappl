@@ -9,9 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Added a `pineappl_grid_convolution_pids` to the C API
+- added a `pineappl_grid_convolution_pids` to the C API
 - added support for the [NeoPDF](https://qcdlab.github.io/neopdf/) library as
-  an alternative to LHAPDF in the CLI; using `--backend=neopdf` one can use it.
+  an alternative to LHAPDF in the CLI; use `--backend=neopdf` to switch to it
 
 ## [1.4.2] - 31/05/2026
 
