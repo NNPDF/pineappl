@@ -451,7 +451,7 @@ fn convert_coeff_add_flex(
                 .subgrids_mut()
                 .slice_mut(s![.., obs, usize::try_from(subproc).unwrap()])
                 .iter_mut()
-                .zip(arrays.into_iter())
+                .zip(arrays)
             {
                 if array.is_empty() {
                     continue;

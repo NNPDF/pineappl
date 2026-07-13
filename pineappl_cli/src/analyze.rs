@@ -35,7 +35,7 @@ impl Subcommand for SubcommandEnum {
 
 /// Compare K-factors with channel K factors (ckf).
 #[derive(Parser)]
-pub(crate) struct CkfOpts {
+pub struct CkfOpts {
     /// Path to the input grid.
     #[arg(value_hint = ValueHint::FilePath)]
     input: PathBuf,

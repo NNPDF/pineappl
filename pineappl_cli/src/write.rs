@@ -81,7 +81,7 @@ impl FromArgMatches for MoreArgs {
                         .collect();
                     assert_eq!(arguments.len(), indices.len());
 
-                    for (index, arg) in indices.into_iter().zip(arguments.into_iter()) {
+                    for (index, arg) in indices.into_iter().zip(arguments) {
                         assert_eq!(arg.len(), 1);
                         args[index] = Some(match id.as_str() {
                             "cc" => OpsArg::Cc(arg[0]),
@@ -97,7 +97,7 @@ impl FromArgMatches for MoreArgs {
                         .collect();
                     assert_eq!(arguments.len(), indices.len());
 
-                    for (index, arg) in indices.into_iter().zip(arguments.into_iter()) {
+                    for (index, arg) in indices.into_iter().zip(arguments) {
                         assert_eq!(arg.len(), 1);
                         args[index] = Some(match id.as_str() {
                             "merge_channel_factors" => OpsArg::MergeChannelFactors(arg[0]),

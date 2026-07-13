@@ -246,7 +246,7 @@ fn read_fktable(reader: impl BufRead) -> Result<Grid> {
                             .subgrids_mut()
                             .slice_mut(s![0, last_bin, ..])
                             .iter_mut()
-                            .zip(arrays.into_iter())
+                            .zip(arrays)
                         {
                             *subgrid = ImportSubgridV1::new(
                                 array,
@@ -313,7 +313,7 @@ fn read_fktable(reader: impl BufRead) -> Result<Grid> {
         .subgrids_mut()
         .slice_mut(s![0, last_bin, ..])
         .iter_mut()
-        .zip(arrays.into_iter())
+        .zip(arrays)
     {
         *subgrid = ImportSubgridV1::new(
             array,
