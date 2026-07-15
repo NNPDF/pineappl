@@ -333,6 +333,14 @@ impl NeopdfPdf {
             pdf: PDF::load(pdf_name, member),
         }
     }
+
+    /// Loads a NeoPDF member by its LHAPDF ID (LHAID).
+    #[must_use]
+    pub fn load_by_lhaid(lhaid: u32) -> Self {
+        Self {
+            pdf: PDF::load_by_lhaid(lhaid),
+        }
+    }
 }
 
 impl PdfBackend for NeopdfPdf {
@@ -451,8 +459,13 @@ pub fn create_pdf(name: &str, member: usize, backend: Backend) -> Result<ConvFun
                 Ok(LhapdfPdf::with_setname_and_member(name, member.try_into().unwrap())?.into())
             }
         }
-        // NOTE: `NeoPDF` doesn't support reading LHAID yet.
-        Backend::Neopdf => Ok(NeopdfPdf::load(name, member).into()),
+        Backend::Neopdf => {
+            if let Ok(lhaid) = name.parse::<u32>() {
+                Ok(NeopdfPdf::load_by_lhaid(lhaid).into())
+            } else {
+                Ok(NeopdfPdf::load(name, member).into())
+            }
+        }
     }
 }
 

@@ -552,6 +552,37 @@ fn neopdf_backend() {
 }
 
 #[test]
+fn lhaid_neopdf_backend() {
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "--pdf-backend=neopdf",
+            "convolve",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
+            "324900",
+        ])
+        .assert()
+        .success()
+        .stdout(DEFAULT_STR);
+}
+
+#[test]
+fn neopdf_multiple_pdfs() {
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "--pdf-backend=neopdf",
+            "convolve",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
+            "NNPDF31_nlo_as_0118_luxqed",
+            "324900=NNPDF31_nlo_as_0118_luxqed",
+        ])
+        .assert()
+        .success()
+        .stdout(DEFAULT_MULTIPLE_PDFS_STR);
+}
+
+#[test]
 fn integrated_neopdf_backend() {
     Command::cargo_bin("pineappl")
         .unwrap()
