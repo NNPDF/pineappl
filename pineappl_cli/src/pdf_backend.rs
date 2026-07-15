@@ -14,25 +14,6 @@ use std::str::FromStr;
 
 pub use neopdf::uncertainty::CL_1_SIGMA;
 
-// /// The type of PDF set (space-like for PDFs, time-like for FFs).
-// #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
-// pub enum SetType {
-//     /// Space-like PDF (standard parton distribution function).
-//     #[default]
-//     SpaceLike,
-//     /// Time-like PDF (fragmentation function).
-//     TimeLike,
-// }
-
-// impl fmt::Display for SetType {
-//     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-//         match self {
-//             Self::SpaceLike => write!(f, "SpaceLike"),
-//             Self::TimeLike => write!(f, "TimeLike"),
-//         }
-//     }
-// }
-
 /// Method for handling negative PDF values.
 #[derive(Clone, Copy, Debug)]
 pub enum ForcePositive {
@@ -65,15 +46,6 @@ impl FromStr for Backend {
         }
     }
 }
-
-// impl fmt::Display for Backend {
-//     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-//         match self {
-//             Self::Lhapdf => write!(f, "lhapdf"),
-//             Self::Neopdf => write!(f, "neopdf"),
-//         }
-//     }
-// }
 
 /// Unified PDF backend interface.
 ///
@@ -136,9 +108,6 @@ pub enum ConvFunBackend {
 /// Unified PDF set interface for uncertainty calculations.
 #[enum_dispatch]
 pub trait PdfSetBackend {
-    // /// Returns the number of members in this set.
-    // fn num_members(&self) -> usize;
-
     /// Creates all PDF members in the set.
     ///
     /// # Errors
@@ -173,10 +142,6 @@ pub struct Uncertainty {
     /// Positive error (absolute value).
     pub errplus: f64,
 }
-
-// ============================================================================
-// LHAPDF Backend Implementation
-// ============================================================================
 
 /// LHAPDF backend wrapper.
 pub struct LhapdfPdf {
@@ -215,21 +180,6 @@ impl PdfBackend for LhapdfPdf {
         self.pdf.alphas_q2(q2)
     }
 
-    // fn error_type(&self) -> String {
-    //     self.pdf
-    //         .set()
-    //         .entry("ErrorType")
-    //         .map(|s| s.to_owned())
-    //         .unwrap_or_default()
-    // }
-
-    // fn is_polarized(&self) -> bool {
-    //     self.pdf
-    //         .set()
-    //         .entry("Polarized")
-    //         .is_some_and(|s| s.eq_ignore_ascii_case("true"))
-    // }
-
     fn particle_id(&self) -> i32 {
         self.pdf
             .set()
@@ -244,19 +194,6 @@ impl PdfBackend for LhapdfPdf {
             ForcePositive::ClipNegative => self.pdf.set_force_positive(1),
         }
     }
-
-    // fn set_type(&self) -> SetType {
-    //     self.pdf
-    //         .set()
-    //         .entry("SetType")
-    //         .map_or(SetType::SpaceLike, |s| {
-    //             if s.eq_ignore_ascii_case("timelike") {
-    //                 SetType::TimeLike
-    //             } else {
-    //                 SetType::SpaceLike
-    //             }
-    //         })
-    // }
 
     fn x_max(&mut self) -> f64 {
         self.pdf.x_max()
@@ -291,13 +228,6 @@ impl LhapdfSet {
 }
 
 impl PdfSetBackend for LhapdfSet {
-    // fn num_members(&self) -> usize {
-    //     self.set
-    //         .entry("NumMembers")
-    //         .and_then(|s| s.parse().ok())
-    //         .unwrap_or(1)
-    // }
-
     fn mk_pdfs(&self) -> Result<Vec<ConvFunBackend>> {
         let pdfs = self.set.mk_pdfs()?;
         Ok(pdfs
@@ -315,10 +245,6 @@ impl PdfSetBackend for LhapdfSet {
         })
     }
 }
-
-// ============================================================================
-// NeoPDF Backend Implementation
-// ============================================================================
 
 /// `NeoPDF` backend wrapper.
 pub struct NeopdfPdf {
@@ -348,14 +274,6 @@ impl PdfBackend for NeopdfPdf {
         self.pdf.alphas_q2(q2)
     }
 
-    // fn error_type(&self) -> String {
-    //     self.pdf.metadata().error_type.clone()
-    // }
-
-    // fn is_polarized(&self) -> bool {
-    //     self.pdf.metadata().polarised
-    // }
-
     fn particle_id(&self) -> i32 {
         self.pdf.metadata().hadron_pid
     }
@@ -371,13 +289,6 @@ impl PdfBackend for NeopdfPdf {
             }
         }
     }
-
-    // fn set_type(&self) -> SetType {
-    //     match self.pdf.metadata().set_type {
-    //         neopdf::metadata::SetType::SpaceLike => SetType::SpaceLike,
-    //         neopdf::metadata::SetType::TimeLike => SetType::TimeLike,
-    //     }
-    // }
 
     fn x_max(&mut self) -> f64 {
         self.pdf.metadata().x_max
@@ -440,10 +351,6 @@ impl PdfSetBackend for NeopdfSet {
         })
     }
 }
-
-// ============================================================================
-// Factory Functions
-// ============================================================================
 
 /// Creates a single PDF from a set name and member index.
 ///
