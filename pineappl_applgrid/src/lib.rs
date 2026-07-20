@@ -194,7 +194,6 @@ pub mod ffi {
     }
 }
 
-use lhapdf::Pdf;
 use std::mem;
 use std::pin::Pin;
 use std::ptr;
@@ -206,14 +205,22 @@ static MUTEX: OnceLock<Mutex<()>> = OnceLock::new();
 /// TODO.
 pub fn grid_convolve_with_one(
     grid: Pin<&mut ffi::grid>,
-    pdf: &mut Pdf,
+    xfx_q2: &mut impl FnMut(i32, f64, f64) -> f64,
+    alphas_q2: &mut impl FnMut(f64) -> f64,
     nloops: i32,
     rscale: f64,
     fscale: f64,
     escale: f64,
 ) -> Vec<f64> {
-    let xfx = |x: &f64, q: &f64, results: *mut f64, pdf: *mut ffi::c_void| {
-        let pdf = unsafe { &mut *pdf.cast::<Pdf>() };
+    struct FnMuts<'a> {
+        xfx_q2: &'a mut dyn FnMut(i32, f64, f64) -> f64,
+        alphas_q2: &'a mut dyn FnMut(f64) -> f64,
+    }
+
+    let mut fn_muts = FnMuts { xfx_q2, alphas_q2 };
+
+    let xfx = |x: &f64, q: &f64, results: *mut f64, ptr: *mut ffi::c_void| {
+        let fn_muts = unsafe { &mut *ptr.cast::<FnMuts<'_>>() };
         let results = unsafe { slice::from_raw_parts_mut(results, 14) };
         for (pid, result) in [-6, -5, -4, -3, -2, -1, 21, 1, 2, 3, 4, 5, 6, 22]
             .into_iter()
@@ -221,13 +228,13 @@ pub fn grid_convolve_with_one(
         {
             // some grids have x-nodes at slightly larger values than `1.0`; in that cases these
             // are numerical problems which we 'fix' by evaluating at exactly `1.0` instead
-            *result = pdf.xfx_q2(pid, x.min(1.0), *q * *q);
+            *result = (fn_muts.xfx_q2)(pid, x.min(1.0), *q * *q);
         }
     };
 
-    let alphas = |q: &f64, pdf: *mut ffi::c_void| -> f64 {
-        let pdf = unsafe { &mut *pdf.cast::<Pdf>() };
-        pdf.alphas_q2(*q * *q)
+    let alphas = |q: &f64, ptr: *mut ffi::c_void| -> f64 {
+        let fn_muts = unsafe { &mut *ptr.cast::<FnMuts<'_>>() };
+        (fn_muts.alphas_q2)(*q * *q)
     };
 
     let lock = MUTEX
@@ -241,7 +248,7 @@ pub fn grid_convolve_with_one(
             grid,
             xfx,
             alphas,
-            ptr::from_mut(pdf).cast::<ffi::c_void>(),
+            ptr::from_mut(&mut fn_muts).cast::<ffi::c_void>(),
             nloops,
             rscale,
             fscale,

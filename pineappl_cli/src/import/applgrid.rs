@@ -1,6 +1,5 @@
 use anyhow::Result;
 use float_cmp::assert_approx_eq;
-use lhapdf::Pdf;
 use pineappl::boc::{BinsWithFillLimits, Channel, Kinematics, Order, ScaleFuncForm, Scales};
 use pineappl::convolutions::{Conv, ConvType};
 use pineappl::grid::Grid;
@@ -298,13 +297,4 @@ pub(super) fn convert_applgrid(grid: Pin<&mut grid>, alpha: u8) -> Result<Grid> 
     grid0.scale_by_order(alphas_factor, 1.0, 1.0, 1.0, 1.0, global);
 
     Ok(grid0)
-}
-
-pub(super) fn convolve_applgrid(grid: Pin<&mut grid>, conv_funs: &mut [Pdf]) -> Vec<f64> {
-    let nloops = grid.nloops();
-
-    // TODO: add support for convolving an APPLgrid with two functions
-    assert_eq!(conv_funs.len(), 1);
-
-    pineappl_applgrid::grid_convolve_with_one(grid, &mut conv_funs[0], nloops, 1.0, 1.0, 1.0)
 }

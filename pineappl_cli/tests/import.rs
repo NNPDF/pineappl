@@ -1,10 +1,11 @@
 #![expect(missing_docs, reason = "non-public items will not be documented")]
 
 use assert_cmd::Command;
-use predicates::str as pred_str;
 
 #[cfg(any(feature = "applgrid", feature = "fastnlo", feature = "fktable"))]
 use assert_fs::NamedTempFile;
+#[cfg(any(feature = "applgrid", feature = "fastnlo"))]
+use predicates::str as pred_str;
 
 #[cfg(feature = "fastnlo")]
 const HELP_STR: &str = "Converts APPLgrid/fastNLO/FastKernel files to PineAPPL grids

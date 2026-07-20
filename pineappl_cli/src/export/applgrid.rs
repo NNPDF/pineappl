@@ -2,7 +2,6 @@ use anyhow::{Result, bail};
 use cxx::{UniquePtr, let_cxx_string};
 use float_cmp::approx_eq;
 use itertools::izip;
-use lhapdf::Pdf;
 use ndarray::{Axis, s};
 use pineappl::boc::{Channel, Kinematics, Order};
 use pineappl::grid::Grid;
@@ -13,7 +12,6 @@ use pineappl_applgrid::ffi::{self, grid};
 use std::f64::consts::TAU;
 use std::iter;
 use std::path::Path;
-use std::pin::Pin;
 
 fn reconstruct_subgrid_params(grid: &Grid, order: usize, bin: usize) -> Result<Vec<Interp>> {
     if grid
@@ -391,14 +389,4 @@ pub(super) fn convert_into_applgrid(
     applgrid.pin_mut().Write(&filename, &empty, &empty);
 
     Ok((applgrid, order_mask))
-}
-
-// TODO: deduplicate this function from import
-pub(super) fn convolve_applgrid(grid: Pin<&mut grid>, conv_funs: &mut [Pdf]) -> Vec<f64> {
-    let nloops = grid.nloops();
-
-    // TODO: add support for convolving an APPLgrid with two functions
-    assert_eq!(conv_funs.len(), 1);
-
-    pineappl_applgrid::grid_convolve_with_one(grid, &mut conv_funs[0], nloops, 1.0, 1.0, 1.0)
 }

@@ -120,7 +120,7 @@ impl Subcommand for Opts {
             bail!("channels differ");
         }
 
-        let mut conv_funs = helpers::create_conv_funs(&self.conv_funs)?;
+        let mut conv_funs = helpers::create_conv_funs(&self.conv_funs, cfg.pdf_backend)?;
 
         let mut table = helpers::create_table();
         let mut title = Row::empty();
