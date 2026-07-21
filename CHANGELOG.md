@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.0] - 21/07/2026
+
 ### Added
 
 - added a `pineappl_grid_convolution_pids` to the C API
@@ -903,7 +905,8 @@ the old file format can still be read with this new version.
 
 - first release
 
-[Unreleased]: https://github.com/NNPDF/pineappl/compare/v1.4.2...HEAD
+[Unreleased]: https://github.com/NNPDF/pineappl/compare/v1.5.0...HEAD
+[1.5.0]: https://github.com/NNPDF/pineappl/compare/v1.4.2...v1.5.0
 [1.4.2]: https://github.com/NNPDF/pineappl/compare/v1.4.1...v1.4.2
 [1.4.1]: https://github.com/NNPDF/pineappl/compare/v1.4.0...v1.4.1
 [1.4.0]: https://github.com/NNPDF/pineappl/compare/v1.3.3...v1.4.0
