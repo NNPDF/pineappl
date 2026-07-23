@@ -60,6 +60,8 @@ jobs:
       - name: Compile binary
         run: |
           brew tap davidchall/hep
+          # trust the tap so its formulae (lhapdf, applgrid, fastnlo) can be installed non-interactively
+          brew trust davidchall/hep
           # install LHAPDF
           brew install lhapdf
           # install APPLgrid's dependencies; disable ROOT because its static libraries are missing
