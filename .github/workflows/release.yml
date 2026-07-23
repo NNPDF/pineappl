@@ -7,6 +7,12 @@ on:
     tags:
       - 'v[0-9]+*'
   workflow_dispatch:
+    inputs:
+      tag:
+        description: >-
+          Existing release tag to (re)publish. Use this to complete a release
+          whose tag-triggered run failed partway.
+        required: true
 
 env:
   # make the `gh` binary work
@@ -16,13 +22,15 @@ jobs:
   # create a release on github
   create-release:
     runs-on: ubuntu-latest
-    if: "startsWith(github.ref, 'refs/tags/')"
+    if: "startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'"
     steps:
       - uses: actions/checkout@v4
       - name: Create new release
+        env:
+          TAG: ${{ github.event.inputs.tag || github.ref_name }}
         run: |
           # remove leading 'v' in tag name
-          gh release create -d v${GITHUB_REF_NAME#v}
+          gh release create -d v${TAG#v}
 
   capi-macos:
     runs-on: macos-latest
@@ -146,7 +154,7 @@ jobs:
   publish-release:
     needs: [capi-macos, cli-macos, capi-linux, cli-linux]
     runs-on: ubuntu-latest
-    if: "startsWith(github.ref, 'refs/tags/')"
+    if: "startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'"
     steps:
       - uses: actions/checkout@v4
       # version must match the one used in `actions/upload-artifact`
@@ -154,9 +162,11 @@ jobs:
         with:
           path: artifacts
       - name: Create new release
+        env:
+          TAG: ${{ github.event.inputs.tag || github.ref_name }}
         run: |
           # remove leading 'v' in tag name
-          version=${GITHUB_REF_NAME#v}
+          version=${TAG#v}
           prerelease=$(echo ${version} | perl -pe 's/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/\4/')
           if [[ ${prerelease}  == "" ]]; then
               # extract the previous version number
