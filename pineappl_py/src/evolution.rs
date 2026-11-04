@@ -64,7 +64,7 @@ impl PyOperatorSliceInfo {
 }
 
 /// PyO3 wrapper to :rustdoc:`pineappl::evolution::EvolveInfo <evolution/struct.EvolveInfo.html>`.
-#[pyclass(name = "EvolveInfo", skip_from_py_object)]
+#[pyclass(name = "EvolveInfo")]
 #[repr(transparent)]
 pub struct PyEvolveInfo {
     pub(crate) evolve_info: EvolveInfo,
