@@ -95,7 +95,7 @@ struct Order {
   std::uint8_t alpha;
 
   /** @brief Exponent of the logarithm of the scale factor of the
-   * renomalization scale. */
+   * renormalization scale. */
   std::uint8_t logxir;
 
   /** @brief Exponent of the logarithm of the scale factor of the

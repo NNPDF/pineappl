@@ -86,7 +86,7 @@ impl PyFkTable {
     /// Returns
     /// -------
     /// numpy.ndarray :
-    ///     4-dimensional tensor with indixes: bin, channel, x1, x2
+    ///     4-dimensional tensor with indices: bin, channel, x1, x2
     pub fn table<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyArrayDyn<f64>>> {
         Ok(self.fk_table.table().into_pyarray(py))
     }

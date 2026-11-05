@@ -18,8 +18,8 @@ pub struct PyOperatorSliceInfo {
 impl PyOperatorSliceInfo {
     /// Constructor.
     ///
-    /// Parameteters
-    /// ------------
+    /// Parameters
+    /// ----------
     /// fac0 : float
     ///     initial factorization scale
     /// pids0 : list(int)
@@ -33,7 +33,7 @@ impl PyOperatorSliceInfo {
     /// x1 : list(float)
     ///     x-grid at the final scale
     /// pid_basis : PyPidBasis
-    ///     flavor basis reprentation at the initial scale
+    ///     flavor basis representation at the initial scale
     /// convolutions_types : PyConvType
     ///     the type of convolution required
     #[new]

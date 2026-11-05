@@ -721,7 +721,7 @@ pub struct Order {
     pub alphas: u8,
     /// Exponent of the electromagnetic coupling.
     pub alpha: u8,
-    /// Exponent of the logarithm of the scale factor of the renomalization scale.
+    /// Exponent of the logarithm of the scale factor of the renormalization scale.
     pub logxir: u8,
     /// Exponent of the logarithm of the scale factor of the initial state factorization scale.
     pub logxif: u8,
