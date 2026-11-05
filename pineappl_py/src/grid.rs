@@ -302,7 +302,7 @@ impl PyGrid {
     /// Returns
     /// -------
     /// int:
-    ///     the dimention of the bins
+    ///     the dimension of the bins
     pub fn bin_dimensions(&mut self) -> usize {
         self.grid.bwfl().dimensions()
     }

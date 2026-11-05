@@ -16,7 +16,7 @@
     it creates a new release on PineAPPL's Github [release page]. You can
     manually run this workflow from any branch to check whether it works, if
     there's no tag no actual release will be made.
-  - `rust.yml`: checks whether the Rust code succesfully compiles and generates
+  - `rust.yml`: checks whether the Rust code successfully compiles and generates
     code coverage
 - `.github/codecov.yml`: configuration file for PineAPPL's [codecov page]
 - `_includes/head-custom.html`: this file is part of PineAPPL's Github-pages

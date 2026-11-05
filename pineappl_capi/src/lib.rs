@@ -25,7 +25,7 @@
 //! pkg-config --libs pineappl_capi
 //! ```
 //!
-//! This will read `PineAPPL`'s `.pc` file and print the neccessary `CFLAGS` (`--cflags`) and
+//! This will read `PineAPPL`'s `.pc` file and print the necessary `CFLAGS` (`--cflags`) and
 //! linker flags (`--libs`). This procedure is supported by many build systems, such as:
 //!
 //! * [Autoconf]/[Automake], using the `PKG_CHECK_MODULES` macro, see the [Autotools mythbuster]

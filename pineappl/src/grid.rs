@@ -1458,7 +1458,7 @@ impl Grid {
         }
     }
 
-    /// Return a vector containg the scale specifications for this grid.
+    /// Return a vector containing the scale specifications for this grid.
     #[must_use]
     pub const fn scales(&self) -> &Scales {
         &self.scales

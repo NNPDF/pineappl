@@ -375,7 +375,7 @@ impl ConvType {
     }
 }
 
-/// Data type that indentifies different types of convolutions.
+/// Data type that identifies different types of convolutions.
 #[repr(C)]
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct Conv {
