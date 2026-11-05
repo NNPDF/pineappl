@@ -158,14 +158,14 @@ impl Grid {
     /// that for the variation to be trusted all non-zero log-grids must be contained.
     ///
     /// Convolution callbacks in `lumi_cache` must return **`x * f`** (LHAPDF). Internally, factors
-    /// **`f`** are used so that they match subgrid data from [`InterpSubgridV1`]
-    /// and from [`ImportSubgridV1`]. The latter is mainly for
+    /// **`f`** are used so that they match subgrid data from [`InterpSubgridV1`](crate::subgrid::InterpSubgridV1)
+    /// and from [`ImportSubgridV1`](crate::subgrid::ImportSubgridV1). The latter is mainly for
     /// **coefficient functions** dumped from outside PineAPPL that are defined to be convolved with
     /// **`f`**; those imported values must already use the **`f`** convention. See [`crate::convolutions`].
     ///
     /// # Panics
     ///
-    /// Panics if `ConvolutionCache::new_grid_conv_cache` cannot match the grid convolutions to
+    /// Panics if [`ConvolutionCache::new_grid_conv_cache`](crate::convolutions::ConvolutionCache::new_grid_conv_cache) cannot match the grid convolutions to
     /// the cache, if non-empty `order_mask` or `channel_mask` slices are shorter than the number of
     /// orders or channels respectively, or if PDF lookup inside the cache panics.
     pub fn convolve(
@@ -705,7 +705,7 @@ impl Grid {
     /// # Panics
     ///
     /// In debug builds, panics if `ntuple.len()` differs from the number of interpolations. Filling
-    /// an [`ImportSubgridV1`] always panics because it is read-only.
+    /// an [`ImportSubgridV1`](crate::subgrid::ImportSubgridV1) always panics because it is read-only.
     pub fn fill(
         &mut self,
         order: usize,
