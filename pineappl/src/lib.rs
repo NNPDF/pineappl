@@ -25,7 +25,7 @@
 //! ## Metadata
 //!
 //! Metadata is a collection of key--value pairs, in which both keys and values are `String`
-//! objects. In metadata anything a user whishes can be stored. However, there are [special keys],
+//! objects. In metadata anything a user wishes can be stored. However, there are [special keys],
 //! which have meaning to `PineAPPL` and/or its CLI `pineappl`. This metadata enables the CLI to
 //! automatically generate plots that are correctly labeled, for instance. For more applications
 //! see also the [CLI tutorial].

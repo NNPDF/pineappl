@@ -810,7 +810,7 @@ pub unsafe extern "C" fn pineappl_grid_order_count(grid: *const Grid) -> usize {
 /// - Order specification `orders` and `order_params`. Each `PineAPPL` grid contains a number of
 ///   different perturbative orders, specified by `orders`. The array `order_params` stores the
 ///   exponent of each perturbative order and must contain 4 integers denoting the exponent of the
-///   string coupling, of the electromagnetic coupling, of the logarithm of the renormalization
+///   strong coupling, of the electromagnetic coupling, of the logarithm of the renormalization
 ///   scale, and finally of the logarithm of the factorization scale.
 /// - The observable definition `bins` and `bin_limits`. Each `PineAPPL` grid can store observables
 ///   from a one-dimensional distribution. To this end `bins` specifies how many observables are
@@ -821,7 +821,7 @@ pub unsafe extern "C" fn pineappl_grid_order_count(grid: *const Grid) -> usize {
 ///
 /// # Safety
 ///
-/// The parameter `lumi` must point a valid luminosity function created by `pineappl_lumi_new`.
+/// The parameter `lumi` must point to a valid luminosity function created by `pineappl_lumi_new`.
 /// `order_params` must be an array with a length of `4 * orders`, and `bin_limits` an array with
 /// length `bins + 1`. `key_vals` must be a valid `KeyVal` object created by `pineappl_keyval_new`.
 ///
@@ -1556,8 +1556,9 @@ pub unsafe extern "C" fn pineappl_string_delete(string: *mut c_char) {
 
 // Here starts the generalized C-API interface.
 
-/// An exact duplicate of `pineappl_lumi_new` to make naming (lumi -> channel) consistent.
-/// should be deleted using `pineappl_channels_delete`.
+/// Creates a new and empty `Channels` definition for the specified number of `convolutions`.
+///
+/// After usage, the returned object should be deleted using [`pineappl_channels_delete`].
 #[unsafe(no_mangle)]
 #[must_use]
 pub extern "C" fn pineappl_channels_new(convolutions: usize) -> Box<Channels> {
@@ -1567,7 +1568,7 @@ pub extern "C" fn pineappl_channels_new(convolutions: usize) -> Box<Channels> {
     })
 }
 
-/// Adds a generalized linear combination of initial states to the Luminosity.
+/// Adds a generalized linear combination of initial states to `channels`.
 ///
 /// # Safety
 ///
@@ -1604,7 +1605,9 @@ pub unsafe extern "C" fn pineappl_channels_add(
     ));
 }
 
-/// An exact duplicate of `pineappl_grid_lumi` to make naming (lumi -> channel) consistent.
+/// Returns the partonic channels of `grid` as a new `Channels` object.
+///
+/// After usage, the returned object should be deleted using [`pineappl_channels_delete`].
 ///
 /// # Safety
 ///
@@ -1620,12 +1623,12 @@ pub unsafe extern "C" fn pineappl_grid_channels(grid: *const Grid) -> Box<Channe
     })
 }
 
-/// An exact duplicate of `pineappl_lumi_count` to make naming (lumi -> channel) consistent.
+/// Returns the number of channels in `channels`.
 ///
 /// # Safety
 ///
-/// The parameter `channels` must point to a valid `Lumi` object created by `pineappl_channels_new` or
-/// `pineappl_grid_channels`.
+/// The parameter `channels` must point to a valid `Channels` object created by [`pineappl_channels_new`] or
+/// [`pineappl_grid_channels`].
 #[unsafe(no_mangle)]
 pub const unsafe extern "C" fn pineappl_channels_count(channels: *const Channels) -> usize {
     let Channels { channels, .. } = unsafe { &*channels };
@@ -1633,7 +1636,7 @@ pub const unsafe extern "C" fn pineappl_channels_count(channels: *const Channels
     channels.len()
 }
 
-/// An exact duplicate of `pineappl_lumi_combinations` to make naming (lumi -> channel) consistent.
+/// Returns the number of parton combinations for the channel at `entry`.
 ///
 /// # Safety
 ///
@@ -1649,7 +1652,7 @@ pub unsafe extern "C" fn pineappl_channels_combinations(
     channels[entry].entry().len()
 }
 
-/// An exact duplicate of `pineappl_lumi_delete` to make naming (lumi -> channel) consistent.
+/// Deletes a `Channels` object created by [`pineappl_channels_new`] or [`pineappl_grid_channels`].
 #[unsafe(no_mangle)]
 #[expect(
     unused_variables,
@@ -1664,22 +1667,20 @@ pub extern "C" fn pineappl_channels_delete(channels: Option<Box<Channels>>) {}
 ///   cross section should be reconstructed.
 /// - Order specification `orders` and `order_params`. Each `PineAPPL` grid contains a number of
 ///   different perturbative orders, specified by `orders`. The array `order_params` stores the
-///   exponent of each perturbative order and must contain 4 integers denoting the exponent of the
-///   string coupling, of the electromagnetic coupling, of the logarithm of the renormalization
-///   scale, and finally of the logarithm of the factorization scale.
+///   exponent of each perturbative order and must contain 5 integers per order denoting the exponent of
+///   the strong coupling, of the electromagnetic coupling, of the logarithm of the renormalization
+///   scale, of the logarithm of the factorization scale, and of the logarithm of the fragmentation scale.
 /// - The observable definition `bins` and `bin_limits`. Each `PineAPPL` grid can store observables
 ///   from a one-dimensional distribution. To this end `bins` specifies how many observables are
 ///   stored and `bin_limits` must contain `bins + 1` entries denoting the left and right limit for
 ///   each bin.
-/// - The types of convolutions `convolution_types` and their numbers `nb_convolutions`: specify how
-///   how many different convolutions are involved and their types - which are a cross product of the
-///   the following combination: (unpolarized, polarized) ⊗ (PDF, Fragmentation Function).
-/// - The PDG IDs of the involved initial- or final-state hadrons `pdg_ids`.
+/// - The convolutions `convolutions`: specifies the convolution type ((unpolarized, polarized) ⊗
+///   (PDF, Fragmentation Function)) and hadron PDG ID for each of the convolutions defined in `channels`.
+/// - The specifications of the interpolation methods `interpolations` and `interps`: provide the number
+///   of interpolations and their specifications for each kinematic variable.
 /// - The types of kinematics `kinematics`: specify the various kinematics required to construct the
 ///   Grid. These can be the energy scales and the various momentum fractions.
-/// - The specifications of the interpolation methods `interpolations`: provide the specifications on
-///   how each of the kinematics should be interpolated.
-/// - The unphysical renormalization, factorization, and fragmentation scales: `mu_scales`. Its entries
+/// - The unphysical renormalization, factorization, and fragmentation scales: `scales`. Its entries
 ///   have to be ordered following {ren, fac, frg}. The mapping is as follows:
 ///   `0` -> `ScaleFuncForm::NoScale`, ..., `n` -> `ScaleFuncForm::Scale(n - 1)`.
 ///
@@ -1770,8 +1771,8 @@ pub unsafe extern "C" fn pineappl_grid_new2(
     ))
 }
 
-/// Similar to  `pineappl_grid_fill` but accepts any given momentum fractions {`x1`, ...,`xn`} at
-/// various energy scalesfor the given value of the `order`, `observable`, and `lumi` with `weight`.
+/// Similar to `pineappl_grid_fill` but accepts any given kinematics `ntuple` (momentum fractions and
+/// energy scales) for the given value of `order`, `observable`, and `channel` with `weight`.
 ///
 /// # Safety
 ///
@@ -1792,8 +1793,8 @@ pub unsafe extern "C" fn pineappl_grid_fill2(
     grid.fill(order, observable, channel, ntuple, weight);
 }
 
-/// Similar to  `pineappl_grid_fill_all` but accepts any given momentum fractions {`x1`, ...,`xn`} at
-/// various energy scalesfor the given value of the `order`, `observable`, and `lumi` with `weight`.
+/// Similar to `pineappl_grid_fill_all` but accepts any given kinematics `ntuple` (momentum fractions and
+/// energy scales) for the given value of `order` and `observable`, filling all channels with their respective `weights`.
 ///
 /// # Safety
 ///
@@ -1816,9 +1817,8 @@ pub unsafe extern "C" fn pineappl_grid_fill_all2(
     }
 }
 
-/// Similar to  `pineappl_grid_fill_array` but accepts any given momentum fractions
-/// {`x1`, ...,`xn`} at various energy scalesfor the given value of the `order`, `observable`,
-/// and `lumi` with `weight`.
+/// Similar to `pineappl_grid_fill_array` but accepts any given kinematics `ntuples` for the given values of
+/// `orders`, `observables`, and `channels` with `weights`.
 ///
 /// # Safety
 ///
@@ -1852,7 +1852,7 @@ pub unsafe extern "C" fn pineappl_grid_fill_array2(
     }
 }
 
-/// Similar to `pineappl_grid_split_channels`.
+/// Splits the grid such that each channel contains only a single combination of partons.
 ///
 /// # Safety
 ///
@@ -1956,7 +1956,7 @@ pub unsafe extern "C" fn pineappl_grid_set_metadata(
 ///
 /// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
 /// this function is not safe to call. The pointer `order_params` must point to an array as large
-/// as four times the number of orders in `grid`.
+/// as five times the number of orders in `grid` (alphas, alpha, logxir, logxif, logxia for each order).
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn pineappl_grid_order_params2(grid: *const Grid, order_params: *mut u32) {
     let grid = unsafe { &*grid };
@@ -1978,9 +1978,10 @@ pub unsafe extern "C" fn pineappl_grid_order_params2(grid: *const Grid, order_pa
 ///
 /// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
 /// this function is not safe to call. The function pointers `xfx` and `alphas` must not
-/// be null pointers and point to valid functions. The parameters `order_mask` and `channel_mask`
-/// must either be null pointers or point to arrays that are as long as `grid` has orders and
-/// channels, respectively. Finally, `results` must be as long as `grid` has bins.
+/// be null pointers and point to valid functions. The parameter `pdfs_state` must point to an
+/// array with at least as many elements as convolutions in `grid`. The parameters `order_mask`
+/// and `channel_mask` must either be null pointers or point to arrays that are as long as `grid`
+/// has orders and channels, respectively. Finally, `results` must be as long as `grid` has bins.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn pineappl_grid_convolve(
     grid: *const Grid,
@@ -2168,10 +2169,13 @@ pub unsafe extern "C" fn pineappl_grid_subgrid_shape(
     shape.copy_from_slice(subgrid_shape);
 }
 
-/// Get the nodes of the subgrid.
+/// Get the node values of the subgrid across all kinematic dimensions as a flattened array.
 ///
 /// # Safety
 ///
+/// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
+/// this function is not safe to call. The pointer `node_values` must point to an array large enough
+/// to hold the flattened node values across all kinematics dimensions.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn pineappl_grid_subgrid_node_values(
     grid: *const Grid,
@@ -2399,18 +2403,19 @@ pub unsafe extern "C" fn pineappl_grid_evolve_info(
 ///
 /// # Arguments
 ///
-/// * `grid` - A `Grid` object
-/// * `op_info` - An array of `OperatorInfo` objects containing the information about the evolution.
-/// * `operator` - A callack that returns the evolution operator.
-/// * `max_orders` - The maximum QCD and EW orders `(alpha_s, alpha)`.
-/// * `params_state` - Parameters that get passed to `operator`.
-/// * `x_in` - The  x-grid that defines the Grid.
-/// * `x_out` - The x-grid that will define the evolved Grid.
+/// * `grid` - A `Grid` object.
+/// * `nb_slices` - The number of operator slices.
+/// * `slices` - A callback that returns the evolution operator slices.
+/// * `operator_info` - An array of `OperatorInfo` objects containing information about the evolution.
 /// * `pids_in` - The list of PID values that defines the Grid.
+/// * `x_in` - The x-grid that defines the Grid.
 /// * `pids_out` - The list of PID values that will define the evolved Grid.
+/// * `x_out` - The x-grid that will define the evolved Grid.
 /// * `eko_shape` - The shape of the evolution operator.
-/// * `xi` - The values that defines that scale variations.
-/// * `ren` - An array containing the values of the renormalization scale variation.
+/// * `state` - User parameters passed through to `slices`.
+/// * `order_mask` - A mask specifying which orders to evolve.
+/// * `xi` - The values that define the scale variations.
+/// * `ren1` - An array containing the values of the renormalization scale variation.
 /// * `alphas` - An array containing the values of `alpha_s`. It must have the same size as `ren1`.
 ///
 /// # Safety
