@@ -112,7 +112,7 @@ impl Grid {
     }
 
     /// Charge conjugate both the convolution function with index `convolution` and the PIDs in the
-    /// channel definition corresponding to it. This leaves the the results returned by
+    /// channel definition corresponding to it. This leaves the results returned by
     /// [`Grid::convolve`] invariant.
     pub fn charge_conjugate(&mut self, convolution: usize) {
         let pid_basis = *self.pid_basis();
@@ -165,7 +165,7 @@ impl Grid {
     ///
     /// # Panics
     ///
-    /// Panics if [`ConvolutionCache::new_grid_conv_cache`] cannot match the grid convolutions to
+    /// Panics if [`ConvolutionCache::new_grid_conv_cache`](crate::convolutions::ConvolutionCache::new_grid_conv_cache) cannot match the grid convolutions to
     /// the cache, if non-empty `order_mask` or `channel_mask` slices are shorter than the number of
     /// orders or channels respectively, or if PDF lookup inside the cache panics.
     pub fn convolve(
@@ -1144,7 +1144,7 @@ impl Grid {
     /// Merges the factors of the channels into the subgrids to normalize channel coefficients.
     ///
     /// This method factors out the smallest absolute coefficient from each channel using
-    /// [`boc::Channel::factor`] and then scales the corresponding subgrids by these factors.
+    /// [`Channel::factor`] and then scales the corresponding subgrids by these factors.
     pub fn merge_channel_factors(&mut self) {
         let (factors, new_channels): (Vec<_>, Vec<_>) =
             self.channels().iter().map(Channel::factor).unzip();

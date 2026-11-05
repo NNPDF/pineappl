@@ -14,5 +14,5 @@ pub enum Error {
     Other(#[from] anyhow::Error),
 }
 
-/// Convenient result type using [`Error`].
+/// Convenient result type using [`enum@Error`].
 pub type Result<T> = StdResult<T, Error>;
