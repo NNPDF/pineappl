@@ -698,9 +698,19 @@ impl Grid {
         }
     }
 
-    /// Fills the grid with an ntuple for the given `order`, `observable`, and `channel`. The
-    /// parameter `ntuple` must contain the variables specified by the `kinematics` parameter in
-    /// the constructor [`Grid::new`] in the same order.
+    /// Fills the grid with an ntuple for the given `order`, `observable`, and `channel`.
+    ///
+    /// The parameter `ntuple` must contain the kinematic variables specified by the `kinematics`
+    /// parameter in the constructor [`Grid::new`] in the same order (e.g. `[q2, x1, x2]`).
+    ///
+    /// # Weight convention ($f(x)$ vs $x f(x)$)
+    ///
+    /// The `weight` parameter is the weight defined to fold with the parton distribution
+    /// functions **`f(x)`** (and/or fragmentation functions **`D(z)`**), **not** with `x * f(x)`.
+    ///
+    /// When [`Grid::convolve`] evaluates convolutions with LHAPDF-style callbacks `xfx` (which return
+    /// `x * f(x)`), PineAPPL automatically divides by `x` to recover `f(x)` (see [`crate::convolutions`]).
+    /// Passing weights that are pre-multiplied by `x` will erroneously double-count `x`.
     ///
     /// # Panics
     ///

@@ -131,6 +131,9 @@ impl PyGrid {
 
     /// Add a point to the grid.
     ///
+    /// The `weight` parameter is the weight to be convolved with parton distribution
+    /// functions `f(x)` (and/or fragmentation functions `D(z)`), not `x * f(x)`.
+    ///
     /// Parameters
     /// ----------
     /// order : int
@@ -139,10 +142,10 @@ impl PyGrid {
     ///     reference point (to be binned)
     /// channel : int
     ///     channel index
-    /// ntuple: list(float)
-    ///     list containing information on kinematics
+    /// ntuple : list(float)
+    ///     list containing kinematic variables (in the order specified at grid creation)
     /// weight : float
-    ///     cross section weight
+    ///     weight convolved with `f(x)` (not `x * f(x)`)
     #[expect(clippy::needless_pass_by_value, reason = "PyO3 requires pass by value")]
     pub fn fill(
         &mut self,
@@ -166,6 +169,7 @@ impl PyGrid {
     /// Add an array to the grid.
     ///
     /// Useful to avoid multiple python calls, leading to performance improvement.
+    /// The weights must be defined to be convolved with `f(x)` (not `x * f(x)`).
     ///
     /// Parameters
     /// ----------
@@ -175,10 +179,10 @@ impl PyGrid {
     ///     list of reference point (to be binned)
     /// channel : int
     ///     channel index
-    /// ntuples: list(list(float))
+    /// ntuples : list(list(float))
     ///     list of `ntuple` kinematics
     /// weights : np.array(float)
-    ///     cross section weight for all events
+    ///     weights convolved with `f(x)` (not `x * f(x)`)
     #[expect(clippy::needless_pass_by_value, reason = "PyO3 requires pass by value")]
     pub fn fill_array(
         &mut self,
@@ -197,16 +201,18 @@ impl PyGrid {
 
     /// Add a point to the grid for all channels.
     ///
+    /// The weights must be defined to be convolved with `f(x)` (not `x * f(x)`).
+    ///
     /// Parameters
     /// ----------
     /// order : int
     ///     order index
     /// observable : float
     ///     reference point (to be binned)
-    /// ntuple: list(float)
+    /// ntuple : list(float)
     ///     list containing information on kinematics
     /// weights : np.array(float)
-    ///     cross section weights, one for each channels
+    ///     weights convolved with `f(x)` (not `x * f(x)`), one for each channel
     #[expect(clippy::needless_pass_by_value, reason = "PyO3 requires pass by value")]
     pub fn fill_all_channels(
         &mut self,
