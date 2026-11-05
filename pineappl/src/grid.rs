@@ -698,14 +698,31 @@ impl Grid {
         }
     }
 
-    /// Fills the grid with an ntuple for the given `order`, `observable`, and `channel`. The
-    /// parameter `ntuple` must contain the variables specified by the `kinematics` parameter in
-    /// the constructor [`Grid::new`] in the same order.
+    /// Fills the grid with an ntuple for the given `order`, `observable`, and `channel`.
+    ///
+    /// The parameter `ntuple` must contain the kinematic variables specified by the `kinematics`
+    /// parameter in the constructor [`Grid::new`] in the same order (e.g. `[q2, x1, x2]`).
+    ///
+    /// # Weight convention ($f(x)$ vs $x f(x)$)
+    ///
+    /// The `weight` parameter is the event weight (differential cross section) defined to fold with
+    /// the parton distribution functions **`f(x)`** (and/or fragmentation functions **`D(z)`**),
+    /// **not** with `x * f(x)`.
+    ///
+    /// When [`Grid::convolve`] evaluates convolutions with LHAPDF-style callbacks `xfx` (which return
+    /// `x * f(x)`), PineAPPL automatically divides by `x` to recover `f(x)` (see [`crate::convolutions`]).
+    /// Therefore, event generators filling the grid must pass weights corresponding to `f(x)`.
+    /// Passing weights that are pre-multiplied by `x` will erroneously double-count `x`.
+    ///
+    /// If an event generator uses integration variables such as $\tau = \ln x$ where the
+    /// integration measure produces a Jacobian factor $\mathrm{d}x = x\,\mathrm{d}\ln x$, that $x$
+    /// factor belongs to the phase-space integration volume of the generator, but the weight must
+    /// not include an extra factor of $x$ for the PDF itself.
     ///
     /// # Panics
     ///
     /// In debug builds, panics if `ntuple.len()` differs from the number of interpolations. Filling
-    /// an [`ImportSubgridV1`](crate::subgrid::ImportSubgridV1) always panics because it is read-only.
+    /// an [`ImportSubgridV1`] always panics because it is read-only.
     pub fn fill(
         &mut self,
         order: usize,

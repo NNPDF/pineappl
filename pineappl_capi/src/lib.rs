@@ -669,6 +669,8 @@ pub extern "C" fn pineappl_grid_delete(grid: Option<Box<Grid>>) {}
 /// Fill `grid` for the given momentum fractions `x1` and `x2`, at the scale `q2` for the given
 /// value of the `order`, `observable`, and `lumi` with `weight`.
 ///
+/// The `weight` parameter is defined to fold with parton distribution functions `f(x)` (not `x * f(x)`).
+///
 /// # Safety
 ///
 /// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
@@ -694,11 +696,13 @@ pub unsafe extern "C" fn pineappl_grid_fill(
 ///
 /// This is done for a given value of the `order` and `observable` with `weights`. The parameter
 /// of weight must contain a result for entry of the luminosity function the grid was created with.
+/// Each weight is defined to fold with parton distribution functions `f(x)` (not `x * f(x)`).
 ///
 /// # Safety
 ///
 /// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
-/// this function is not safe to call.
+/// this function is not safe to call. Additionally, `weights` must point to an array of as many
+/// `f64` elements as there are channels in `grid`.
 #[deprecated(since = "1.0.0", note = "use `pineappl_grid_fill_all2` instead")]
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn pineappl_grid_fill_all(
@@ -719,6 +723,8 @@ pub unsafe extern "C" fn pineappl_grid_fill_all(
 }
 
 /// Fill `grid` with as many points as indicated by `size`.
+///
+/// Each weight is defined to fold with parton distribution functions `f(x)` (not `x * f(x)`).
 ///
 /// # Safety
 ///
@@ -1770,13 +1776,26 @@ pub unsafe extern "C" fn pineappl_grid_new2(
     ))
 }
 
-/// Similar to  `pineappl_grid_fill` but accepts any given momentum fractions {`x1`, ...,`xn`} at
-/// various energy scalesfor the given value of the `order`, `observable`, and `lumi` with `weight`.
+/// Fill `grid` for an event with kinematic variables in `ntuple` at the given `order`,
+/// `observable`, and `channel` with `weight`.
+///
+/// The `ntuple` array must contain the kinematic variables in the order specified by the
+/// `kinematics` parameter when the grid was constructed with [`pineappl_grid_new2`] (e.g.
+/// scales, momentum fractions).
+///
+/// # Weight convention ($f(x)$ vs $x f(x)$)
+///
+/// The `weight` parameter is the event cross-section weight defined to fold with parton
+/// distribution functions **`f(x)`** (and/or fragmentation functions **`D(z)`**), **not** with
+/// `x * f(x)`. When PineAPPL convolves grids with LHAPDF-style callbacks (which return `x * f(x)`),
+/// it automatically divides by `x` to recover `f(x)`. Pre-multiplying `weight` by `x` will therefore
+/// erroneously double-count `x`.
 ///
 /// # Safety
 ///
 /// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
-/// this function is not safe to call.
+/// this function is not safe to call. Additionally, `ntuple` must point to an array of at least as
+/// many `f64` elements as there are kinematics dimensions in `grid`.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn pineappl_grid_fill2(
     grid: *mut Grid,
@@ -1792,13 +1811,27 @@ pub unsafe extern "C" fn pineappl_grid_fill2(
     grid.fill(order, observable, channel, ntuple, weight);
 }
 
-/// Similar to  `pineappl_grid_fill_all` but accepts any given momentum fractions {`x1`, ...,`xn`} at
-/// various energy scalesfor the given value of the `order`, `observable`, and `lumi` with `weight`.
+/// Fill `grid` across all partonic channels for an event with kinematic variables in `ntuple` at
+/// the given `order` and `observable`.
+///
+/// The `ntuple` array must contain the kinematic variables in the order specified by the
+/// `kinematics` parameter when the grid was constructed with [`pineappl_grid_new2`].
+///
+/// The `weights` pointer must point to an array containing one event weight per partonic channel
+/// in `grid`.
+///
+/// # Weight convention ($f(x)$ vs $x f(x)$)
+///
+/// Each weight in `weights` is defined to fold with parton distribution functions **`f(x)`**
+/// (and/or fragmentation functions **`D(z)`**), **not** with `x * f(x)`. Do not pre-multiply
+/// weights by `x`.
 ///
 /// # Safety
 ///
 /// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
-/// this function is not safe to call.
+/// this function is not safe to call. Additionally, `ntuple` must point to an array with at least as
+/// many `f64` elements as kinematics dimensions in `grid`, and `weights` must point to an array
+/// with at least as many `f64` elements as channels in `grid`.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn pineappl_grid_fill_all2(
     grid: *mut Grid,
@@ -1816,15 +1849,28 @@ pub unsafe extern "C" fn pineappl_grid_fill_all2(
     }
 }
 
-/// Similar to  `pineappl_grid_fill_array` but accepts any given momentum fractions
-/// {`x1`, ...,`xn`} at various energy scalesfor the given value of the `order`, `observable`,
-/// and `lumi` with `weight`.
+/// Fill `grid` with multiple events (indicated by `size`) across arbitrary orders, observables,
+/// kinematics ntuples, channels, and weights.
+///
+/// Each event `i` (from `0` to `size - 1`) is specified by:
+/// - `orders[i]`: perturbative order index
+/// - `observables[i]`: observable value to determine the bin
+/// - `channels[i]`: partonic channel index
+/// - `ntuples`: flattened contiguous array of shape `(size, n_kinematics)` where the $i$-th slice
+///   contains kinematic variables in the order specified at grid construction
+/// - `weights[i]`: event cross-section weight defined to fold with `f(x)` (not `x * f(x)`)
+///
+/// # Weight convention ($f(x)$ vs $x f(x)$)
+///
+/// All entries in `weights` must be defined to fold with parton distribution functions **`f(x)`**
+/// (and/or fragmentation functions **`D(z)`**), **not** with `x * f(x)`.
 ///
 /// # Safety
 ///
 /// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
-/// this function is not safe to call. Additionally, all remaining pointer parameters must be
-/// arrays as long as specified by `size`.
+/// this function is not safe to call. Additionally, `orders`, `observables`, `channels`, and `weights`
+/// must each point to an array of at least `size` elements, and `ntuples` must point to a contiguous
+/// array of at least `size * grid.kinematics().len()` elements.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn pineappl_grid_fill_array2(
     grid: *mut Grid,
