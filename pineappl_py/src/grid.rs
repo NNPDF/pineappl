@@ -131,9 +131,8 @@ impl PyGrid {
 
     /// Add a point to the grid.
     ///
-    /// The `weight` parameter is the event cross section weight to be convolved with
-    /// parton distribution functions `f(x)` (and/or fragmentation functions `D(z)`),
-    /// not `x * f(x)`.
+    /// The `weight` parameter is the weight to be convolved with parton distribution
+    /// functions `f(x)` (and/or fragmentation functions `D(z)`), not `x * f(x)`.
     ///
     /// Parameters
     /// ----------
@@ -146,7 +145,7 @@ impl PyGrid {
     /// ntuple : list(float)
     ///     list containing kinematic variables (in the order specified at grid creation)
     /// weight : float
-    ///     cross section weight convolved with `f(x)` (not `x * f(x)`)
+    ///     weight convolved with `f(x)` (not `x * f(x)`)
     #[expect(clippy::needless_pass_by_value, reason = "PyO3 requires pass by value")]
     pub fn fill(
         &mut self,
@@ -183,7 +182,7 @@ impl PyGrid {
     /// ntuples : list(list(float))
     ///     list of `ntuple` kinematics
     /// weights : np.array(float)
-    ///     cross section weight convolved with `f(x)` (not `x * f(x)`) for all events
+    ///     weights convolved with `f(x)` (not `x * f(x)`)
     #[expect(clippy::needless_pass_by_value, reason = "PyO3 requires pass by value")]
     pub fn fill_array(
         &mut self,
@@ -213,7 +212,7 @@ impl PyGrid {
     /// ntuple : list(float)
     ///     list containing information on kinematics
     /// weights : np.array(float)
-    ///     cross section weights convolved with `f(x)` (not `x * f(x)`), one for each channel
+    ///     weights convolved with `f(x)` (not `x * f(x)`), one for each channel
     #[expect(clippy::needless_pass_by_value, reason = "PyO3 requires pass by value")]
     pub fn fill_all_channels(
         &mut self,

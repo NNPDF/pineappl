@@ -462,9 +462,8 @@ pub trait Subgrid {
     /// kinematic information in `ntuple`. The parameter `ntuple` assumes the same ordering given
     /// by `kinematics` in [`Grid::new`](super::grid::Grid::new) that was used to create the grid.
     ///
-    /// The `weight` parameter is the event weight (differential cross section) defined to fold with
-    /// parton distribution functions **`f(x)`** (or fragmentation functions **`D(z)`**), **not** with
-    /// `x * f(x)`.
+    /// The `weight` parameter is the weight defined to fold with parton distribution
+    /// functions **`f(x)`** (or fragmentation functions **`D(z)`**), **not** with `x * f(x)`.
     fn fill(&mut self, interps: &[Interp], ntuple: &[f64], weight: f64);
 
     /// Return an iterator over all non-zero elements of the subgrid.

@@ -193,7 +193,7 @@ struct Grid {
    * @param observable value of the observable
    * @param channel index of the channel
    * @param ntuples tuples containing the kinematics {q2, x1, ...}
-   * @param weight event cross-section weight convolved with f(x) (not x * f(x))
+   * @param weight value of the weighting factor to be convolved with f(x) (not x * f(x))
    */
   void fill(const std::size_t order, const double observable,
             const std::size_t channel, std::vector<double> &ntuples,
