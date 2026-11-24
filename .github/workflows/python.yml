@@ -10,7 +10,8 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    # `ubuntu-26.04` (`ubuntu-latest`) doesn't provide Python 3.9 anymore
+    runs-on: ubuntu-24.04
 
     strategy:
       matrix:
