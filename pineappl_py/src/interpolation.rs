@@ -4,7 +4,7 @@ use pineappl::interpolation::{Interp, InterpMeth, Map, ReweightMeth};
 use pyo3::prelude::*;
 
 /// PyO3 wrapper to :rustdoc:`pineappl::interpolation::Interp <interpolation/struct.Interp.html>`.
-#[pyclass(name = "Interp", skip_from_py_object)]
+#[pyclass(name = "Interp")]
 #[repr(transparent)]
 pub struct PyInterp {
     pub(crate) interp: Interp,

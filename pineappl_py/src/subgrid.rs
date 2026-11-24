@@ -21,7 +21,7 @@ use pyo3::prelude::*;
 /// :class:`~pineappl.grid.Grid` ``.convolve`` still expects LHAPDF-style callables that return
 /// ``x * f``; the core library divides by ``x`` when building the luminosity. See the submodule
 /// docstring and `issue 388 <https://github.com/NNPDF/pineappl/issues/388>`__.
-#[pyclass(name = "ImportSubgridV1", skip_from_py_object)]
+#[pyclass(name = "ImportSubgridV1")]
 #[derive(Clone)]
 #[repr(transparent)]
 pub struct PyImportSubgridV1 {

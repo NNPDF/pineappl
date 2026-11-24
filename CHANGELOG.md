@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- added support for Python 3.15 to the Python interface
+
+### Changed
+
+- updated PyO3 to v0.30 and rust-numpy to v0.30; as a consequence the Python
+  interface and the CLI wheels now require Python 3.9 or newer
+- updated NeoPDF to v0.5.0
+
 ## [1.5.0] - 21/07/2026
 
 ### Added

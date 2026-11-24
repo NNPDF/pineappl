@@ -10,12 +10,12 @@ on:
 
 jobs:
   test:
-    # `ubuntu-24.04` doesn't support Python 3.7 anymore
-    runs-on: ubuntu-22.04
+    # `ubuntu-26.04` (`ubuntu-latest`) doesn't provide Python 3.9 anymore
+    runs-on: ubuntu-24.04
 
     strategy:
       matrix:
-        python-version: ["3.7", "3.8", "3.9", "3.10", "3.11", "3.12", "3.13"]
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13", "3.14", "3.15"]
 
     steps:
       - uses: actions/checkout@v4
