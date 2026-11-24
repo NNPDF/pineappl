@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- added support for Python 3.15 to the Python interface
+
 ### Changed
 
 - updated PyO3 to v0.30 and rust-numpy to v0.30; as a consequence the Python
