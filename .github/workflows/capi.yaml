@@ -15,7 +15,7 @@ defaults:
 
 jobs:
   capi:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     container: ghcr.io/nnpdf/pineappl-ci:latest
     steps:
       # checkout@v4 uses a newer version of Node that's incompatible with our container's GLIBC
